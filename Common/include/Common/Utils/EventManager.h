@@ -29,8 +29,8 @@ namespace Mcc
         template<typename T>
         void Dispatch(T event);
 
-        template<typename T>
-        EventHandlerID Subscribe(EventHandler<T> handler);
+        template<typename T, typename F, typename... Args>
+        EventHandlerID Subscribe(F&& handler, Args&&... args);
 
         void Withdraw(EventHandlerID id);
 

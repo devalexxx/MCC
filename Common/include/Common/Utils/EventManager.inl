@@ -35,28 +35,30 @@ namespace Mcc
     }
 
     template<typename Tag>
-    template<typename T>
-    EventHandlerID EventManager<Tag>::Subscribe(EventHandler<T> handler)
+    template<typename T, typename F, typename... Args>
+    EventHandlerID EventManager<Tag>::Subscribe(F&& handler, Args&&... args)
     {
         auto typeId = Event<Tag, T>::GetType();
+        auto bound  = std::bind(std::forward<F>(handler), std::placeholders::_1, std::forward<Args>(args)...);
 
         if (mEventHandlers.size() <= typeId)
         {
             mEventHandlers.push_back({});
         }
 
+
         Hx::u64 handlerId = 0;
         for (Hx::u64 i = 0; i < mEventHandlers[typeId].size(); ++i)
         {
             if (!mEventHandlers[typeId][i])
             {
-                mEventHandlers[typeId][i] = HandlerFunctor<T> { std::move(handler) };
+                mEventHandlers[typeId][i] = HandlerFunctor<T> { std::move(bound) };
                 handlerId                 = i + 1;
             }
         }
         if (handlerId == 0)
         {
-            mEventHandlers[typeId].push_back(HandlerFunctor<T> { std::move(handler) });
+            mEventHandlers[typeId].push_back(HandlerFunctor<T> { std::move(bound) });
             handlerId = mEventHandlers[typeId].size();
         }
 
