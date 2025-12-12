@@ -95,6 +95,9 @@ namespace Mcc
     template<typename T>
     struct State<StateTargetEntity, T> : BaseState<T>
     {
+        using BaseState<T>::OnEnter;
+        using BaseState<T>::OnExit;
+
         template<typename SV>
         static O<T> OnEnter(const flecs::entity& entity);
         template<typename SV>
