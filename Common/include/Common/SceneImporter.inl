@@ -83,7 +83,7 @@ namespace Mcc
             [](ecs_world_t* worldPtr, void*) {
                 const auto world_ = flecs::world(worldPtr);
                 auto       cb     = [&]<typename T>() {
-                    if (world_.try_get<ActiveScene, T>())
+                    if (world_.has<ActiveScene, T>())
                     {
                         world_.run_pipeline<typename T::QuitPipeline>();
                         world_.delete_with(flecs::ChildOf, world_.entity<SceneRoot>());
