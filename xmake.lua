@@ -33,7 +33,7 @@ local packages = {
     }, 
     { 
         name  = "flecs", 
-        extra = " 4.1.0",
+        extra = "", -- " 4.1.0""
         usage = usage_all,
         rconf = {}
     }, 

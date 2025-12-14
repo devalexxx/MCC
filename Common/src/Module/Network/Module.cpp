@@ -19,8 +19,8 @@ namespace Mcc
 
     void NetworkModule::RegisterComponent(flecs::world& world)
     {
-        world.component<ServerTag>();
-        world.component<ClientTag>();
+        world.component<ServerTag>().add(flecs::Singleton);
+        world.component<ClientTag>().add(flecs::Singleton);
         world.component<NetworkObjectTag>();
 
         world.component<NetworkProps>();
@@ -34,7 +34,6 @@ namespace Mcc
         world.observer<NetworkProps>()
             .event(flecs::OnAdd)
             .with<ServerTag>()
-            .singleton()
             .each(GenerateNetworkHandleObserver);
 
         world.observer<const NetworkProps>().event(flecs::OnSet).run(AddToContextObserver);
