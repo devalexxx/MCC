@@ -111,7 +111,7 @@ namespace Mcc
                 case GLFW_KEY_ESCAPE:
                     if (GameState::InGame::IsActive(world))
                         GameState::InMenu::Enter(world);
-                    else
+                    else if (GameState::InMenu::IsActive(world))
                         GameState::InGame::Enter(world);
                 default:
                     break;
