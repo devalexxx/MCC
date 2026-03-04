@@ -54,6 +54,8 @@ namespace Mcc
     template<typename SV>
     void BaseState<T>::Enter(const auto& obj)
     {
+        if (BaseState::IsActive<SV>(obj))
+            return;
         obj.template add<T, SV>();
     }
 
