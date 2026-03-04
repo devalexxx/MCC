@@ -26,6 +26,7 @@ namespace Mcc
     void EntityReplicationModule::RegisterComponent(flecs::world& world)
     {
         world.component<InterpolationExcludedTag>();
+        world.component<SnapshotQueue>();
     }
 
     void EntityReplicationModule::RegisterSystem(flecs::world& world)

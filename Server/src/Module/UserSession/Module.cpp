@@ -30,6 +30,8 @@ namespace Mcc
         MCC_LOG_DEBUG("Import PlayerSessionModule...");
         world.module<UserSessionModule>();
 
+        world.component<UserSessionHolder>();
+
         const auto* ctx = WorldContext<>::Get(world);
 
         ctx->networkManager.Subscribe<ConnectEvent>([&](const auto& event) { OnConnectEventHandler(world, event); });

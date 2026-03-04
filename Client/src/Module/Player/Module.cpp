@@ -37,12 +37,15 @@ namespace Mcc
     void PlayerModule::RegisterComponent(flecs::world& world)
     {
         world.component<PlayerEntityTag>();
+
+        world.component<PlayerEntityPrefab>();
+
         world.component<CurrentPlayerInput>();
     }
 
     void PlayerModule::RegisterSystem(flecs::world& world)
     {
-        world.system<CurrentPlayerInput, UserInputQueue>()
+        world.system<CurrentPlayerInput, UserInputQueue>("ApplyAndSendPlayerInputSystem")
             .kind<Phase::OnUpdate>()
             .with<PlayerEntityTag>()
             .each(ApplyAndSendPlayerInput)
@@ -52,33 +55,34 @@ namespace Mcc
     void PlayerModule::RegisterHandler(flecs::world& world)
     {
         const auto* ctx = ClientWorldContext::Get(world);
-
-        GameState::InGame::OnEnter(world).with<ActiveScene, GameScene>().each(
-            [&world, this, ctx](const flecs::iter&, size_t, GameState) {
-                mKeyEventHandlerID =
-                    ctx->window.Subscribe<KeyEvent>([&world](const auto& event) { OnKeyEventHandler(world, event); });
-                mCursorPosEventHandlerID = ctx->window.Subscribe<CursorPosEvent>([&world](const auto& event) {
-                    OnCursorPosEventHandler(world, event);
-                });
-            }
-        );
-
-        GameState::InGame::OnExit(world).with<ActiveScene, GameScene>().each(
-            [this, ctx](const flecs::iter&, size_t, GameState) {
-                ctx->window.Withdraw(mKeyEventHandlerID);
-                ctx->window.Withdraw(mCursorPosEventHandlerID);
-            }
-        );
-
-        ctx->networkManager.Subscribe<OnEntitiesCreated>([&world](const auto& event) {
-            OnEntitiesCreatedHandler(world, event);
-        });
-        ctx->networkManager.Subscribe<OnEntitiesUpdated>([&world](const auto& event) {
-            OnEntitiesUpdatedHandler(world, event);
-        });
+        ctx->networkManager.Subscribe<OnEntitiesCreated>(OnEntitiesCreatedHandler, world);
+        ctx->networkManager.Subscribe<OnEntitiesUpdated>(OnEntitiesUpdatedHandler, world);
     }
 
-    void PlayerModule::OnEntitiesCreatedHandler(const flecs::world& world, const OnEntitiesCreated& event)
+    void PlayerModule::SetInputHandler(flecs::world& world)
+    {
+        if (mKeyEventHandlerID != 0 || mCursorPosEventHandlerID != 0)
+            return;
+
+        const auto ctx = ClientWorldContext::Get(world);
+        mKeyEventHandlerID       = ctx->window.Subscribe<KeyEvent>      (OnKeyEventHandler, world);
+        mCursorPosEventHandlerID = ctx->window.Subscribe<CursorPosEvent>(OnCursorPosEventHandler, world);
+    }
+
+    void PlayerModule::ClearInputHandler(flecs::world& world)
+    {
+        if (mKeyEventHandlerID == 0 || mCursorPosEventHandlerID == 0)
+            return;
+
+        const auto ctx = ClientWorldContext::Get(world);
+        ctx->window.Withdraw(mKeyEventHandlerID);
+        ctx->window.Withdraw(mCursorPosEventHandlerID);
+
+        mKeyEventHandlerID       = 0;
+        mCursorPosEventHandlerID = 0;
+    }
+
+    void PlayerModule::OnEntitiesCreatedHandler(const OnEntitiesCreated& event, const flecs::world& world)
     {
         const auto* ctx = ClientWorldContext::Get(world);
 
@@ -110,7 +114,7 @@ namespace Mcc
         }
     }
 
-    void PlayerModule::OnEntitiesUpdatedHandler(const flecs::world& world, const OnEntitiesUpdated& event)
+    void PlayerModule::OnEntitiesUpdatedHandler(const OnEntitiesUpdated& event, const flecs::world& world)
     {
         const auto* ctx = ClientWorldContext::Get(world);
 
@@ -164,7 +168,7 @@ namespace Mcc
         }
     }
 
-    void PlayerModule::OnKeyEventHandler(const flecs::world& world, const KeyEvent& event)
+    void PlayerModule::OnKeyEventHandler(const KeyEvent& event, const flecs::world& world)
     {
         const auto* ctx    = ClientWorldContext::Get(world);
         const auto  handle = ctx->networkMapping.GetLHandle(ctx->playerInfo.handle);
@@ -204,7 +208,7 @@ namespace Mcc
         }
     }
 
-    void PlayerModule::OnCursorPosEventHandler(const flecs::world& world, const CursorPosEvent& event)
+    void PlayerModule::OnCursorPosEventHandler(const CursorPosEvent& event, const flecs::world& world)
     {
         auto [w, h] = event.window.GetWindowSize();
 

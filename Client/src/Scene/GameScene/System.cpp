@@ -10,6 +10,8 @@
 #include "Client/Scene/Scene.h"
 #include "Client/WorldContext.h"
 
+#include "Common/Utils/FlecsUtils.h"
+
 #include "Hexis/Core/LambdaAsFuncPtr.h"
 #include "Hexis/Math/FloatingPoint.h"
 
@@ -20,6 +22,39 @@
 namespace Mcc
 {
 
+    void OnEnterGameStateInGame(flecs::iter& it)
+    {
+        auto world = it.world();
+        ClientWorldContext::Get(world)->window.SetInputMode(GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
+        if (const auto module = world.try_get_mut<PlayerModule>(); module)
+        {
+            module->SetInputHandler(world);
+        }
+
+        IgnoreIter(it);
+    }
+
+    void OnExitGameStateInGame(flecs::iter& it)
+    {
+        auto world = it.world();
+        ClientWorldContext::Get(world)->window.SetInputMode(GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+        if (const auto module = world.try_get_mut<PlayerModule>(); module)
+        {
+            module->ClearInputHandler(world);
+        }
+
+        IgnoreIter(it);
+    }
+
+    void OnEnterGameStateShutdown(flecs::iter& it)
+    {
+        const auto world = it.world();
+        world.each<MeshHolder>([](MeshHolder& mesh) { mesh.pendingMesh.Cancel(); });
+        ClientWorldContext::Get(world)->scheduler.StartJoin("game_group");
+
+        IgnoreIter(it);
+    }
+
     void SetupStateSystem(flecs::iter& it)
     {
         while (it.next()) {};
@@ -28,27 +63,27 @@ namespace Mcc
 
     void ConnectToServerSystem(flecs::iter& it)
     {
-        while (it.next()) {};
-
         const auto ctx = ClientWorldContext::Get(it.world());
         ctx->scheduler.Insert([=]() { ctx->networkManager.Connect(); }).Enqueue();
+
+        IgnoreIter(it);
     }
 
     void ClearGameInfoSystem(flecs::iter& it)
     {
-        while (it.next()) {};
-
         const auto ctx      = ClientWorldContext::Get(it.world());
         ctx->chunkMap       = {};
         ctx->networkMapping = {};
+
+        IgnoreIter(it);
     }
 
     void DisconnectFromServerSystem(flecs::iter& it)
     {
-        while (it.next()) {};
-
         const auto ctx = ClientWorldContext::Get(it.world());
         ctx->networkManager.Disconnect();
+
+        IgnoreIter(it);
     }
 
     void DisplayEscapeMenuSystem(const flecs::iter& it, size_t)
@@ -143,7 +178,7 @@ namespace Mcc
         }
         ImGui::End();
 
-        while (it.next()) {}
+        IgnoreIter(it);
     }
 
 }

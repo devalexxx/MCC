@@ -6,6 +6,14 @@
 #define MCC_CLIENT_SCENE_GAME_SCENE_SCENE_H
 
 #include "Client/Graphics/Window/Event.h"
+#include "Client/Module/Camera/Module.h"
+#include "Client/Module/EntityRenderer/Module.h"
+#include "Client/Module/EntityReplication/Module.h"
+#include "Client/Module/ImGui/Module.h"
+#include "Client/Module/Player/Module.h"
+#include "Client/Module/ServerSession/Module.h"
+#include "Client/Module/TerrainRenderer/Module.h"
+#include "Client/Module/TerrainReplication/Module.h"
 
 #include "Common/Module/Base/Module.h"
 #include "Common/SceneImporter.h"
@@ -15,13 +23,23 @@
 
 namespace Mcc
 {
-
     REGISTER_STATE(StateTargetScene, GameState, Load, InGame, InMenu, Shutdown)
 
     struct GameScene;
 
     template<>
-    struct SceneModule<GameScene> final : BaseModule<SceneModule<GameScene>>
+    struct SceneModule<GameScene> final :
+        BaseModule<
+            SceneModule<GameScene>,
+            CameraModule,
+            EntityRendererModule,
+            EntityReplicationModule,
+            ImGuiModule,
+            PlayerModule,
+            TerrainRendererModule,
+            TerrainReplicationModule,
+            ServerSessionModule
+        >
     {
         SceneModule(flecs::world& world);
 
@@ -29,7 +47,7 @@ namespace Mcc
         void RegisterSystem(flecs::world& world) override;
         void RegisterHandler(flecs::world& world) override;
 
-        static void KeyEventHandler(const flecs::world& world, const KeyEvent& event);
+        static void KeyEventHandler(const KeyEvent& event, const flecs::world& world);
     };
 
 }

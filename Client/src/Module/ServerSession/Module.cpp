@@ -16,11 +16,12 @@ namespace Mcc
 
     ServerSessionModule::ServerSessionModule(flecs::world& world) : BaseModule(world)
     {
-        ServerConnectionState::Register(world);
     }
 
-    void ServerSessionModule::RegisterComponent(flecs::world& /* world */)
-    {}
+    void ServerSessionModule::RegisterComponent(flecs::world& world)
+    {
+        ServerConnectionState::Register(world);
+    }
 
     void ServerSessionModule::RegisterSystem(flecs::world& /* world */)
     {}

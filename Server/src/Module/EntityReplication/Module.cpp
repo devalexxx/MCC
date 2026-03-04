@@ -25,6 +25,8 @@ namespace Mcc
         world.module<EntityReplicationModule>();
 
         world.component<EntityDirtyTag>();
+        world.component<EntityCreatedTag>();
+        world.component<EntityDestroyedTag>();
 
         world.system<const Transform, const Extra, const NetworkProps>("BroadcastEntitiesCreated")
             .with<EntityCreatedTag>()

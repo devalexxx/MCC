@@ -13,7 +13,7 @@
 namespace Mcc
 {
 
-    class TerrainRendererModule final : public BaseModule<TerrainRendererModule, RendererModule>
+    class TerrainRendererModule final : public BaseModule<TerrainRendererModule, struct TerrainModule, struct RendererModule>
     {
       public:
         explicit TerrainRendererModule(flecs::world& world);

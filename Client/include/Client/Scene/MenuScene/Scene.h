@@ -15,7 +15,11 @@ namespace Mcc
     struct MenuScene;
 
     template<>
-    struct SceneModule<MenuScene> final : BaseModule<SceneModule<MenuScene>>
+    struct SceneModule<MenuScene> final :
+        BaseModule<
+            SceneModule<MenuScene>,
+            ImGuiModule
+        >
     {
         SceneModule(flecs::world& world);
 

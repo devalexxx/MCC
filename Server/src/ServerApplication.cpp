@@ -82,9 +82,6 @@ namespace Mcc
         }
 
         MCC_LOG_DEBUG("Setup world...");
-
-        mWorld.add<ServerTag>();
-
         mWorld.set_ctx(
             new ServerWorldContext {
                 { .networkManager = mNetworkManager, .networkMapping = {}, .scheduler = mScheduler, .chunkMap = {} },
@@ -92,8 +89,8 @@ namespace Mcc
         },
             [](void* ptr) { delete static_cast<ServerWorldContext*>(ptr); }
         );
-
         mWorld.import <NetworkModule>();
+        mWorld.add<ServerTag>();
         mWorld.import <EntityModule>();
         mWorld.import <UserSessionModule>();
         mWorld.import <EntityReplicationModule>();

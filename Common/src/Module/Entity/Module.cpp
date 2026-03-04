@@ -40,6 +40,10 @@ namespace Mcc
         world.component<EntityPrefab>();
         world.component<NetworkEntityPrefab>();
         world.component<UserEntityPrefab>();
+
+        world.component<Transform>();
+        world.component<Extra>();
+        world.component<UserInputQueue>();
     }
 
     void EntityModule::RegisterSystem(flecs::world& /* world */)

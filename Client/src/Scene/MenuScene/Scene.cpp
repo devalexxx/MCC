@@ -12,8 +12,6 @@ namespace Mcc
 
     SceneModule<MenuScene>::SceneModule(flecs::world& world) : BaseModule(world)
     {
-        // Register scene
-        MenuScene::Register(world);
     }
 
     void SceneModule<MenuScene>::RegisterComponent(flecs::world& /* world */)

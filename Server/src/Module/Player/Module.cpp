@@ -5,6 +5,7 @@
 #include "Server/Module/Player/Module.h"
 
 #include "Server/Module/EntityReplication/Component.h"
+#include "Server/Module/Player/Component.h"
 #include "Server/Module/Player/System.h"
 #include "Server/Module/UserSession/Module.h"
 
@@ -22,6 +23,9 @@ namespace Mcc
         MCC_ASSERT(world.has<EntityModule>(), "PlayerModule require EntityModule, you must import it before.");
         MCC_LOG_DEBUG("Import PlayerInputModule...");
         world.module<PlayerModule>();
+
+        world.component<OnPlayerCreatedEvent>();
+        world.component<OnPlayerMoveEvent>();
 
         world.system<UserInputQueue>("ProcessPlayerInputsSystem").with<UserEntityTag>().each(ProcessPlayerInputs);
 

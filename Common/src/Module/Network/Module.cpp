@@ -23,6 +23,8 @@ namespace Mcc
         world.component<ClientTag>().add(flecs::Singleton);
         world.component<NetworkObjectTag>();
 
+        world.component<NetworkObjectPrefab>();
+
         world.component<NetworkProps>();
     }
 

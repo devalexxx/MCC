@@ -11,9 +11,21 @@ namespace Mcc
     template<typename T, typename M>
     void Scene<T, M>::Register(const flecs::world& world)
     {
-        world.pipeline<LoadPipeline>().with(flecs::System).template with<T>().template with<Phase::OnLoad>().build();
+        world.component<LoadPipeline>();
+        world.component<QuitPipeline>();
+        world.component<MainPipeline>();
 
-        world.pipeline<QuitPipeline>().with(flecs::System).template with<T>().template with<Phase::OnQuit>().build();
+        world.pipeline<LoadPipeline>()
+            .with(flecs::System)
+            .template with<T>()
+            .template with<Phase::OnLoad>()
+            .build();
+
+        world.pipeline<QuitPipeline>()
+            .with(flecs::System)
+            .template with<T>()
+            .template with<Phase::OnQuit>()
+            .build();
 
         auto builder = world.pipeline<MainPipeline>().with(flecs::System);
         auto lambda  = [&]<typename S> {
@@ -78,6 +90,9 @@ namespace Mcc
 
         world.component<ActiveScene>().add(flecs::Exclusive);
         world.component<SceneRoot>();
+        world.component<LoadPipeline>();
+        world.component<QuitPipeline>();
+        (world.component<Ts>(), ...);
 
         world.atfini(
             [](ecs_world_t* worldPtr, void*) {
@@ -107,6 +122,8 @@ namespace Mcc
         world.component<Phase::OnDraw>().add<Phase>().depends_on<Phase::OnClear>();
         world.component<Phase::PreRender>().add<Phase>().depends_on<Phase::OnDraw>();
         world.component<Phase::OnRender>().add<Phase>().depends_on<Phase::PreRender>();
+
+        (Ts::Register(world), ...);
 
         auto excludeScene = [](flecs::pipeline_builder<>& builder) {
             return [&]<typename T>() { builder.without<T>(); };

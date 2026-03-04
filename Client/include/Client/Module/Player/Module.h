@@ -26,12 +26,15 @@ namespace Mcc
         void RegisterSystem(flecs::world& world) override;
         void RegisterHandler(flecs::world& world) override;
 
-      private:
-        static void OnEntitiesCreatedHandler(const flecs::world& world, const OnEntitiesCreated& event);
-        static void OnEntitiesUpdatedHandler(const flecs::world& world, const OnEntitiesUpdated& event);
+        void SetInputHandler(flecs::world& world);
+        void ClearInputHandler(flecs::world& world);
 
-        static void OnKeyEventHandler(const flecs::world& world, const KeyEvent& event);
-        static void OnCursorPosEventHandler(const flecs::world& world, const CursorPosEvent& event);
+      private:
+        static void OnEntitiesCreatedHandler(const OnEntitiesCreated& event, const flecs::world& world);
+        static void OnEntitiesUpdatedHandler(const OnEntitiesUpdated& event, const flecs::world& world);
+
+        static void OnKeyEventHandler(const KeyEvent& event, const flecs::world& world);
+        static void OnCursorPosEventHandler(const CursorPosEvent& event, const flecs::world& world);
 
         EventHandlerID mKeyEventHandlerID;
         EventHandlerID mCursorPosEventHandlerID;

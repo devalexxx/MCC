@@ -55,7 +55,6 @@ namespace Mcc
 
 
         MCC_LOG_DEBUG("Setup modules...");
-        mWorld.add<ClientTag>();
         mWorld.set_ctx(
             new ClientWorldContext {
                 { .networkManager = mNetworkManager, .networkMapping = {}, .scheduler = mScheduler, .chunkMap = {} },
@@ -67,21 +66,8 @@ namespace Mcc
             [](void* ptr) { delete static_cast<ClientWorldContext*>(ptr); }
         );
         mWorld.import <CSceneImporter>();
-        mWorld.import <NetworkModule>();
-        mWorld.import <ServerSessionModule>();
-        mWorld.import <EntityModule>();
-        mWorld.import <EntityReplicationModule>();
-        mWorld.import <CameraModule>();
-        mWorld.import <PlayerModule>();
-        mWorld.import <TerrainModule>();
-        mWorld.import <TerrainReplicationModule>();
-        mWorld.import <RendererModule>();
-        mWorld.import <EntityRendererModule>();
-        mWorld.import <TerrainRendererModule>();
-        mWorld.import <ImGuiModule>();
 
         MCC_LOG_INFO("Application started");
-
         while (!mWorld.should_quit() && !mWindow.ShouldClose())
         {
             mWorld.progress();

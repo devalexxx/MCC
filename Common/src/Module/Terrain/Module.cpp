@@ -36,8 +36,12 @@ namespace Mcc
         world.component<BlockStateTag>();
         world.component<ChunkTag>();
 
+        world.component<BlockPrefab>();
+        world.component<ChunkPrefab>();
+
         world.component<BlockStateRelation>();
 
+        world.component<BlockColor>();
         world.component<BlockMeta>();
         world.component<BlockType>();
 

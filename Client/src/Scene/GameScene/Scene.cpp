@@ -6,35 +6,43 @@
 
 #include "Client/Graphics/Window/Event.h"
 #include "Client/Module/ServerSession/Component.h"
-#include "Client/Module/TerrainRenderer/Component.h"
 #include "Client/Scene/GameScene/Component.h"
 #include "Client/Scene/GameScene/Scene.h"
 #include "Client/Scene/GameScene/System.h"
 #include "Client/WorldContext.h"
+
+#include "Common/Module/Network/Component.h"
 
 namespace Mcc
 {
 
     SceneModule<GameScene>::SceneModule(flecs::world& world) : BaseModule(world)
     {
-        // Register scene
-        GameScene::Register(world);
+        world.add<ClientTag>();
+    }
 
-        // Register states
+    void SceneModule<GameScene>::RegisterComponent(flecs::world& world)
+    {
         GameState::Register(world);
     }
 
-    void SceneModule<GameScene>::RegisterComponent(flecs::world& /* world */)
-    {}
-
     void SceneModule<GameScene>::RegisterSystem(flecs::world& world)
     {
-        static DebugContext debugContext { .fpsHistory      = std::vector(100, 0.f),
-                                           .fpsHistorySize  = 100,
-                                           .fpsHistoryIndex = 0 };
-        world.system("SetupStateSystem").kind<Phase::OnLoad>().run(SetupStateSystem).add<GameScene>();
+        static DebugContext debugContext {
+            .fpsHistory      = std::vector(100, 0.f),
+            .fpsHistorySize  = 100,
+            .fpsHistoryIndex = 0
+        };
 
-        world.system("ConnectToServerSystem").kind<Phase::OnLoad>().run(ConnectToServerSystem).add<GameScene>();
+        world.system("SetupStateSystem")
+            .kind<Phase::OnLoad>()
+            .run(SetupStateSystem)
+            .add<GameScene>();
+
+        world.system("ConnectToServerSystem")
+            .kind<Phase::OnLoad>()
+            .run(ConnectToServerSystem)
+            .add<GameScene>();
 
         world.system("DisplayEscapeMenuSystem")
             .kind<Phase::OnDrawGui>()
@@ -63,7 +71,10 @@ namespace Mcc
             .each(JoinPendingMeshTaskSystem)
             .add<GameScene>();
 
-        world.system("ClearGameInfoSystem").kind<Phase::OnQuit>().run(ClearGameInfoSystem).add<GameScene>();
+        world.system("ClearGameInfoSystem")
+            .kind<Phase::OnQuit>()
+            .run(ClearGameInfoSystem)
+            .add<GameScene>();
 
         world.system("DisconnectFromServerSystem")
             .kind<Phase::OnQuit>()
@@ -73,21 +84,9 @@ namespace Mcc
 
     void SceneModule<GameScene>::RegisterHandler(flecs::world& world)
     {
-        GameState::InGame::OnEnter(world).run([](flecs::iter& it) {
-            ClientWorldContext::Get(it.world())->window.SetInputMode(GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
-            it.fini();
-        });
-
-        GameState::InGame::OnExit(world).run([](flecs::iter& it) {
-            ClientWorldContext::Get(it.world())->window.SetInputMode(GLFW_CURSOR, GLFW_CURSOR_NORMAL);
-            it.fini();
-        });
-
-        GameState::Shutdown::OnEnter(world).run([&world](flecs::iter& it) {
-            world.each<MeshHolder>([](MeshHolder& mesh) { mesh.pendingMesh.Cancel(); });
-            ClientWorldContext::Get(it.world())->scheduler.StartJoin("game_group");
-            it.fini();
-        });
+        GameState::InGame  ::OnEnter(world).run(OnEnterGameStateInGame);
+        GameState::InGame  ::OnExit (world).run(OnExitGameStateInGame);
+        GameState::Shutdown::OnEnter(world).run(OnEnterGameStateShutdown);
 
         ServerConnectionState::Connected::OnEnter(world).run([](flecs::iter& it) {
             GameState::InGame::Enter(it.world());
@@ -100,10 +99,10 @@ namespace Mcc
         });
 
         const auto ctx = ClientWorldContext::Get(world);
-        ctx->window.Subscribe<KeyEvent>([&world](const auto& event) { KeyEventHandler(world, event); });
+        ctx->window.Subscribe<KeyEvent>(KeyEventHandler, world);
     }
 
-    void SceneModule<GameScene>::KeyEventHandler(const flecs::world& world, const KeyEvent& event)
+    void SceneModule<GameScene>::KeyEventHandler(const KeyEvent& event, const flecs::world& world)
     {
         if (event.action == GLFW_PRESS)
         {

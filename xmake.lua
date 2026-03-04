@@ -35,7 +35,7 @@ local packages = {
         name  = "flecs", 
         extra = "", -- " 4.1.0""
         usage = usage_all,
-        rconf = {}
+        rconf = {}-- { cxflags = "-DFLECS_CPP_NO_AUTO_REGISTRATION=1" }
     }, 
     { 
         name  = "glfw", 
@@ -117,6 +117,7 @@ if is_mode("releasedbg") then
 end
 
 add_defines("GLM_ENABLE_EXPERIMENTAL")
+add_defines("FLECS_CPP_NO_AUTO_REGISTRATION")
 
 target("MCCCommon")
     add_defines("MCC_LIB_BUILD")

@@ -7,13 +7,14 @@
 
 #include "Common/Export.h"
 #include "Common/Module/Base/Module.h"
+#include "Common/Module/Network/Module.h"
 
 #include <flecs.h>
 
 namespace Mcc
 {
 
-    struct MCC_LIB_API TerrainModule final : BaseModule<TerrainModule>
+    struct MCC_LIB_API TerrainModule final : BaseModule<TerrainModule, NetworkModule>
     {
         explicit TerrainModule(flecs::world& world);
 

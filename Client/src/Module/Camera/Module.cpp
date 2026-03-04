@@ -18,7 +18,10 @@ namespace Mcc
 
     CameraModule::CameraModule(flecs::world& world) : BaseModule(world)
     {
-        world.prefab<CameraPrefab>().is_a<EntityPrefab>().add<CameraTag>().set_auto_override<CameraSettings>({});
+        world.prefab<CameraPrefab>()
+            .is_a<EntityPrefab>()
+            .add<CameraTag>()
+            .set_auto_override<CameraSettings>({});
 
         world.prefab<CameraFollowPrefab>()
             .is_a<CameraPrefab>()
@@ -32,9 +35,13 @@ namespace Mcc
         world.component<CameraFollowTag>();
         world.component<ActiveCameraTag>();
 
+        world.component<CameraPrefab>();
+        world.component<CameraFollowPrefab>();
+
         world.component<CameraFollowRelation>();
 
         world.component<CameraSettings>();
+        world.component<CameraFollowSettings>();
     }
 
     void CameraModule::RegisterSystem(flecs::world& world)
