@@ -68,8 +68,10 @@ namespace Mcc
         mWorld.import <CSceneImporter>();
 
         MCC_LOG_INFO("Application started");
+        const auto builtinPipeline = mWorld.lookup("flecs::pipeline::BuiltinPipeline");
         while (!mWorld.should_quit() && !mWindow.ShouldClose())
         {
+            mWorld.run_pipeline(builtinPipeline);
             mWorld.progress();
             mNetworkManager.Poll();
         }

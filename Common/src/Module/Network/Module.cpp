@@ -14,7 +14,9 @@ namespace Mcc
 
     NetworkModule::NetworkModule(flecs::world& world) : BaseModule(world)
     {
-        world.prefab<NetworkObjectPrefab>().add<NetworkObjectTag>().set_auto_override<NetworkProps>({ Null() });
+        world.prefab<NetworkObjectPrefab>()
+            .add<NetworkObjectTag>()
+            .set_auto_override<NetworkProps>({ Null() });
     }
 
     void NetworkModule::RegisterComponent(flecs::world& world)
@@ -38,9 +40,13 @@ namespace Mcc
             .with<ServerTag>()
             .each(GenerateNetworkHandleObserver);
 
-        world.observer<const NetworkProps>().event(flecs::OnSet).run(AddToContextObserver);
+        world.observer<const NetworkProps>()
+            .event(flecs::OnSet)
+            .run(AddToContextObserver);
 
-        world.observer<const NetworkProps>().event(flecs::OnRemove).run(RemoveFromContextObserver);
+        world.observer<const NetworkProps>()
+            .event(flecs::OnRemove)
+            .run(RemoveFromContextObserver);
     }
 
 

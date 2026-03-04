@@ -23,12 +23,15 @@ namespace Mcc
         void RegisterSystem(flecs::world& world) override;
         void RegisterHandler(flecs::world& world) override;
 
-      private:
-        static void OnWaitingInfoHandler(const flecs::world& world, const OnWaitingInfo&);
-        static void OnConnectionAcceptedHandler(const flecs::world& world, const OnConnectionAccepted& packet);
-        static void OnConnectionRefusedHandler(const flecs::world& world, const OnConnectionRefused& packet);
+        static void Connect   (const flecs::world& world);
+        static void Disconnect(const flecs::world& world);
 
-        static void OnDisconnectEventHandler(const flecs::world& world, const DisconnectEvent& event);
+      private:
+        static void OnWaitingInfoHandler(const OnWaitingInfo&, const flecs::world& world);
+        static void OnConnectionAcceptedHandler(const OnConnectionAccepted& packet, const flecs::world& world);
+        static void OnConnectionRefusedHandler(const OnConnectionRefused& packet, const flecs::world& world);
+
+        static void OnDisconnectEventHandler(const DisconnectEvent& event, const flecs::world& world);
     };
 
 }

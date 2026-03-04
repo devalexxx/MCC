@@ -4,6 +4,8 @@
 
 #include "Client/Scene/GameScene/System.h"
 
+#include "Client/Module/ServerSession/Component.h"
+#include "Client/Module/ServerSession/Module.h"
 #include "Client/Module/TerrainRenderer/Component.h"
 #include "Client/Scene/GameScene/Component.h"
 #include "Client/Scene/GameScene/Scene.h"
@@ -55,7 +57,19 @@ namespace Mcc
         IgnoreIter(it);
     }
 
-    void SetupStateSystem(flecs::iter& it)
+    void OnEnterSessionStateActive(flecs::iter& it)
+    {
+        GameState::InGame::Enter(it.world());
+        IgnoreIter(it);
+    }
+
+    void OnSessionOrConnLost(flecs::iter& it)
+    {
+        GameState::Shutdown::Enter(it.world());
+        IgnoreIter(it);
+    }
+
+    void SetupGameStateSystem(flecs::iter& it)
     {
         while (it.next()) {};
         GameState::Load::Enter(it.world());
@@ -63,9 +77,7 @@ namespace Mcc
 
     void ConnectToServerSystem(flecs::iter& it)
     {
-        const auto ctx = ClientWorldContext::Get(it.world());
-        ctx->scheduler.Insert([=]() { ctx->networkManager.Connect(); }).Enqueue();
-
+        ServerSessionModule::Connect(it.world());
         IgnoreIter(it);
     }
 
@@ -80,9 +92,7 @@ namespace Mcc
 
     void DisconnectFromServerSystem(flecs::iter& it)
     {
-        const auto ctx = ClientWorldContext::Get(it.world());
-        ctx->networkManager.Disconnect();
-
+        ServerSessionModule::Disconnect(it.world());
         IgnoreIter(it);
     }
 
@@ -106,15 +116,21 @@ namespace Mcc
         ImGui::End();
     }
 
-    void DisplayLoadScreenSystem(const flecs::iter&, size_t)
+    void DisplayLoadScreenSystem(const flecs::iter& it, size_t)
     {
         ImGui::Begin("Loading...");
+        if (ImGui::Button("Cancel"))
+        {
+            GameState::Enter<GameState::Shutdown>(it.world());
+        }
         ImGui::End();
     }
 
     void JoinPendingMeshTaskSystem(const flecs::iter& it, size_t)
     {
-        if (const auto ctx = ClientWorldContext::Get(it.world()); ctx->scheduler.IsJoined("game_group"))
+        const auto world = it.world();
+        const auto ctx   = ClientWorldContext::Get(world);
+        if (ctx->scheduler.IsJoined("game_group"))
         {
             ctx->scheduler.StopJoin("game_group");
             it.world().add<ActiveScene, MenuScene>();
@@ -170,10 +186,10 @@ namespace Mcc
 
         if (ImGui::CollapsingHeader("Chunk"))
         {
-            const auto totalChunk = it.world().count<ChunkTag>();
+            // const auto totalChunk = it.world().count<ChunkTag>();
             const auto queued     = it.world().count<MeshHolder>();
             ImGui::Text("queued : %d", queued);
-            ImGui::Text("loaded : %d", totalChunk - queued);
+            ImGui::Text("meshed : %d", it.world().count<ChunkMesh>());
             ImGui::Text("display: %d", it.world().count<ShouldRenderChunkTag>());
         }
         ImGui::End();

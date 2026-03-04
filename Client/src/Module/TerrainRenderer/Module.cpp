@@ -65,7 +65,9 @@ namespace Mcc
             .src(world.entity(*ctx->networkMapping.GetLHandle(ctx->playerInfo.handle)))
             .each(OnPlayerMoveObserver);
 
-        world.observer<const ChunkPosition>("OnChunkCreated").event(flecs::OnSet).each(OnChunkCreatedObserver);
+        world.observer<const ChunkPosition>("OnChunkCreated")
+            .event(flecs::OnSet)
+            .each(OnChunkCreatedObserver);
 
         world.observer<const ChunkHolder>("OnChunkChanged")
             .event(flecs::OnSet)

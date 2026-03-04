@@ -66,11 +66,11 @@ namespace Mcc
         if (auto from = MCC_BENCH_TIME(RLEDecompression, Helper::FromNetwork)(packet.data, world); from.has_value())
         {
             const auto e = world.entity()
-                               .is_a<ChunkPrefab>()
-                               .set<NetworkProps>({ packet.handle })
-                               .set<ChunkPosition>(packet.position)
-                               .set<ChunkHolder>({ std::make_shared<Chunk>(std::move(*from)) })
-                               .child_of<SceneRoot>();
+               .is_a<ChunkPrefab>()
+               .set<NetworkProps>({ packet.handle })
+               .set<ChunkPosition>(packet.position)
+               .set<ChunkHolder>({ std::make_shared<Chunk>(std::move(*from)) })
+               .child_of<SceneRoot>();
 
             ctx->chunkMap.emplace(packet.position.position, e.id());
         }

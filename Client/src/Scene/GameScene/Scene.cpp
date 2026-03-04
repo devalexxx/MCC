@@ -36,7 +36,7 @@ namespace Mcc
 
         world.system("SetupStateSystem")
             .kind<Phase::OnLoad>()
-            .run(SetupStateSystem)
+            .run(SetupGameStateSystem)
             .add<GameScene>();
 
         world.system("ConnectToServerSystem")
@@ -46,15 +46,13 @@ namespace Mcc
 
         world.system("DisplayEscapeMenuSystem")
             .kind<Phase::OnDrawGui>()
-            .with<GameState, GameState::InMenu>()
-            .src<SceneRoot>()
+            .with<GameState, GameState::InMenu>().src<SceneRoot>()
             .each(DisplayEscapeMenuSystem)
             .add<GameScene>();
 
         world.system("DisplayLoadScreenSystem")
             .kind<Phase::OnDrawGui>()
-            .with<GameState, GameState::Load>()
-            .src<SceneRoot>()
+            .with<GameState, GameState::Load>().src<SceneRoot>()
             .each(DisplayLoadScreenSystem)
             .add<GameScene>();
 
@@ -66,8 +64,7 @@ namespace Mcc
 
         world.system("JoinPendingMeshTaskSystem")
             .kind<Phase::OnUpdate>()
-            .with<GameState, GameState::Shutdown>()
-            .src<SceneRoot>()
+            .with<GameState, GameState::Shutdown>().src<SceneRoot>()
             .each(JoinPendingMeshTaskSystem)
             .add<GameScene>();
 
@@ -78,6 +75,7 @@ namespace Mcc
 
         world.system("DisconnectFromServerSystem")
             .kind<Phase::OnQuit>()
+            .with<SrvConnState, SrvConnState::Connected>().src<SceneRoot>()
             .run(DisconnectFromServerSystem)
             .add<GameScene>();
     }
@@ -88,15 +86,9 @@ namespace Mcc
         GameState::InGame  ::OnExit (world).run(OnExitGameStateInGame);
         GameState::Shutdown::OnEnter(world).run(OnEnterGameStateShutdown);
 
-        ServerConnectionState::Connected::OnEnter(world).run([](flecs::iter& it) {
-            GameState::InGame::Enter(it.world());
-            it.fini();
-        });
-
-        ServerConnectionState::Error::OnEnter(world).run([](flecs::iter& it) {
-            it.world().should_quit();
-            it.fini();
-        });
+        SessionState::Active   ::OnEnter(world).run(OnEnterSessionStateActive);
+        SessionState::Active   ::OnExit (world).run(OnSessionOrConnLost);
+        SrvConnState::Connected::OnExit (world).run(OnSessionOrConnLost);
 
         const auto ctx = ClientWorldContext::Get(world);
         ctx->window.Subscribe<KeyEvent>(KeyEventHandler, world);
@@ -110,9 +102,16 @@ namespace Mcc
             {
                 case GLFW_KEY_ESCAPE:
                     if (GameState::InGame::IsActive(world))
+                    {
                         GameState::InMenu::Enter(world);
-                    else if (GameState::InMenu::IsActive(world))
+                        break;
+                    }
+
+                    if (GameState::InMenu::IsActive(world))
+                    {
                         GameState::InGame::Enter(world);
+                        break;
+                    }
                 default:
                     break;
             }

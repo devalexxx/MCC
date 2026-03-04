@@ -37,6 +37,10 @@ namespace Mcc
         return CreateHost(nullptr, 1, 2, 0, 0);
     }
 
+    /**
+     *
+     * @return 0 if success, 1 if failure
+     */
     int ClientNetworkManager::Connect()
     {
         ENetEvent event;
@@ -60,6 +64,10 @@ namespace Mcc
         return EXIT_SUCCESS;
     }
 
+    /**
+     *
+     * @return 0 if success, 1 if failure
+     */
     int ClientNetworkManager::Disconnect() const
     {
         ENetEvent event;

@@ -13,8 +13,10 @@ namespace Mcc
     void OnEnterGameStateInGame(flecs::iter& it);
     void OnExitGameStateInGame(flecs::iter& it);
     void OnEnterGameStateShutdown(flecs::iter& it);
+    void OnEnterSessionStateActive(flecs::iter& it);
+    void OnSessionOrConnLost(flecs::iter& it);
 
-    void SetupStateSystem(flecs::iter& it);
+    void SetupGameStateSystem(flecs::iter& it);
     void ConnectToServerSystem(flecs::iter& it);
     void ClearGameInfoSystem(flecs::iter& it);
     void DisconnectFromServerSystem(flecs::iter& it);
