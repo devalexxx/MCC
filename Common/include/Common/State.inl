@@ -8,7 +8,7 @@ namespace Mcc
     template<typename S, typename T>
     void StateValue<S, T>::Register(const flecs::world& world)
     {
-        world.component<T>().add(flecs::Target);
+        world.component<T>().add(flecs::Target).template child_of<S>();
     }
 
     template<typename S, typename T>
