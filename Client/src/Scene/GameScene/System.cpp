@@ -38,7 +38,7 @@ namespace Mcc
 
     void OnExitGameStateInGame(flecs::iter& it)
     {
-        auto world = it.world();
+        const auto world = it.world();
         ClientWorldContext::Get(world)->window.SetInputMode(GLFW_CURSOR, GLFW_CURSOR_NORMAL);
         if (const auto module = world.try_get_mut<PlayerModule>(); module)
         {
@@ -51,7 +51,7 @@ namespace Mcc
     void OnEnterGameStateShutdown(flecs::iter& it)
     {
         const auto world = it.world();
-        world.each<MeshHolder>([](MeshHolder& mesh) { mesh.pendingMesh.Cancel(); });
+        world.each<CChunkMeshGenTask>([](CChunkMeshGenTask& task) { task.Cancel(); });
         ClientWorldContext::Get(world)->scheduler.StartJoin("game_group");
 
         IgnoreIter(it);
@@ -60,24 +60,28 @@ namespace Mcc
     void OnEnterSessionStateActive(flecs::iter& it)
     {
         GameState::InGame::Enter(it.world());
+
         IgnoreIter(it);
     }
 
     void OnSessionOrConnLost(flecs::iter& it)
     {
         GameState::Shutdown::Enter(it.world());
+
         IgnoreIter(it);
     }
 
     void SetupGameStateSystem(flecs::iter& it)
     {
-        while (it.next()) {};
         GameState::Load::Enter(it.world());
+
+        IgnoreIter(it);
     }
 
     void ConnectToServerSystem(flecs::iter& it)
     {
         ServerSessionModule::Connect(it.world());
+
         IgnoreIter(it);
     }
 
@@ -93,6 +97,7 @@ namespace Mcc
     void DisconnectFromServerSystem(flecs::iter& it)
     {
         ServerSessionModule::Disconnect(it.world());
+
         IgnoreIter(it);
     }
 
@@ -187,10 +192,10 @@ namespace Mcc
         if (ImGui::CollapsingHeader("Chunk"))
         {
             // const auto totalChunk = it.world().count<ChunkTag>();
-            const auto queued     = it.world().count<MeshHolder>();
+            const auto queued     = it.world().count<CChunkMeshGenTask>();
             ImGui::Text("queued : %d", queued);
-            ImGui::Text("meshed : %d", it.world().count<ChunkMesh>());
-            ImGui::Text("display: %d", it.world().count<ShouldRenderChunkTag>());
+            ImGui::Text("meshed : %d", it.world().count<CChunkMesh>());
+            ImGui::Text("display: %d", it.world().count<TShouldRenderChunk>());
         }
         ImGui::End();
 

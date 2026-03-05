@@ -7,6 +7,15 @@
 namespace Mcc
 {
 
+    CTransform CTransform::Identity()
+    {
+        return {
+            .position={ 0.f, 0.f, 0.f },
+            .rotation={ 0.f, 0.f, 0.f, 0.f },
+            .scale   ={ 1.f, 1.f, 1.f }
+        };
+    }
+
     unsigned short UserInput::Meta::GetNextID()
     {
         static unsigned short next = 0;
@@ -24,7 +33,7 @@ namespace Mcc
             );
         }
 
-        void ApplyMovement(const UserInput& input, Transform& transform, float speed, float dt)
+        void ApplyMovement(const UserInput& input, CTransform& transform, float speed, float dt)
         {
             if (input.movement.forward && !input.movement.backward)
                 transform.position += transform.rotation * glm::forward * speed * dt;
@@ -45,12 +54,12 @@ namespace Mcc
                 transform.position -= transform.rotation * glm::up * speed * dt;
         }
 
-        void ApplyXAxis(const UserInput& input, Transform& transform)
+        void ApplyXAxis(const UserInput& input, CTransform& transform)
         {
             transform.rotation = glm::normalize(glm::angleAxis(input.axis.x, glm::up) * transform.rotation);
         }
 
-        void ApplyYAxis(const UserInput& input, Transform& transform)
+        void ApplyYAxis(const UserInput& input, CTransform& transform)
         {
             glm::vec3 right  = transform.rotation * glm::right;
             glm::quat qPitch = glm::angleAxis(input.axis.y, right);
@@ -66,7 +75,7 @@ namespace Mcc
             }
         }
 
-        void ApplyBothAxis(const UserInput& input, Transform& transform)
+        void ApplyBothAxis(const UserInput& input, CTransform& transform)
         {
             ApplyXAxis(input, transform);
             ApplyYAxis(input, transform);

@@ -12,9 +12,9 @@
 namespace Mcc
 {
 
-    MCC_LIB_API void GenerateNetworkHandleObserver(flecs::entity, NetworkProps& props);
-    MCC_LIB_API void AddToContextObserver(flecs::iter& it);
-    MCC_LIB_API void RemoveFromContextObserver(flecs::iter& it);
+    MCC_LIB_API void GenerateNetworkHandleObserver(flecs::entity, CNetProps& props);
+    MCC_LIB_API void AddToContextObserver         (flecs::iter& it);
+    MCC_LIB_API void RemoveFromContextObserver    (flecs::iter& it);
 
 }
 

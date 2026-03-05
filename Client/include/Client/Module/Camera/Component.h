@@ -10,29 +10,23 @@
 namespace Mcc
 {
 
-    struct CameraTag
-    {};
-    struct CameraFollowTag
-    {};
-    struct ActiveCameraTag
-    {};
+    struct TCamera       {};
+    struct TCameraFollow {};
+    struct TActiveCamera {};
 
-    struct CameraFollowRelation
-    {};
+    struct RCameraFollow {};
 
-    struct CameraPrefab
-    {};
-    struct CameraFollowPrefab
-    {};
+    struct PCamera       {};
+    struct PCameraFollow {};
 
-    struct CameraSettings
+    struct CCameraSettings
     {
         float fov;
         float zNear;
         float zFar;
     };
 
-    struct CameraFollowSettings
+    struct CCameraFollowSettings
     {
         glm::vec3 offset;
     };

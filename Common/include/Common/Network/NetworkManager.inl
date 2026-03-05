@@ -24,7 +24,7 @@ namespace Mcc
 
         if (const auto packet = CreatePacket(stream.GetBuffer(), flag))
         {
-            mCommandQueue.push([=]() { enet_peer_send(peer, channel, packet); });
+            mCommandQueue.push([=] { enet_peer_send(peer, channel, packet); });
             return EXIT_SUCCESS;
         }
 

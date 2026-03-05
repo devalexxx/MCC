@@ -8,12 +8,9 @@
 namespace Mcc
 {
 
-    struct EntityDirtyTag
-    {};
-    struct EntityCreatedTag
-    {};
-    struct EntityDestroyedTag
-    {};
+    struct TEntityDirty     {};
+    struct TEntityCreated   {};
+    struct TEntityDestroyed {};
 
 }
 

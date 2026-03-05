@@ -14,8 +14,6 @@
 #include "Client/WorldContext.h"
 
 #include "Common/Phase.h"
-#include "Common/Utils/Assert.h"
-#include "Common/Utils/Logging.h"
 
 #include <algorithm>
 
@@ -27,37 +25,39 @@ namespace Mcc
         mKeyEventHandlerID(0),
         mCursorPosEventHandlerID(0)
     {
-        world.prefab<PlayerEntityPrefab>()
-            .is_a<UserEntityPrefab>()
-            .add<PlayerEntityTag>()
-            .add<InterpolationExcludedTag>()
-            .set_auto_override<CurrentPlayerInput>({});
-    }
-
-    void PlayerModule::RegisterComponent(flecs::world& world)
-    {
-        world.component<PlayerEntityTag>();
-
-        world.component<PlayerEntityPrefab>();
-
-        world.component<CurrentPlayerInput>();
-    }
-
-    void PlayerModule::RegisterSystem(flecs::world& world)
-    {
-        world.system<CurrentPlayerInput, UserInputQueue>("ApplyAndSendPlayerInputSystem")
-            .kind<Phase::OnUpdate>()
-            .with<PlayerEntityTag>()
-            .each(ApplyAndSendPlayerInput)
-            .add<GameScene>();
-    }
-
-    void PlayerModule::RegisterHandler(flecs::world& world)
-    {
         const auto* ctx = ClientWorldContext::Get(world);
         ctx->networkManager.Subscribe<OnEntitiesCreated>(OnEntitiesCreatedHandler, world);
         ctx->networkManager.Subscribe<OnEntitiesUpdated>(OnEntitiesUpdatedHandler, world);
     }
+
+    void PlayerModule::RegisterComponent(flecs::world& world)
+    {
+        world.component<TPlayerEntity>();
+
+        world.component<PPlayerEntity>();
+
+        AutoRegister<CCurrentPlayerInput>::Register(world, "CCurrentPlayerInput");
+    }
+
+    void PlayerModule::RegisterPrefab(flecs::world& world)
+    {
+        world.prefab<PPlayerEntity>()
+            .is_a<PUserEntity>()
+            .add<TPlayerEntity>()
+            .add<TInterpolationExcluded>()
+            .set<CCurrentPlayerInput>({});
+    }
+
+    void PlayerModule::RegisterSystem(flecs::world& world)
+    {
+        world.system<CCurrentPlayerInput, CUserInputQueue>("ApplyAndSendPlayerInput")
+            .kind<Phase::OnUpdate>()
+            .with<TPlayerEntity>()
+            .each(ApplyAndSendPlayerInput)
+            .add<GameScene>();
+    }
+
+    void PlayerModule::RegisterObserver(flecs::world& /* world */) {}
 
     void PlayerModule::SetInputHandler(flecs::world& world)
     {
@@ -69,7 +69,7 @@ namespace Mcc
         mCursorPosEventHandlerID = ctx->window.Subscribe<CursorPosEvent>(OnCursorPosEventHandler, world);
     }
 
-    void PlayerModule::ClearInputHandler(flecs::world& world)
+    void PlayerModule::ClearInputHandler(const flecs::world& world)
     {
         if (mKeyEventHandlerID == 0 || mCursorPosEventHandlerID == 0)
             return;
@@ -94,22 +94,23 @@ namespace Mcc
             const auto handle = ctx->networkMapping.GetLHandle(ctx->playerInfo.handle);
             if (!handle.has_value())
             {
-                MCC_LOG_WARN(
-                    "No local entity associated to the player network id, make sure to import EntityReplicationModule "
-                    "before PlayerModule"
+                MCC_LOG_ERROR(
+                    "[OnEntitiesCreatedHandler] No local entity associated to the player network id, make sure to import EntityReplicationModule before PlayerModule"
                 );
                 return;
             }
 
-            const auto entity = world.entity(*handle).is_a<PlayerEntityPrefab>();
+            const auto entity = world.entity(*handle).is_a<PPlayerEntity>();
             world.entity()
-                .is_a<CameraFollowPrefab>()
-                .set<CameraSettings>({
-                    glm::radians(ctx->settings.fov), 0.1f, static_cast<float>(ctx->settings.renderDistance) * 256.f
-            })
-                .set<CameraFollowSettings>({ { 0, 2, 0 } })
-                .add<CameraFollowRelation>(entity)
-                .add<ActiveCameraTag>()
+                .is_a<PCameraFollow>()
+                .set<CCameraSettings>({
+                    .fov=glm::radians(ctx->settings.fov),
+                    .zNear=0.1f,
+                    .zFar=static_cast<float>(ctx->settings.renderDistance) * 256.f
+                })
+                .set<CCameraFollowSettings>({ { 0, 2, 0 } })
+                .add<RCameraFollow>(entity)
+                .add<TActiveCamera>()
                 .child_of<SceneRoot>();
         }
     }
@@ -129,36 +130,35 @@ namespace Mcc
                 const auto handle = ctx->networkMapping.GetLHandle(state->handle);
                 if (!handle.has_value())
                 {
-                    MCC_LOG_WARN("The player network id {} isn't associated to a local entity", state->handle);
+                    MCC_LOG_WARN("[OnEntitiesUpdatedHandler] Entity({}) isn't associated to a local entity", state->handle);
                     return;
                 }
 
                 const auto entity = world.entity(*handle);
-                auto& [qData1]    = entity.get_mut<UserInputQueue>();
+                auto&      iQueue = entity.get_mut<CUserInputQueue>();
 
                 // Drop inputs already processed by the server
-                for (; !qData1.empty(); qData1.pop_front())
+                for (; !iQueue.empty(); iQueue.pop_front())
                 {
-                    if (const auto& input = qData1.front(); input.meta.id == id)
+                    if (const auto& input = iQueue.front(); input.meta.id == id)
                     {
-                        qData1.pop_front();
+                        iQueue.pop_front();
                         break;
                     }
                 }
 
                 MCC_ASSERT(
-                    qData1.empty() || (!qData1.empty() && qData1.front().meta.id - id == 1),
-                    "The difference between front Player in queue and last Player processes by server should be equal "
-                    "to 1"
+                    iQueue.empty() || (!iQueue.empty() && iQueue.front().meta.id - id == 1),
+                    "The difference between front input in queue and last input processes by the server should be equal to 1"
                 );
 
                 // Empty snapshot queue
-                auto& [qData2] = entity.get_mut<SnapshotQueue>();
-                while (!qData2.empty()) { qData2.pop_back(); }
+                auto& sQueue = entity.get_mut<CSnapshotQueue>();
+                while (!sQueue.empty()) { sQueue.pop_back(); }
 
                 // Set the last received transform and reapply all inputs unprocessed by the server
                 auto tr = state->transform;
-                for (auto& input: qData1)
+                for (auto& input: iQueue)
                 {
                     Helper::ApplyXAxis(input, tr);
                     Helper::ApplyMovement(input, tr, ctx->serverInfo.userSpeed, input.meta.dt);
@@ -174,12 +174,12 @@ namespace Mcc
         const auto  handle = ctx->networkMapping.GetLHandle(ctx->playerInfo.handle);
         if (!handle.has_value())
         {
-            MCC_LOG_WARN("The player network id {} isn't associated to a local entity", ctx->playerInfo.handle);
+            MCC_LOG_WARN("[OnKeyEventHandler] Player entity({}) isn't associated to a local entity", ctx->playerInfo.handle);
             return;
         }
 
         const auto entity = world.entity(*handle);
-        auto&      input  = entity.get_ref<CurrentPlayerInput>()->input;
+        auto&      input  = entity.get_mut<CCurrentPlayerInput>();
         if (event.action == GLFW_PRESS || event.action == GLFW_RELEASE)
         {
             switch (event.key)
@@ -216,12 +216,12 @@ namespace Mcc
         const auto  handle = ctx->networkMapping.GetLHandle(ctx->playerInfo.handle);
         if (!handle.has_value())
         {
-            MCC_LOG_WARN("The player network id {} isn't associated to a local entity", ctx->playerInfo.handle);
+            MCC_LOG_WARN("[OnCursorPosEventHandler] Player entity({}) isn't associated to a local entity", ctx->playerInfo.handle);
             return;
         }
 
         const auto entity = world.entity(*handle);
-        auto&      input  = entity.get_ref<CurrentPlayerInput>()->input;
+        auto&      input  = entity.get_mut<CCurrentPlayerInput>();
         if (event.x >= 0 && event.x <= w && event.y >= 0 && event.y <= h && event.window.IsFocused())
         {
             event.window.SetInputMode(GLFW_CURSOR, GLFW_CURSOR_HIDDEN);

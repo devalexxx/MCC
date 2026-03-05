@@ -12,7 +12,7 @@
 namespace Mcc
 {
 
-    void ProcessPlayerInputs(flecs::entity entity, UserInputQueue& queue);
+    void ProcessPlayerInputs (flecs::entity entity, CUserInputQueue& queue);
     void HandlePlayerCreation(flecs::entity entity);
 
 }

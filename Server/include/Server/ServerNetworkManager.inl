@@ -28,7 +28,7 @@ namespace Mcc
         auto packet = CreatePacket(stream.GetBuffer(), flag);
         if (packet)
         {
-            mCommandQueue.push([=, this]() { enet_host_broadcast(mHost, channel, packet); });
+            mCommandQueue.push([=, this] { enet_host_broadcast(mHost, channel, packet); });
             return;
         }
         MCC_LOG_WARN("Failed to create packet {}", Hx::TypeName<T>());

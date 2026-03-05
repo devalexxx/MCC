@@ -10,51 +10,56 @@
 #include "Common/Module/Entity/Component.h"
 #include "Common/Module/Entity/Module.h"
 #include "Common/Phase.h"
-#include "Common/Utils/Assert.h"
-#include "Common/Utils/Logging.h"
 
 namespace Mcc
 {
 
     CameraModule::CameraModule(flecs::world& world) : BaseModule(world)
-    {
-        world.prefab<CameraPrefab>()
-            .is_a<EntityPrefab>()
-            .add<CameraTag>()
-            .set_auto_override<CameraSettings>({});
-
-        world.prefab<CameraFollowPrefab>()
-            .is_a<CameraPrefab>()
-            .add<CameraFollowTag>()
-            .set_auto_override<CameraFollowSettings>({});
-    }
+    {}
 
     void CameraModule::RegisterComponent(flecs::world& world)
     {
-        world.component<CameraTag>();
-        world.component<CameraFollowTag>();
-        world.component<ActiveCameraTag>();
+        world.component<TCamera>();
+        world.component<TCameraFollow>();
+        world.component<TActiveCamera>();
 
-        world.component<CameraPrefab>();
-        world.component<CameraFollowPrefab>();
+        world.component<PCamera>();
+        world.component<PCameraFollow>();
 
-        world.component<CameraFollowRelation>();
+        world.component<RCameraFollow>();
 
-        world.component<CameraSettings>();
-        world.component<CameraFollowSettings>();
+        world.component<CCameraSettings>()
+            .member<float>("fov")
+            .member<float>("zNear")
+            .member<float>("zFar");
+
+        world.component<CCameraFollowSettings>()
+            .member<glm::vec3>("offset");
+    }
+
+    void CameraModule::RegisterPrefab(flecs::world& world)
+    {
+        world.prefab<PCamera>()
+            .is_a<PEntity>()
+            .add<TCamera>()
+            .set<CCameraSettings>({});
+
+        world.prefab<PCameraFollow>()
+            .is_a<PCamera>()
+            .add<TCameraFollow>()
+            .set<CCameraFollowSettings>({});
     }
 
     void CameraModule::RegisterSystem(flecs::world& world)
     {
-        world.system<Transform, const CameraFollowSettings>()
+        world.system<CTransform, const CCameraFollowSettings>("CameraFollowSystem")
             .kind<Phase::OnUpdate>()
-            .with<CameraFollowTag>()
-            .with<CameraFollowRelation>(flecs::Wildcard)
+            .with<TCameraFollow>()
+            .with<RCameraFollow>(flecs::Wildcard)
             .each(CameraFollowSystem);
     }
 
-    void CameraModule::RegisterHandler(flecs::world& /* world */)
-    {}
+    void CameraModule::RegisterObserver(flecs::world& /* world */) {}
 
 
 }

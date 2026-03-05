@@ -18,7 +18,17 @@
 
 namespace Mcc
 {
-    enum class BlockFace;
+
+    enum class BlockFace
+    {
+        Left,
+        Right,
+        Front,
+        Back,
+        Top,
+        Bottom,
+        Count
+    };
 
     template<typename T>
     struct ChunkData
@@ -70,10 +80,8 @@ namespace Mcc
     namespace Helper
     {
 
-        MCC_LIB_API std::optional<RLEChunkData>
-                    ToNetwork(const ChunkData<flecs::entity_t>& data, const flecs::world& world);
-        MCC_LIB_API std::optional<ChunkData<flecs::entity_t>>
-                    FromNetwork(const RLEChunkData& data, const flecs::world& world);
+        MCC_LIB_API std::optional<RLEChunkData>               ToNetwork  (const ChunkData<flecs::entity_t>& data, const flecs::world& world);
+        MCC_LIB_API std::optional<ChunkData<flecs::entity_t>> FromNetwork(const RLEChunkData& rle, const flecs::world& world);
 
     }
 

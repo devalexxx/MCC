@@ -16,66 +16,65 @@ namespace Mcc
 {
 
     ServerSessionModule::ServerSessionModule(flecs::world& world) : BaseModule(world)
-    {}
-
+    {
+        const auto* ctx = ClientWorldContext::Get(world);
+        ctx->networkManager.Subscribe<OnWaitingInfo>       (OnWaitingInfoHandler, world);
+        ctx->networkManager.Subscribe<OnConnectionAccepted>(OnConnectionAcceptedHandler, world);
+        ctx->networkManager.Subscribe<OnConnectionRefused> (OnConnectionRefusedHandler, world);
+        ctx->networkManager.Subscribe<DisconnectEvent>     (OnDisconnectEventHandler, world);
+    }
 
     void ServerSessionModule::RegisterComponent(flecs::world& world)
     {
         SessionState::Register(world);
         SrvConnState::Register(world);
 
-        world.component<SrvConnResult> ().add(flecs::Singleton);
-        world.component<SrvDConnResult>().add(flecs::Singleton);
+        world.component<CSrvConnTask>("CSrvConnTask")
+            .add(flecs::Singleton);
+
+        world.component<CSrvDConnTask>("CSrvDConnTask")
+            .add(flecs::Singleton);
     }
+
+    void ServerSessionModule::RegisterPrefab(flecs::world& /* world */) {}
 
     void ServerSessionModule::RegisterSystem(flecs::world& world)
     {
-        world.system()
+        world.system("SetupSessionState")
             .kind<Phase::OnLoad>()
             .run(SetupSessionStateSystem)
             .add<GameScene>();
 
-        world.system<SrvConnResult>()
+        world.system<CSrvConnTask>("HandleConnectionResult")
             .kind<Phase::OnSetup>()
             .each(HandleConnectionResultSystem);
 
-        world.system<SrvDConnResult>()
+        world.system<CSrvDConnTask>("HandleDisconnectionResult")
             .kind<Phase::OnSetup>()
             .each(HandleDisconnectionResultSystem);
     }
 
-    void ServerSessionModule::RegisterHandler(flecs::world& world)
-    {
-        const auto* ctx = ClientWorldContext::Get(world);
-
-        ctx->networkManager.Subscribe<OnWaitingInfo>(OnWaitingInfoHandler, world);
-        ctx->networkManager.Subscribe<OnConnectionAccepted>(OnConnectionAcceptedHandler, world);
-        ctx->networkManager.Subscribe<OnConnectionRefused>(OnConnectionRefusedHandler, world);
-        ctx->networkManager.Subscribe<DisconnectEvent>(OnDisconnectEventHandler, world);
-    }
+    void ServerSessionModule::RegisterObserver(flecs::world& /* world */) {}
 
     void ServerSessionModule::Connect(const flecs::world& world)
     {
         const auto ctx = ClientWorldContext::Get(world);
-        auto result = ctx->scheduler.Insert([=]() { return ctx->networkManager.Connect() == 0; }).AsUnique().Enqueue();
-        world.emplace<SrvConnResult>(std::move(result));
+        auto result = ctx->scheduler.Insert([=] { return ctx->networkManager.Connect() == 0; }).AsUnique().Enqueue();
+        world.emplace<CSrvConnTask>(std::move(result));
         SrvConnState::Pending::Enter(world);
     }
 
     void ServerSessionModule::Disconnect(const flecs::world& world)
     {
         const auto ctx = ClientWorldContext::Get(world);
-        auto result = ctx->scheduler.Insert([=]() { return ctx->networkManager.Disconnect() == 0; }).AsUnique().Enqueue();
-        world.emplace<SrvDConnResult>(std::move(result));
+        auto result = ctx->scheduler.Insert([=] { return ctx->networkManager.Disconnect() == 0; }).AsUnique().Enqueue();
+        world.emplace<CSrvDConnTask>(std::move(result));
     }
 
     void ServerSessionModule::OnWaitingInfoHandler(const OnWaitingInfo&, const flecs::world& world)
     {
         const auto* ctx = ClientWorldContext::Get(world);
-
-        ctx->networkManager.Send<OnClientInfo>(
-            { static_cast<ClientInfo>(ctx->settings) }, ENET_PACKET_FLAG_RELIABLE, 0
-        );
+        ctx->networkManager.Send<OnClientInfo>({ static_cast<ClientInfo>(ctx->settings) }, ENET_PACKET_FLAG_RELIABLE, 0);
 
         SessionState::Pending::Enter(world);
     }

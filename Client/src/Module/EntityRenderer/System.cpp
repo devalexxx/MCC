@@ -2,23 +2,24 @@
 // Distributed under the MIT License.
 // https://opensource.org/licenses/MIT
 
+#include "Client/Module/EntityRenderer/System.h"
+
 #include "Client/Graphics/Mesh.h"
 #include "Client/Graphics/Shader.h"
 #include "Client/Module/EntityRenderer/Module.h"
 #include "Client/Module/Renderer/Module.h"
 
 #include "Common/Module/Entity/Component.h"
+#include "Common/Utils/FlecsUtils.h"
 
 #include <glm/gtx/quaternion.hpp>
-
-#include <numeric>
 
 namespace Mcc
 {
 
-    void EntityRendererModule::SetupEntityMeshSystem(flecs::iter& it)
+    void SetupEntityMeshSystem(flecs::iter& it)
     {
-        while (it.next()) {}
+        auto& module = it.world().get_mut<EntityRendererModule>();
 
         const Shader vertexShader(GL_VERTEX_SHADER, R"""(
 			#version 330
@@ -49,48 +50,52 @@ namespace Mcc
 			}
 		)""");
 
-        mProgram.Create();
-        mProgram.Attach(vertexShader);
-        mProgram.Attach(fragmentShader);
+        module.program.Create();
+        module.program.Attach(vertexShader);
+        module.program.Attach(fragmentShader);
 
-        mProgram.Link();
+        module.program.Link();
 
-        mProgram.Detach(vertexShader);
-        mProgram.Detach(fragmentShader);
+        module.program.Detach(vertexShader);
+        module.program.Detach(fragmentShader);
 
-        mVertexArray.Create();
-        mVertexArray.Bind();
+        module.vertexArray.Create();
+        module.vertexArray.Bind();
 
         auto&& [vertex, index] = Helper::GenerateCapsuleMesh(.5f, 32, 16);
-        mVertexBuffer.Create();
-        mVertexBuffer.SetData(std::span(vertex), GL_STATIC_DRAW);
-        mProgram.SetVertexAttribPointer("inVertex", 3, GL_FLOAT, sizeof(PackedVertex), 0);
+        module.vertexBuffer.Create();
+        module.vertexBuffer.SetData(std::span(vertex), GL_STATIC_DRAW);
+        module.program.SetVertexAttribPointer("inVertex", 3, GL_FLOAT, sizeof(PackedVertex), 0);
 
-        mIndexBuffer.Create();
-        mIndexBuffer.SetData(std::span(index), GL_STATIC_DRAW);
+        module.indexBuffer.Create();
+        module.indexBuffer.SetData(std::span(index), GL_STATIC_DRAW);
 
-        mIndexCount = index.size();
+        module.indexCount = index.size();
+
+        IgnoreIter(it);
     }
 
-    void EntityRendererModule::RenderUserEntitySystem(flecs::iter& it)
+    void RenderUserEntitySystem(flecs::iter& it)
     {
         static std::unordered_map<flecs::entity_t, glm::vec3> colorMapper {};
 
-        const auto modelLocation = mProgram.GetUniformLocation("model");
-        const auto colorLocation = mProgram.GetUniformLocation("color");
+        auto& module = it.world().get_mut<EntityRendererModule>();
 
-        mProgram.Use();
+        const auto modelLocation = module.program.GetUniformLocation("model");
+        const auto colorLocation = module.program.GetUniformLocation("color");
+
+        module.program.Use();
 
         const auto&& [_, view, proj] = RendererModule::GetView(it.world());
-        mProgram.SetUniformMatrix(mProgram.GetUniformLocation("view"), view);
-        mProgram.SetUniformMatrix(mProgram.GetUniformLocation("proj"), proj);
+        module.program.SetUniformMatrix(module.program.GetUniformLocation("view"), view);
+        module.program.SetUniformMatrix(module.program.GetUniformLocation("proj"), proj);
 
-        mVertexArray.Bind();
-        mIndexBuffer.Bind();
+        module.vertexArray.Bind();
+        module.indexBuffer.Bind();
 
         while (it.next())
         {
-            auto t = it.field<const Transform>(0);
+            auto t = it.field<const CTransform>(0);
 
             for (const auto i: it)
             {
@@ -102,21 +107,21 @@ namespace Mcc
                         static_cast<float>(std::rand()) / RAND_MAX
                     );
                     colorMapper[entity] = color;
-                    mProgram.SetUniformVector(colorLocation, color);
+                    module.program.SetUniformVector(colorLocation, color);
                 }
                 else
                 {
-                    mProgram.SetUniformVector(colorLocation, colorIt->second);
+                    module.program.SetUniformVector(colorLocation, colorIt->second);
                 }
 
-                mProgram.SetUniformMatrix(
+                module.program.SetUniformMatrix(
                     modelLocation, glm::translate(glm::mat4(1.f), t[i].position) * glm::toMat4(t[i].rotation) *
                                        glm::scale(glm::mat4(1.f), t[i].scale)
                 );
 
                 // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
                 // glDisable(GL_CULL_FACE);
-                glCheck(glDrawElements(GL_TRIANGLES, mIndexCount, GL_UNSIGNED_INT, nullptr));
+                glCheck(glDrawElements(GL_TRIANGLES, module.indexCount, GL_UNSIGNED_INT, nullptr));
                 // glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
             }
         }

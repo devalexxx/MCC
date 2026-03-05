@@ -18,13 +18,18 @@ namespace Mcc
 
     SceneModule<GameScene>::SceneModule(flecs::world& world) : BaseModule(world)
     {
-        world.add<ClientTag>();
+        world.add<TClient>();
+
+        const auto ctx = ClientWorldContext::Get(world);
+        ctx->window.Subscribe<KeyEvent>(KeyEventHandler, world);
     }
 
     void SceneModule<GameScene>::RegisterComponent(flecs::world& world)
     {
         GameState::Register(world);
     }
+
+    void SceneModule<GameScene>::RegisterPrefab(flecs::world& /* world */) {}
 
     void SceneModule<GameScene>::RegisterSystem(flecs::world& world)
     {
@@ -80,7 +85,7 @@ namespace Mcc
             .add<GameScene>();
     }
 
-    void SceneModule<GameScene>::RegisterHandler(flecs::world& world)
+    void SceneModule<GameScene>::RegisterObserver(flecs::world& world)
     {
         GameState::InGame  ::OnEnter(world).run(OnEnterGameStateInGame);
         GameState::InGame  ::OnExit (world).run(OnExitGameStateInGame);
@@ -89,9 +94,6 @@ namespace Mcc
         SessionState::Active   ::OnEnter(world).run(OnEnterSessionStateActive);
         SessionState::Active   ::OnExit (world).run(OnSessionOrConnLost);
         SrvConnState::Connected::OnExit (world).run(OnSessionOrConnLost);
-
-        const auto ctx = ClientWorldContext::Get(world);
-        ctx->window.Subscribe<KeyEvent>(KeyEventHandler, world);
     }
 
     void SceneModule<GameScene>::KeyEventHandler(const KeyEvent& event, const flecs::world& world)

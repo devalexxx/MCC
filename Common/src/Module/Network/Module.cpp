@@ -6,45 +6,46 @@
 
 #include "Common/Module/Network/Component.h"
 #include "Common/Module/Network/System.h"
-#include "Common/Utils/Logging.h"
 #include "Common/WorldContext.h"
 
 namespace Mcc
 {
 
-    NetworkModule::NetworkModule(flecs::world& world) : BaseModule(world)
-    {
-        world.prefab<NetworkObjectPrefab>()
-            .add<NetworkObjectTag>()
-            .set_auto_override<NetworkProps>({ Null() });
-    }
+    NetworkModule::NetworkModule(flecs::world& world) : BaseModule(world) {}
 
     void NetworkModule::RegisterComponent(flecs::world& world)
     {
-        world.component<ServerTag>().add(flecs::Singleton);
-        world.component<ClientTag>().add(flecs::Singleton);
-        world.component<NetworkObjectTag>();
+        world.component<TServer>().add(flecs::Singleton);
+        world.component<TClient>().add(flecs::Singleton);
+        world.component<TNetObject>();
 
-        world.component<NetworkObjectPrefab>();
+        world.component<PNetObject>();
 
-        world.component<NetworkProps>();
+        world.component<CNetProps>()
+            .member<uint32_t>("handle");
     }
 
-    void NetworkModule::RegisterSystem(flecs::world& /* world */)
-    {}
-
-    void NetworkModule::RegisterHandler(flecs::world& world)
+    void NetworkModule::RegisterPrefab(flecs::world& world)
     {
-        world.observer<NetworkProps>()
+        world.prefab<PNetObject>()
+            .add<TNetObject>()
+            .set<CNetProps>({ Null() });
+    }
+
+    void NetworkModule::RegisterSystem(flecs::world& /* world */) {}
+
+    void NetworkModule::RegisterObserver(flecs::world& world)
+    {
+        world.observer<CNetProps>()
             .event(flecs::OnAdd)
-            .with<ServerTag>()
+            .with<TServer>()
             .each(GenerateNetworkHandleObserver);
 
-        world.observer<const NetworkProps>()
+        world.observer<const CNetProps>()
             .event(flecs::OnSet)
             .run(AddToContextObserver);
 
-        world.observer<const NetworkProps>()
+        world.observer<const CNetProps>()
             .event(flecs::OnRemove)
             .run(RemoveFromContextObserver);
     }

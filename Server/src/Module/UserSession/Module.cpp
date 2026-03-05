@@ -25,31 +25,34 @@ namespace Mcc
     }
 
     UserSessionModule::UserSessionModule(flecs::world& world) : BaseModule(world)
-    {}
+    {
+        const auto* ctx = WorldContext<>::Get(world);
+        ctx->networkManager.Subscribe<ConnectEvent>      (OnConnectEventHandler, world);
+        ctx->networkManager.Subscribe<DisconnectEvent>   (OnDisconnectEventHandler, world);
+        ctx->networkManager.Subscribe<From<OnClientInfo>>(OnClientInfoHandler, world);
+    }
 
     void UserSessionModule::RegisterComponent(flecs::world& world)
     {
-        world.component<UserSessionHolder>();
+        world.component<CUserSession>("CUserSession");
     }
 
-    void UserSessionModule::RegisterSystem(flecs::world& /* world */)
-    {}
+    void UserSessionModule::RegisterPrefab(flecs::world& /* world */) {}
 
-    void UserSessionModule::RegisterHandler(flecs::world& world)
-    {
-        const auto* ctx = WorldContext<>::Get(world);
+    void UserSessionModule::RegisterSystem(flecs::world& /* world */) {}
 
-        ctx->networkManager.Subscribe<ConnectEvent>(OnConnectEventHandler, world);
-        ctx->networkManager.Subscribe<DisconnectEvent>(OnDisconnectEventHandler, world);
-        ctx->networkManager.Subscribe<From<OnClientInfo>>(OnClientInfoHandler, world);
-    }
+    void UserSessionModule::RegisterObserver(flecs::world& /* world */) {}
 
     void UserSessionModule::OnConnectEventHandler(const ConnectEvent& event, const flecs::world& world)
     {
         const auto* ctx = ServerWorldContext::Get(world);
 
         auto handle      = GenerateNetworkHandle();
-        event.peer->data = new UserSession { { handle }, {}, event.peer, {}, {}, {} };
+        event.peer->data = new UserSession
+        {
+            .pInfo={ handle }, .cInfo={}, .peer=event.peer,
+            .replicatedChunks={}, .replicatedChunksPending={}, .replicatedBlocks={}
+        };
 
         char hostname[100];
         enet_address_get_host_ip(&event.peer->address, hostname, 100);
@@ -65,17 +68,17 @@ namespace Mcc
         const auto* ctx = ServerWorldContext::Get(world);
         if (auto* session = UserSession::Get(from.peer))
         {
-            const OnConnectionAccepted packet { session->pInfo, ctx->settings };
+            const OnConnectionAccepted packet { .playerInfo=session->pInfo, .serverInfo=ctx->settings };
             session->cInfo = from.packet.info;
 
             ctx->networkManager.Send(from.peer, packet, ENET_PACKET_FLAG_RELIABLE, 0);
 
             world.entity()
-                .is_a<UserEntityPrefab>()
-                .set<UserSessionHolder>({ session })
-                .set<NetworkProps>({ session->pInfo.handle })
-                .set<Transform>({ { 0, 100, 0 }, {}, { 1, 1, 1 } })
-                .add<EntityCreatedTag>()
+                .is_a<PUserEntity>()
+                .set<CUserSession>(session)
+                .set<CNetProps>({ session->pInfo.handle })
+                .set<CTransform>({ .position={ 0, 100, 0 }, .rotation={}, .scale={ 1, 1, 1 } })
+                .add<TEntityCreated>()
                 .child_of<SceneRoot>();
         }
         else
@@ -99,17 +102,17 @@ namespace Mcc
 
             if (!lHandle.has_value())
             {
-                MCC_LOG_WARN("The network id {} isn't associated to a local entity", rHandle);
+                MCC_LOG_WARN("[OnDisconnectEventHandler] Entity({}) isn't associated to a local entity", rHandle);
                 return;
             }
 
             if (!world.is_alive(*lHandle))
             {
-                MCC_LOG_WARN("The local entity associated to the network id {} isn't alive", rHandle);
+                MCC_LOG_WARN("[OnDisconnectEventHandler] Entity({}) isn't alive", rHandle);
                 return;
             }
 
-            world.entity(*lHandle).add<EntityDestroyedTag>();
+            world.entity(*lHandle).add<TEntityDestroyed>();
         }
     }
 

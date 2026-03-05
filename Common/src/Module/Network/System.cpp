@@ -9,7 +9,7 @@
 namespace Mcc
 {
 
-    void GenerateNetworkHandleObserver(flecs::entity, NetworkProps& props)
+    void GenerateNetworkHandleObserver(flecs::entity, CNetProps& props)
     {
         props.handle = GenerateNetworkHandle();
     }
@@ -19,7 +19,7 @@ namespace Mcc
         auto* ctx = WorldContext<>::Get(it.world());
         while (it.next())
         {
-            auto props = it.field<const NetworkProps>(0);
+            auto props = it.field<const CNetProps>(0);
 
             for (const auto i: it)
             {
@@ -37,7 +37,7 @@ namespace Mcc
         auto* ctx = WorldContext<>::Get(it.world());
         while (it.next())
         {
-            auto props = it.field<const NetworkProps>(0);
+            auto props = it.field<const CNetProps>(0);
 
             for (const auto i: it)
             {

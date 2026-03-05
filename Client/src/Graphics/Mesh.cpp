@@ -155,14 +155,7 @@ namespace Mcc
                             const float x  = radius * std::sin(bA) * std::cos(hA);
                             const float y  = radius * std::cos(bA);
                             const float z  = radius * std::sin(bA) * std::sin(hA);
-                            mesh.vertex.push_back(
-                                {
-                                    { x, y, z },
-                                    {},
-                                    {},
-                                    {}
-                            }
-                            );
+                            mesh.vertex.push_back({.vertex={ x, y, z }, .color={}, .uv={}, .normal={}});
                         }
 
                         if (i > offset && j > 0)
@@ -189,14 +182,7 @@ namespace Mcc
                 // North pole
                 if (!half)
                 {
-                    mesh.vertex.push_back(
-                        {
-                            { 0, radius, 0 },
-                            {},
-                            {},
-                            {}
-                    }
-                    );
+                    mesh.vertex.push_back({.vertex={ 0, radius, 0 }, .color={}, .uv={}, .normal={}});
                     const auto v0 = mesh.vertex.size() - 1;
                     for (unsigned int i = 1; i <= segments; ++i)
                     {
@@ -210,14 +196,7 @@ namespace Mcc
                 }
 
                 // South pole
-                mesh.vertex.push_back(
-                    {
-                        { 0, -radius, 0 },
-                        {},
-                        {},
-                        {}
-                }
-                );
+                mesh.vertex.push_back({.vertex={ 0, -radius, 0 }, .color={}, .uv={}, .normal={}});
                 const auto v0 = mesh.vertex.size() - 1;
                 for (unsigned int i = 1; i <= segments; ++i)
                 {
@@ -267,22 +246,8 @@ namespace Mcc
                     const float a = static_cast<float>(i) * theta;
                     const float x = radius * std::cos(a);
                     const float z = radius * std::sin(a);
-                    mesh.vertex.push_back(
-                        {
-                            { x, cHalf, z },
-                            {},
-                            {},
-                            {}
-                    }
-                    );
-                    mesh.vertex.push_back(
-                        {
-                            { x, -cHalf, z },
-                            {},
-                            {},
-                            {}
-                    }
-                    );
+                    mesh.vertex.push_back({.vertex={ x,  cHalf, z }, .color={}, .uv={}, .normal={}});
+                    mesh.vertex.push_back({.vertex={ x, -cHalf, z }, .color={}, .uv={}, .normal={}});
                 }
 
                 if (i > 0)
@@ -315,7 +280,9 @@ namespace Mcc
             auto offset = mesh.vertex.size();
             for (auto& [v, c, u, n]: hsVertex)
             {
-                mesh.vertex.push_back({ topTransform * glm::vec4(v, 1.f), c, u, topTransform * glm::vec4(n, 1.f) });
+                mesh.vertex.push_back({
+                    .vertex=topTransform * glm::vec4(v, 1.f), .color=c, .uv=u, .normal=topTransform * glm::vec4(n, 1.f)
+                });
             }
 
             for (const auto i: hsIndex) { mesh.index.push_back(i + offset); }
@@ -324,7 +291,9 @@ namespace Mcc
             offset = mesh.vertex.size();
             for (auto& [v, c, u, n]: hsVertex)
             {
-                mesh.vertex.push_back({ botTransform * glm::vec4(v, 1.f), c, u, botTransform * glm::vec4(n, 1.f) });
+                mesh.vertex.push_back({
+                    .vertex=botTransform * glm::vec4(v, 1.f), .color=c, .uv=u, .normal=botTransform * glm::vec4(n, 1.f)
+                });
             }
 
             for (const auto i: hsIndex) { mesh.index.push_back(i + offset); }

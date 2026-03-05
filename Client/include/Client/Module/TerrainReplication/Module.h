@@ -20,15 +20,15 @@ namespace Mcc
         explicit TerrainReplicationModule(flecs::world& world);
 
         void RegisterComponent(flecs::world& world) override;
-        void RegisterSystem(flecs::world& world) override;
-        void RegisterHandler(flecs::world& world) override;
+        void RegisterPrefab   (flecs::world& world) override;
+        void RegisterSystem   (flecs::world& world) override;
+        void RegisterObserver (flecs::world& world) override;
 
       private:
-        static void OnBlockHandler(const flecs::world& world, const OnBlock& packet);
-        static void OnChunkHandler(const flecs::world& world, const OnChunk& packet);
-
-        static void OnBlockBatchHandler(const flecs::world& world, const OnBlockBatch& packet);
-        static void OnChunkBatchHandler(const flecs::world& world, const OnChunkBatch& packet);
+        static void OnBlockHandler     (const OnBlock& packet, const flecs::world& world);
+        static void OnChunkHandler     (const OnChunk& packet, const flecs::world& world);
+        static void OnBlockBatchHandler(const OnBlockBatch& packet, const flecs::world& world);
+        static void OnChunkBatchHandler(const OnChunkBatch& packet, const flecs::world& world);
     };
 
 }

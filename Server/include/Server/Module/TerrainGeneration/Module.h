@@ -15,16 +15,16 @@
 namespace Mcc
 {
 
-    class TerrainGenerationModule final : public BaseModule<TerrainGenerationModule, TerrainModule>
+    struct TerrainGenerationModule final : BaseModule<TerrainGenerationModule, TerrainModule>
     {
-      public:
         TerrainGenerationModule(flecs::world& world);
 
         void RegisterComponent(flecs::world& world) override;
-        void RegisterSystem(flecs::world& world) override;
-        void RegisterHandler(flecs::world& world) override;
+        void RegisterPrefab   (flecs::world& world) override;
+        void RegisterSystem   (flecs::world& world) override;
+        void RegisterObserver (flecs::world& world) override;
 
-        void          InitializeGenerator(const flecs::world& world);
+        void          InitializeGenerator (const flecs::world& world);
         flecs::entity LaunchGenerationTask(const flecs::world& world, const glm::ivec3& position) const;
 
       private:

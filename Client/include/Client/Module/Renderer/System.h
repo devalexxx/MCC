@@ -10,10 +10,10 @@
 namespace Mcc
 {
 
-    void SetupRendererSystem(flecs::iter& it);
+    void SetupRendererSystem  (flecs::iter& it);
     void PollWindowEventSystem(flecs::iter& it);
-    void ClearFrameSystem(flecs::iter& it);
-    void RenderFrameSystem(flecs::iter& it);
+    void ClearFrameSystem     (flecs::iter& it);
+    void RenderFrameSystem    (flecs::iter& it);
 
 }
 

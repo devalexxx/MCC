@@ -4,6 +4,7 @@
 
 #include "Client/Module/ImGui/Module.h"
 
+#include "Client/Module/ImGui/System.h"
 #include "Client/Module/Renderer/Module.h"
 #include "Client/WorldContext.h"
 
@@ -40,28 +41,24 @@ namespace Mcc
         ImGui::DestroyContext();
     }
 
-    void ImGuiModule::RegisterComponent(flecs::world& /* world */)
-    {}
+    void ImGuiModule::RegisterComponent(flecs::world& /* world */) {}
+
+    void ImGuiModule::RegisterPrefab(flecs::world& /* world */) {}
 
     void ImGuiModule::RegisterSystem(flecs::world& world)
     {
-        world.system().kind<Phase::OnSetup>().run([](flecs::iter&) {
-            ImGui_ImplOpenGL3_NewFrame();
-            ImGui_ImplGlfw_NewFrame();
-            ImGui::NewFrame();
-        });
+        world.system("ImGuiBeginFrame")
+            .kind<Phase::OnSetup>()
+            .run(ImGuiBeginFrameSystem);
 
-        world.system().kind<Phase::OnDrawGui>().run([](flecs::iter&) {
-            // ImGui::ShowDemoWindow();
-        });
+        world.system("ImGuiRenderFrame")
+            .kind<Phase::PostDrawGui>()
+            .run(ImGuiRenderFrameSystem);
 
-        world.system().kind<Phase::PostDrawGui>().run([](flecs::iter&) { ImGui::Render(); });
-
-        world.system().kind<Phase::PreRender>().run([](flecs::iter&) {
-            ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
-        });
+        world.system("ImGuiDrawFrame")
+            .kind<Phase::PreRender>()
+            .run(ImGuiDrawFrameSystem);
     }
 
-    void ImGuiModule::RegisterHandler(flecs::world& /* world */)
-    {}
+    void ImGuiModule::RegisterObserver(flecs::world& /* world */) {}
 }

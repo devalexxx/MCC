@@ -6,15 +6,9 @@ namespace Mcc
 {
 
     template<typename Archive>
-    void serialize(Archive& ar, BlockMeta& packet)
+    void serialize(Archive& ar, CBlockMeta& packet)
     {
         ar(packet.id);
-    }
-
-    template<typename Archive>
-    void serialize(Archive& ar, ChunkPosition& packet)
-    {
-        ar(packet.position);
     }
 
 }

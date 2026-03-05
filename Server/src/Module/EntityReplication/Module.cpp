@@ -17,36 +17,35 @@
 namespace Mcc
 {
 
-    EntityReplicationModule::EntityReplicationModule(flecs::world& world) : BaseModule(world)
-    {}
+    EntityReplicationModule::EntityReplicationModule(flecs::world& world) : BaseModule(world) {}
 
     void EntityReplicationModule::RegisterComponent(flecs::world& world)
     {
-        world.component<EntityDirtyTag>();
-        world.component<EntityCreatedTag>();
-        world.component<EntityDestroyedTag>();
+        world.component<TEntityDirty>();
+        world.component<TEntityCreated>();
+        world.component<TEntityDestroyed>();
     }
+
+    void EntityReplicationModule::RegisterPrefab(flecs::world& /* world */) {}
 
     void EntityReplicationModule::RegisterSystem(flecs::world& world)
     {
-        world.system<const Transform, const Extra, const NetworkProps>("BroadcastEntitiesCreated")
+        world.system<const CTransform, const CEntityDataMap, const CNetProps>("BroadcastEntitiesCreated")
             .kind<Phase::PostUpdate>()
-            .with<EntityCreatedTag>()
+            .with<TEntityCreated>()
             .run(BroadcastEntitiesCreated);
 
-        world.system<const Transform, const Extra, const NetworkProps>("BroadcastEntitiesUpdated")
+        world.system<const CTransform, const CEntityDataMap, const CNetProps>("BroadcastEntitiesUpdated")
             .kind<Phase::PostUpdate>()
-            .with<EntityDirtyTag>()
+            .with<TEntityDirty>()
             .run(BroadcastEntitiesUpdated);
 
-        world.system<const NetworkProps>("BroadcastEntitiesDestroyed")
+        world.system<const CNetProps>("BroadcastEntitiesDestroyed")
             .kind<Phase::PostUpdate>()
-            .with<EntityDestroyedTag>()
+            .with<TEntityDestroyed>()
             .run(BroadcastEntitiesDestroyed);
     }
 
-    void EntityReplicationModule::RegisterHandler(flecs::world& /* world */)
-    {
-    }
+    void EntityReplicationModule::RegisterObserver(flecs::world& /* world */) {}
 
 }

@@ -53,7 +53,7 @@ namespace Mcc
     {
         NetworkHandle handle;
 
-        Transform transform;
+        CTransform transform;
 
         std::unordered_map<std::string, std::string> extra;
     };
@@ -84,7 +84,7 @@ namespace Mcc
     struct OnChunk
     {
         NetworkHandle handle {};
-        ChunkPosition position {};
+        CChunkPos     position {};
         RLEChunkData  data;
     };
 
@@ -94,9 +94,9 @@ namespace Mcc
     struct OnBlock
     {
         NetworkHandle handle;
-        BlockMeta     meta;
+        CBlockMeta     meta;
         glm::vec3     color;
-        BlockType     type;
+        CBlockType     type;
     };
 
     struct OnBlockBatch : std::vector<OnBlock>

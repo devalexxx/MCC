@@ -6,7 +6,6 @@
 
 #include "Server/Module/EntityReplication/Component.h"
 #include "Server/Module/Player/Component.h"
-#include "Server/Module/TerrainGeneration/Module.h"
 #include "Server/Module/UserSession/Module.h"
 #include "Server/WorldContext.h"
 
@@ -18,26 +17,26 @@
 namespace Mcc
 {
 
-    void ProcessPlayerInputs(const flecs::entity entity, UserInputQueue& queue)
+    void ProcessPlayerInputs(const flecs::entity entity, CUserInputQueue& queue)
     {
         const auto* ctx = ServerWorldContext::Get(entity.world());
 
-        if (queue.data.empty())
+        if (queue.empty())
         {
             return;
         }
 
-        entity.get([&](Transform& transform, Extra& extra) {
+        entity.get([&](CTransform& transform, CEntityDataMap& data) {
             const auto position = transform.position;
-            for (; !queue.data.empty(); queue.data.pop_front())
+            for (; !queue.empty(); queue.pop_front())
             {
-                auto& input = queue.data.front();
-                Helper::ApplyXAxis(input, transform);
+                auto& input = queue.front();
+                Helper::ApplyXAxis   (input, transform);
                 Helper::ApplyMovement(input, transform, ctx->settings.userSpeed, input.meta.dt);
 
-                if (queue.data.size() == 1)
+                if (queue.size() == 1)
                 {
-                    extra.data.insert_or_assign("last-input-processed", std::to_string(input.meta.id));
+                    data.insert_or_assign("last-input-processed", std::to_string(input.meta.id));
                 }
             }
 
@@ -48,12 +47,16 @@ namespace Mcc
                 .emit();
         });
 
-        entity.add<EntityDirtyTag>();
+        entity.add<TEntityDirty>();
     }
 
     void HandlePlayerCreation(const flecs::entity entity)
     {
-        entity.world().event<OnPlayerCreatedEvent>().id<Transform>().entity(entity).emit();
+        entity.world()
+            .event<OnPlayerCreatedEvent>()
+            .id<CTransform>()
+            .entity(entity)
+            .emit();
     }
 
 }

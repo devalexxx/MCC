@@ -17,19 +17,19 @@ namespace Mcc
     struct OnEntitiesDestroyed;
     struct OnEntitiesUpdated;
 
-    class EntityReplicationModule final : public BaseModule<EntityReplicationModule, EntityModule>
+    struct EntityReplicationModule final : BaseModule<EntityReplicationModule, EntityModule>
     {
-      public:
         explicit EntityReplicationModule(flecs::world& world);
 
         void RegisterComponent(flecs::world& world) override;
-        void RegisterSystem(flecs::world& world) override;
-        void RegisterHandler(flecs::world& world) override;
+        void RegisterPrefab   (flecs::world& world) override;
+        void RegisterSystem   (flecs::world& world) override;
+        void RegisterObserver (flecs::world& world) override;
 
       private:
-        static void OnEntitiesCreatedHandler(const flecs::world& world, const OnEntitiesCreated& event);
-        static void OnEntitiesDestroyedHandler(const flecs::world& world, const OnEntitiesDestroyed& event);
-        static void OnEntitiesUpdatedHandler(const flecs::world& world, const OnEntitiesUpdated& event);
+        static void OnEntitiesCreatedHandler  (const OnEntitiesCreated&   event, const flecs::world& world);
+        static void OnEntitiesUpdatedHandler  (const OnEntitiesUpdated&   event, const flecs::world& world);
+        static void OnEntitiesDestroyedHandler(const OnEntitiesDestroyed& event, const flecs::world& world);
     };
 
 }

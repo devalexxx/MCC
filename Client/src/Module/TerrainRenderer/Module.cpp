@@ -16,62 +16,61 @@
 namespace Mcc
 {
 
-    TerrainRendererModule::TerrainRendererModule(flecs::world& world) : BaseModule(world)
-    {}
+    TerrainRendererModule::TerrainRendererModule(flecs::world& world) : BaseModule(world) {}
 
     void TerrainRendererModule::RegisterComponent(flecs::world& world)
     {
-        world.component<ShouldBuildMeshTag>();
-        world.component<CouldRenderChunkTag>();
-        world.component<ShouldRenderChunkTag>();
+        world.component<TShouldBuildMesh>();
+        world.component<TCouldRenderChunk>();
+        world.component<TShouldRenderChunk>();
 
-        world.component<ChunkMesh>();
-        world.component<MeshHolder>();
+        world.component<CChunkMesh>();
+        world.component<CChunkMeshGenTask>("CChunkMeshGenTask");
     }
+
+    void TerrainRendererModule::RegisterPrefab(flecs::world& /* world */) {}
 
     void TerrainRendererModule::RegisterSystem(flecs::world& world)
     {
-        world.system<const ChunkHolder, const ChunkPosition>("BuildChunkMesh")
+        world.system<const CChunkPtr, const CChunkPos>("BuildChunkMesh")
             .kind<Phase::PostUpdate>()
-            .with<ShouldBuildMeshTag>()
+            .with<TShouldBuildMesh>()
             .each(BuildChunkMeshSystem)
             .add<GameScene>();
 
-        world.system<MeshHolder>("SetupChunkRenderingMesh")
+        world.system<CChunkMeshGenTask>("SetupChunkRenderingMesh")
             .kind<Phase::PostUpdate>()
-            .each([this](const flecs::entity entity, MeshHolder& holder) {
-                SetupChunkRenderingMeshSystem(entity, holder);
-            })
+            .each(SetupChunkRenderingMeshSystem)
             .add<GameScene>();
 
-        world.system("SetupChunkProgram").kind<Phase::OnLoad>().run([this](auto&&... args) {
-            SetupChunkProgramSystem(args...);
-        });
+        world.system("SetupChunkProgram")
+            .kind<Phase::OnLoad>()
+            .run(SetupChunkProgramSystem);
 
-        world.system<const ChunkPosition, const ChunkMesh>("RenderChunkMeshSystem")
+        world.system<const CChunkPos, const CChunkMesh>("RenderChunkMeshSystem")
             .kind<Phase::OnDraw>()
-            .with<ShouldRenderChunkTag>()
-            .run([this](auto&&... args) { RenderChunkMeshSystem(args...); })
+            .with<TShouldRenderChunk>()
+            .run(RenderChunkMeshSystem)
             .add<GameScene>();
     }
 
-    void TerrainRendererModule::RegisterHandler(flecs::world& world)
+    void TerrainRendererModule::RegisterObserver(flecs::world& world)
     {
         const auto* ctx = ClientWorldContext::Get(world);
 
-        world.observer<const Transform>("OnPlayerMove")
+        world.observer<const CTransform>("OnPlayerMove")
             .event(flecs::OnSet)
             .term_at(0)
             .src(world.entity(*ctx->networkMapping.GetLHandle(ctx->playerInfo.handle)))
             .each(OnPlayerMoveObserver);
 
-        world.observer<const ChunkPosition>("OnChunkCreated")
+        world.observer<const CChunkPos>("OnChunkCreated")
             .event(flecs::OnSet)
             .each(OnChunkCreatedObserver);
 
-        world.observer<const ChunkHolder>("OnChunkChanged")
+        world.observer<const CChunkPtr>("OnChunkChanged")
             .event(flecs::OnSet)
-            .with<CouldRenderChunkTag>()
+            .with<TCouldRenderChunk>()
             .each(OnChunkChangedObserver);
     }
 

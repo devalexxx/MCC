@@ -14,17 +14,17 @@
 namespace Mcc
 {
 
-    class PlayerModule final : public BaseModule<PlayerModule, EntityReplicationModule>
+    struct PlayerModule final : BaseModule<PlayerModule, EntityReplicationModule>
     {
-      public:
         explicit PlayerModule(flecs::world& world);
 
         void RegisterComponent(flecs::world& world) override;
-        void RegisterSystem(flecs::world& world) override;
-        void RegisterHandler(flecs::world& world) override;
+        void RegisterPrefab   (flecs::world& world) override;
+        void RegisterSystem   (flecs::world& world) override;
+        void RegisterObserver (flecs::world& world) override;
 
       private:
-        static void OnPlayerInputHandler(const flecs::world& world, const From<OnPlayerInput>& from);
+        static void OnPlayerInputHandler(const From<OnPlayerInput>& from, const flecs::world& world);
     };
 
 }

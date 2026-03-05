@@ -10,19 +10,20 @@
 namespace Mcc
 {
 
-    SceneModule<MenuScene>::SceneModule(flecs::world& world) : BaseModule(world)
-    {
-    }
+    SceneModule<MenuScene>::SceneModule(flecs::world& world) : BaseModule(world) {}
 
-    void SceneModule<MenuScene>::RegisterComponent(flecs::world& /* world */)
-    {}
+    void SceneModule<MenuScene>::RegisterComponent(flecs::world& /* world */) {}
+
+    void SceneModule<MenuScene>::RegisterPrefab(flecs::world& /* world */) {}
 
     void SceneModule<MenuScene>::RegisterSystem(flecs::world& world)
     {
-        world.system().kind<Phase::OnDrawGui>().run(DisplayMainMenuSystem).add<MenuScene>();
+        world.system()
+            .kind<Phase::OnDrawGui>()
+            .run(DisplayMainMenuSystem)
+            .add<MenuScene>();
     }
 
-    void SceneModule<MenuScene>::RegisterHandler(flecs::world& /* world */)
-    {}
+    void SceneModule<MenuScene>::RegisterObserver(flecs::world& /* world */) {}
 
 }

@@ -6,6 +6,7 @@
 #define MCC_COMMON_MODULE_ENTITY_COMPONENT_H
 
 #include "Common/Export.h"
+#include "Common/Utils/FlecsUtils.h"
 
 #include <glm/glm.hpp>
 #include <glm/gtc/quaternion.hpp>
@@ -41,30 +42,21 @@ namespace glm
 namespace Mcc
 {
 
-    struct EntityTag
-    {};
-    struct NetworkEntityTag
-    {};
-    struct UserEntityTag
-    {};
+    struct TEntity        {};
+    struct TNetworkEntity {};
+    struct TUserEntity    {};
 
-    struct EntityPrefab
-    {};
-    struct NetworkEntityPrefab
-    {};
-    struct UserEntityPrefab
-    {};
+    struct PEntity     {};
+    struct PNetEntity  {};
+    struct PUserEntity {};
 
-    struct Transform
+    struct MCC_LIB_API CTransform
     {
         glm::vec3 position;
         glm::quat rotation;
         glm::vec3 scale;
-    };
 
-    struct Extra
-    {
-        std::unordered_map<std::string, std::string> data;
+        static CTransform Identity();
     };
 
     struct MCC_LIB_API UserInput
@@ -75,9 +67,9 @@ namespace Mcc
             float          dt;
 
             static unsigned short GetNextID();
-        };
+        } meta;
 
-        struct
+        struct Movement
         {
             bool forward;
             bool backward;
@@ -87,22 +79,20 @@ namespace Mcc
             bool down;
         } movement;
 
-        struct
+        struct Axis
         {
             float x;
             float y;
         } axis;
-
-        Meta meta;
     };
 
-    struct UserInputQueue
-    {
-        std::deque<UserInput> data;
-    };
+
+    namespace _ { struct EntityModuleTag {}; };
+    using CEntityDataMap  = ComponentWrapper<std::unordered_map<std::string, std::string>, _::EntityModuleTag>;
+    using CUserInputQueue = ComponentWrapper<std::deque<UserInput>                       , _::EntityModuleTag>;
 
     template<class Archive>
-    void serialize(Archive& ar, Transform& transform);
+    void serialize(Archive& ar, CTransform& transform);
     template<typename Archive>
     void serialize(Archive& ar, UserInput& input);
 
@@ -110,10 +100,10 @@ namespace Mcc
     {
 
         MCC_LIB_API bool IsNull(const UserInput& input);
-        MCC_LIB_API void ApplyMovement(const UserInput& input, Transform& transform, float speed, float dt);
-        MCC_LIB_API void ApplyXAxis(const UserInput& input, Transform& transform);
-        MCC_LIB_API void ApplyYAxis(const UserInput& input, Transform& transform);
-        MCC_LIB_API void ApplyBothAxis(const UserInput& input, Transform& transform);
+        MCC_LIB_API void ApplyMovement(const UserInput& input, CTransform& transform, float speed, float dt);
+        MCC_LIB_API void ApplyXAxis(const UserInput& input, CTransform& transform);
+        MCC_LIB_API void ApplyYAxis(const UserInput& input, CTransform& transform);
+        MCC_LIB_API void ApplyBothAxis(const UserInput& input, CTransform& transform);
 
     }
 

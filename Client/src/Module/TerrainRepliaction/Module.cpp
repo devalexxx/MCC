@@ -17,73 +17,70 @@ namespace Mcc
 {
 
     TerrainReplicationModule::TerrainReplicationModule(flecs::world& world) : BaseModule(world)
-    {}
-
-    void TerrainReplicationModule::RegisterComponent(flecs::world& /* world */)
-    {}
-
-    void TerrainReplicationModule::RegisterSystem(flecs::world& /* world */)
-    {}
-
-    void TerrainReplicationModule::RegisterHandler(flecs::world& world)
     {
         const auto* ctx = ClientWorldContext::Get(world);
-
-        ctx->networkManager.Subscribe<OnBlock>([&world](const auto& event) { OnBlockHandler(world, event); });
-        ctx->networkManager.Subscribe<OnChunk>([&world](const auto& event) { OnChunkHandler(world, event); });
-
-        ctx->networkManager.Subscribe<OnBlockBatch>([&world](const auto& event) { OnBlockBatchHandler(world, event); });
-        ctx->networkManager.Subscribe<OnChunkBatch>([&world](const auto& event) { OnChunkBatchHandler(world, event); });
+        ctx->networkManager.Subscribe<OnBlock>     (OnBlockHandler, world);
+        ctx->networkManager.Subscribe<OnChunk>     (OnChunkHandler, world);
+        ctx->networkManager.Subscribe<OnBlockBatch>(OnBlockBatchHandler, world);
+        ctx->networkManager.Subscribe<OnChunkBatch>(OnChunkBatchHandler, world);
     }
 
-    void TerrainReplicationModule::OnBlockHandler(const flecs::world& world, const OnBlock& packet)
+    void TerrainReplicationModule::RegisterComponent(flecs::world& /* world */) {}
+
+    void TerrainReplicationModule::RegisterPrefab(flecs::world& /* world */) {}
+
+    void TerrainReplicationModule::RegisterSystem(flecs::world& /* world */) {}
+
+    void TerrainReplicationModule::RegisterObserver(flecs::world& /* world */) {}
+
+    void TerrainReplicationModule::OnBlockHandler(const OnBlock& packet, const flecs::world& world)
     {
         const auto* ctx = ClientWorldContext::Get(world);
         if (const auto lid = ctx->networkMapping.GetLHandle(packet.handle); lid.has_value())
         {
-            MCC_LOG_WARN("The network id {} is already associated to a local entity(#{})", packet.handle, *lid);
+            MCC_LOG_WARN("[OnBlockHandler] Block({}) is already associated to a local entity(#{})", packet.handle, *lid);
             return;
         }
 
         world.entity()
-            .is_a<BlockPrefab>()
-            .set<NetworkProps>({ packet.handle })
-            .set<BlockMeta>(packet.meta)
-            .set<BlockColor>({ packet.color })
-            .set<BlockType>(packet.type)
+            .is_a<PBlock>()
+            .set<CNetProps>({ packet.handle })
+            .set<CBlockMeta>(packet.meta)
+            .set<CBlockColor>(packet.color)
+            .set<CBlockType>(packet.type)
             .child_of<SceneRoot>();
     }
 
-    void TerrainReplicationModule::OnChunkHandler(const flecs::world& world, const OnChunk& packet)
+    void TerrainReplicationModule::OnChunkHandler(const OnChunk& packet, const flecs::world& world)
     {
         auto* ctx = ClientWorldContext::Get(world);
         if (const auto lid = ctx->networkMapping.GetLHandle(packet.handle); lid.has_value())
         {
-            MCC_LOG_WARN("The network id {} is already associated to a local entity(#{})", packet.handle, *lid);
+            MCC_LOG_WARN("[OnChunkHandler] Chunk({}) is already associated to a local entity(#{})", packet.handle, *lid);
             return;
         }
 
         if (auto from = MCC_BENCH_TIME(RLEDecompression, Helper::FromNetwork)(packet.data, world); from.has_value())
         {
             const auto e = world.entity()
-               .is_a<ChunkPrefab>()
-               .set<NetworkProps>({ packet.handle })
-               .set<ChunkPosition>(packet.position)
-               .set<ChunkHolder>({ std::make_shared<Chunk>(std::move(*from)) })
+               .is_a<PChunk>()
+               .set<CNetProps>({ packet.handle })
+               .set<CChunkPos>(packet.position)
+               .set<CChunkPtr>(std::make_shared<Chunk>(std::move(*from)))
                .child_of<SceneRoot>();
 
-            ctx->chunkMap.emplace(packet.position.position, e.id());
+            ctx->chunkMap.emplace(packet.position, e.id());
         }
     }
 
-    void TerrainReplicationModule::OnBlockBatchHandler(const flecs::world& world, const OnBlockBatch& packet)
+    void TerrainReplicationModule::OnBlockBatchHandler(const OnBlockBatch& packet, const flecs::world& world)
     {
-        for (auto& block: packet) { OnBlockHandler(world, block); }
+        for (auto& block: packet) { OnBlockHandler(block, world); }
     }
 
-    void TerrainReplicationModule::OnChunkBatchHandler(const flecs::world& world, const OnChunkBatch& packet)
+    void TerrainReplicationModule::OnChunkBatchHandler(const OnChunkBatch& packet, const flecs::world& world)
     {
-        for (auto& chunk: packet) { OnChunkHandler(world, chunk); }
+        for (auto& chunk: packet) { OnChunkHandler(chunk, world); }
     }
 
 

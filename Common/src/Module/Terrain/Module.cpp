@@ -6,53 +6,53 @@
 
 #include "Common/Module/Network/Component.h"
 #include "Common/Module/Terrain/Component.h"
-#include "Common/Utils/Assert.h"
-#include "Common/Utils/Logging.h"
-
-#include <memory>
 
 namespace Mcc
 {
 
-    TerrainModule::TerrainModule(flecs::world& world) : BaseModule(world)
-    {
-        world.prefab<BlockPrefab>()
-            .is_a<NetworkObjectPrefab>()
-            .add<BlockTag>()
-            .set_auto_override<BlockMeta>({})
-            .set_auto_override<BlockColor>({})
-            .set_auto_override<BlockType>({});
-
-        world.prefab<ChunkPrefab>()
-            .is_a<NetworkObjectPrefab>()
-            .add<ChunkTag>()
-            .add<ChunkPosition>()
-            .set_auto_override<ChunkHolder>({});
-    }
+    TerrainModule::TerrainModule(flecs::world& world) : BaseModule(world) {}
 
     void TerrainModule::RegisterComponent(flecs::world& world)
     {
-        world.component<BlockTag>();
-        world.component<BlockStateTag>();
-        world.component<ChunkTag>();
+        world.component<TBlock>();
+        world.component<TBlockState>();
+        world.component<TChunk>();
 
-        world.component<BlockPrefab>();
-        world.component<ChunkPrefab>();
+        world.component<PBlock>();
+        world.component<PChunk>();
 
-        world.component<BlockStateRelation>();
+        world.component<RBlockState>();
 
-        world.component<BlockColor>();
-        world.component<BlockMeta>();
-        world.component<BlockType>();
+        world.component<CBlockColor>("CBlockColor")
+            .is_a<CBlockColor::Type>();
 
-        world.component<ChunkPosition>();
-        world.component<ChunkHolder>();
+        world.component<CBlockMeta>()
+            .member<std::string>("id");
+
+        world.component<CBlockType>();
+
+        world.component<CChunkPtr>("CChunkPtr");
+        world.component<CChunkPos>("CChunkPos")
+            .is_a<CChunkPos::Type>();
     }
 
-    void TerrainModule::RegisterSystem(flecs::world& /* world */)
-    {}
+    void TerrainModule::RegisterPrefab(flecs::world& world)
+    {
+        world.prefab<PBlock>()
+            .is_a<PNetObject>()
+            .add<TBlock>()
+            .add<CBlockMeta>()
+            .add<CBlockColor>()
+            .add<CBlockType>();
 
-    void TerrainModule::RegisterHandler(flecs::world& /* world */)
-    {}
+        world.prefab<PChunk>()
+            .is_a<PNetObject>()
+            .add<TChunk>()
+            .add<CChunkPos>();
+    }
+
+    void TerrainModule::RegisterSystem(flecs::world& /* world */) {}
+
+    void TerrainModule::RegisterObserver(flecs::world& /* world */) {}
 
 }

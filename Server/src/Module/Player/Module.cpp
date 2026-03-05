@@ -20,7 +20,10 @@ namespace Mcc
 {
 
     PlayerModule::PlayerModule(flecs::world& world) : BaseModule(world)
-    {}
+    {
+        const auto* ctx = WorldContext<>::Get(world);
+        ctx->networkManager.Subscribe<From<OnPlayerInput>>(OnPlayerInputHandler, world);
+    }
 
     void PlayerModule::RegisterComponent(flecs::world& world)
     {
@@ -28,30 +31,25 @@ namespace Mcc
         world.component<OnPlayerMoveEvent>();
     }
 
+    void PlayerModule::RegisterPrefab(flecs::world& /* world */) {}
+
     void PlayerModule::RegisterSystem(flecs::world& world)
     {
-        world.system<UserInputQueue>("ProcessPlayerInputsSystem")
+        world.system<CUserInputQueue>("ProcessPlayerInputs")
             .kind<Phase::OnUpdate>()
-            .with<UserEntityTag>()
+            .with<TUserEntity>()
             .each(ProcessPlayerInputs);
 
-        world.system("HandlePlayerCreationSystem")
+        world.system("HandlePlayerCreation")
             .kind<Phase::OnSetup>()
-            .with<EntityCreatedTag>()
-            .with<UserEntityTag>()
+            .with<TEntityCreated>()
+            .with<TUserEntity>()
             .each(HandlePlayerCreation);
     }
 
-    void PlayerModule::RegisterHandler(flecs::world& world)
-    {
-        const auto* ctx = WorldContext<>::Get(world);
-        ctx->networkManager.Subscribe<From<OnPlayerInput>>([&](const auto& event) {
-            OnPlayerInputHandler(world, event);
-        });
-    }
+    void PlayerModule::RegisterObserver(flecs::world& /* world */) {}
 
-
-    void PlayerModule::OnPlayerInputHandler(const flecs::world& world, const From<OnPlayerInput>& from)
+    void PlayerModule::OnPlayerInputHandler(const From<OnPlayerInput>& from, const flecs::world& world)
     {
         const auto* ctx     = WorldContext<>::Get(world);
         const auto* session = UserSession::Get(from.peer);
@@ -60,18 +58,18 @@ namespace Mcc
 
         if (!lHandle.has_value())
         {
-            MCC_LOG_WARN("The network id {} isn't associated to a local entity", rHandle);
+            MCC_LOG_WARN("[OnPlayerInputHandler] Entity({}) isn't associated to a local entity", rHandle);
             return;
         }
 
         if (!world.is_alive(*lHandle))
         {
-            MCC_LOG_WARN("The local entity associated to the network id {} isn't alive", rHandle);
+            MCC_LOG_WARN("[OnPlayerInputHandler] Entity({}) isn't alive", rHandle);
             return;
         }
 
-        world.entity(*lHandle).get([&from](UserInputQueue& queue) {
-            queue.data.push_back(from.packet.input);
+        world.entity(*lHandle).get([&from](CUserInputQueue& queue) {
+            queue.push_back(from.packet.input);
         });
     }
 

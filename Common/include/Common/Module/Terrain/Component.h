@@ -5,6 +5,7 @@
 #ifndef MCC_COMMON_MODULE_TERRAIN_COMPONENT_H
 #define MCC_COMMON_MODULE_TERRAIN_COMPONENT_H
 
+#include "Common/Utils/FlecsUtils.h"
 #include "Common/World/Chunk.h"
 
 #include <memory>
@@ -13,63 +14,34 @@
 namespace Mcc
 {
 
-    struct BlockTag
-    {};
-    struct BlockStateTag
-    {};
-    struct ChunkTag
-    {};
+    struct TBlock      {};
+    struct TBlockState {};
+    struct TChunk      {};
 
-    struct BlockPrefab
-    {};
-    struct ChunkPrefab
-    {};
+    struct PBlock {};
+    struct PChunk {};
 
-    struct BlockStateRelation
-    {};
+    struct RBlockState {};
 
-    enum class BlockType
+    enum class CBlockType
     {
         Solid,
         Fluid,
         Gas
     };
 
-    enum class BlockFace
-    {
-        Left,
-        Right,
-        Front,
-        Back,
-        Top,
-        Bottom,
-        Count
-    };
-
-    struct BlockColor
-    {
-        glm::vec3 color;
-    };
-
-    struct BlockMeta
+    struct CBlockMeta
     {
         std::string id;
     };
 
-    struct ChunkPosition
-    {
-        glm::ivec3 position;
-    };
-
-    struct ChunkHolder
-    {
-        std::shared_ptr<Chunk> chunk;
-    };
+    namespace _ { struct TerrainModuleTag {}; };
+    using CBlockColor = ComponentWrapper<glm::vec3             , _::TerrainModuleTag>;
+    using CChunkPos   = ComponentWrapper<glm::ivec3            , _::TerrainModuleTag>;
+    using CChunkPtr   = ComponentWrapper<std::shared_ptr<Chunk>, _::TerrainModuleTag>;
 
     template<typename Archive>
-    void serialize(Archive& ar, BlockMeta& packet);
-    template<typename Archive>
-    void serialize(Archive& ar, ChunkPosition& packet);
+    void serialize(Archive& ar, CBlockMeta& packet);
 
 }
 

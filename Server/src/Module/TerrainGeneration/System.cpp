@@ -18,60 +18,61 @@ namespace Mcc
         const auto world = it.world();
 
         world.entity("mcc:block:air")
-            .is_a<BlockPrefab>()
-            .set<BlockType>(BlockType::Gas)
-            .set<BlockMeta>({ "mcc:block:air" })
+            .is_a<PBlock>()
+            .set<CBlockType>(CBlockType::Gas)
+            .set<CBlockMeta>({ "mcc:block:air" })
             .child_of<SceneRoot>();
 
         world.entity("mcc:block:stone")
-            .is_a<BlockPrefab>()
-            .set<BlockType>(BlockType::Solid)
-            .set<BlockColor>({{ .5f, .5f, .5f }})
-            .set<BlockMeta>({ "mcc:block:stone" })
+            .is_a<PBlock>()
+            .set<CBlockType>(CBlockType::Solid)
+            .set<CBlockColor>({ .5f, .5f, .5f })
+            .set<CBlockMeta>({ "mcc:block:stone" })
             .child_of<SceneRoot>();
 
         world.entity("mcc:block:dirt")
-            .is_a<BlockPrefab>()
-            .set<BlockType>(BlockType::Solid)
-            .set<BlockColor>({{ .0f, .7f, .3f }})
-            .set<BlockMeta>({ "mcc:block:dirt" })
+            .is_a<PBlock>()
+            .set<CBlockType>(CBlockType::Solid)
+            .set<CBlockColor>({ .0f, .7f, .3f })
+            .set<CBlockMeta>({ "mcc:block:dirt" })
             .child_of<SceneRoot>();
 
         world.get_mut<TerrainGenerationModule>().InitializeGenerator(world);
+
+        IgnoreIter(it);
     }
 
-    void HandleGenerationEndingSystem(const flecs::entity entity, PendingChunk& pending, ChunkHolder& holder)
+    void HandleGenerationEndingSystem(const flecs::entity entity, CChunkGenTask& task)
     {
-        if (pending.pendingChunk.GetState() == Hx::TaskState::Cancelled)
+        if (task.GetState() == Hx::TaskState::Cancelled)
         {
-            // TODO: add a state maybe
-            entity.remove<PendingChunk>();
+            entity.remove<CChunkGenTask>();
             GenerationState::Failed::Enter(entity);
             return;
         }
 
-        if (pending.pendingChunk.GetState() == Hx::TaskState::Done)
+        if (task.GetState() == Hx::TaskState::Done)
         {
-            const auto result = pending.pendingChunk.GetResult();
+            const auto result = task.GetResult();
             MCC_ASSERT(result, "Chunk data has already been retrieve");
-            holder.chunk = std::make_shared<Chunk>(result->get());
-            entity.remove<PendingChunk>();
+            entity.emplace<CChunkPtr>(std::make_shared<Chunk>(result->get()));
+            entity.remove<CChunkGenTask>();
             GenerationState::Done::Enter(entity);
         }
     }
 
     void DispatchPendingReplication(const flecs::entity entity, const GenerationState)
     {
-        entity.get([&](const PendingReplication& pending) {
+        entity.get([&](const CPendingReplication& pending) {
             const auto world = entity.world();
             const auto ctx   = ServerWorldContext::Get(world);
-            for (const auto session: pending.sessions)
+            for (const auto session: pending)
             {
                 ctx->scheduler.Insert(TerrainReplicationModule::ReplicateChunk, session, world, entity.id()).Enqueue();
             }
         });
 
-        entity.remove<PendingReplication>();
+        entity.remove<CPendingReplication>();
     }
 
 }

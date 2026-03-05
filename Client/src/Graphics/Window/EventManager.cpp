@@ -14,34 +14,34 @@ namespace Mcc
 
     void WindowEventManager::BoundEvent(const Window& window)
     {
-        glfwSetKeyCallback(window.Get(), KeyCallback);
+        glfwSetKeyCallback      (window.Get(), KeyCallback);
         glfwSetCursorPosCallback(window.Get(), CursorPosCallback);
     }
 
-    void WindowEventManager::KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mods)
+    void WindowEventManager::KeyCallback(
+        GLFWwindow* window, const int key, const int scancode, const int action, const int mods
+    )
     {
-        auto w = reinterpret_cast<Window*>(glfwGetWindowUserPointer(window));
-        if (w)
-        {
-            w->Dispatch<KeyEvent>({ *w, key, scancode, action, mods });
-        }
-        else
+        const auto w = static_cast<Window*>(glfwGetWindowUserPointer(window));
+        if (!w)
         {
             MCC_LOG_WARN("Trying to dispatch an event from a non exiting window (Should not happen)");
+            return;
         }
+
+        w->Dispatch<KeyEvent>({ .window=*w, .key=key, .scancode=scancode, .action=action, .mods=mods });
     }
 
-    void WindowEventManager::CursorPosCallback(GLFWwindow* window, double x, double y)
+    void WindowEventManager::CursorPosCallback(GLFWwindow* window, const double x, const double y)
     {
-        auto w = reinterpret_cast<Window*>(glfwGetWindowUserPointer(window));
-        if (w)
-        {
-            w->Dispatch<CursorPosEvent>({ *w, x, y });
-        }
-        else
+        const auto w = static_cast<Window*>(glfwGetWindowUserPointer(window));
+        if (!w)
         {
             MCC_LOG_WARN("Trying to dispatch an event from a non exiting window (Should not happen)");
+            return;
         }
+
+        w->Dispatch<CursorPosEvent>({ .window=*w, .x=x, .y=y });
     }
 
 }

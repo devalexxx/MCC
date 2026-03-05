@@ -10,36 +10,38 @@
 
 #include <glad/glad.h>
 
-#include <ranges>
-
 namespace Mcc
 {
 
     void SetupRendererSystem(flecs::iter& it)
     {
-        while (it.next()) {}
         glEnable(GL_DEPTH_TEST);
         glDepthFunc(GL_LESS);
         glEnable(GL_CULL_FACE);
+
+        IgnoreIter(it);
     }
 
     void PollWindowEventSystem(flecs::iter& it)
     {
-        while (it.next()) {}
         Window::PollEvents();
+
+        IgnoreIter(it);
     }
 
     void ClearFrameSystem(flecs::iter& it)
     {
-        while (it.next()) {}
         glCheck(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
         glCheck(glClearColor(1., 1., 1., 1.));
+
+        IgnoreIter(it);
     }
 
     void RenderFrameSystem(flecs::iter& it)
     {
-        while (it.next()) {}
         ClientWorldContext::Get(it.world())->window.SwapBuffer();
+
+        IgnoreIter(it);
     }
 
 }

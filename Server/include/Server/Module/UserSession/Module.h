@@ -8,7 +8,6 @@
 #include "Common/Module/Base/Module.h"
 #include "Common/Module/Network/Module.h"
 #include "Common/Module/Entity/Module.h"
-#include "Common/Module/Terrain/Component.h"
 #include "Common/Network/Event.h"
 #include "Common/Network/Packet.h"
 #include "Common/Network/Packet/Session.h"
@@ -18,7 +17,7 @@
 
 namespace Mcc
 {
-    struct NetworkProps;
+    struct CNetProps;
 
     using EntitySet = std::unordered_set<flecs::entity_t>;
 
@@ -35,18 +34,18 @@ namespace Mcc
         SafeAccess<EntitySet> replicatedBlocks;
     };
 
-    class UserSessionModule final : public BaseModule<UserSessionModule, NetworkModule, EntityModule>
+    struct UserSessionModule final : BaseModule<UserSessionModule, NetworkModule, EntityModule>
     {
-      public:
         UserSessionModule(flecs::world& world);
 
         void RegisterComponent(flecs::world& world) override;
-        void RegisterSystem(flecs::world& world) override;
-        void RegisterHandler(flecs::world& world) override;
+        void RegisterPrefab   (flecs::world& world) override;
+        void RegisterSystem   (flecs::world& world) override;
+        void RegisterObserver (flecs::world& world) override;
 
       private:
-        static void OnConnectEventHandler(const ConnectEvent& event, const flecs::world& world);
-        static void OnClientInfoHandler(const From<OnClientInfo>& from, const flecs::world& world);
+        static void OnConnectEventHandler   (const ConnectEvent& event, const flecs::world& world);
+        static void OnClientInfoHandler     (const From<OnClientInfo>& from, const flecs::world& world);
         static void OnDisconnectEventHandler(const DisconnectEvent& event, const flecs::world& world);
     };
 

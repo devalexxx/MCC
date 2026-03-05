@@ -10,8 +10,8 @@
 namespace Mcc
 {
 
-    void BroadcastEntitiesCreated(flecs::iter& it);
-    void BroadcastEntitiesUpdated(flecs::iter& it);
+    void BroadcastEntitiesCreated  (flecs::iter& it);
+    void BroadcastEntitiesUpdated  (flecs::iter& it);
     void BroadcastEntitiesDestroyed(flecs::iter& it);
 
 }

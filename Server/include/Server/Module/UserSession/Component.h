@@ -5,14 +5,13 @@
 #ifndef MCC_SERVER_MODULE_USER_SESSION_COMPONENT_H
 #define MCC_SERVER_MODULE_USER_SESSION_COMPONENT_H
 
+#include "Common/Utils/FlecsUtils.h"
+
 namespace Mcc
 {
 
-    struct UserSession;
-    struct UserSessionHolder
-    {
-        UserSession* session;
-    };
+    namespace _ { struct UserSessionModuleTag {}; };
+    using CUserSession = ComponentPtrWrapper<UserSession, _::UserSessionModuleTag>;
 
 }
 

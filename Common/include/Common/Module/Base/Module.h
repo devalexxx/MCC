@@ -17,8 +17,9 @@ namespace Mcc
         BaseModule(flecs::world& world);
 
         virtual void RegisterComponent(flecs::world& world) = 0;
-        virtual void RegisterSystem(flecs::world& world)    = 0;
-        virtual void RegisterHandler(flecs::world& world)   = 0;
+        virtual void RegisterPrefab   (flecs::world& world) = 0;
+        virtual void RegisterSystem   (flecs::world& world) = 0;
+        virtual void RegisterObserver (flecs::world& world) = 0;
     };
 
 }

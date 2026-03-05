@@ -17,24 +17,20 @@
 namespace Mcc
 {
 
-    class EntityRendererModule final : public BaseModule<EntityRendererModule, RendererModule>
+    struct EntityRendererModule final : BaseModule<EntityRendererModule, RendererModule>
     {
-      public:
         explicit EntityRendererModule(flecs::world& world);
 
         void RegisterComponent(flecs::world& world) override;
-        void RegisterSystem(flecs::world& world) override;
-        void RegisterHandler(flecs::world& world) override;
+        void RegisterPrefab   (flecs::world& world) override;
+        void RegisterSystem   (flecs::world& world) override;
+        void RegisterObserver (flecs::world& world) override;
 
-        void SetupEntityMeshSystem(flecs::iter& it);
-        void RenderUserEntitySystem(flecs::iter& it);
-
-      private:
-        VertexArray mVertexArray;
-        Buffer      mVertexBuffer;
-        Buffer      mIndexBuffer;
-        size_t      mIndexCount;
-        Program     mProgram;
+        VertexArray vertexArray;
+        Buffer      vertexBuffer;
+        Buffer      indexBuffer;
+        size_t      indexCount;
+        Program     program;
     };
 }
 

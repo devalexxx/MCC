@@ -12,22 +12,19 @@
 namespace Mcc
 {
 
-    struct InterpolationExcludedTag
-    {};
+    struct TInterpolationExcluded {};
 
     using TimeClock = std::chrono::steady_clock;
     using TimePoint = std::chrono::time_point<TimeClock>;
 
     struct Snapshot
     {
-        Transform transform {};
+        CTransform transform {};
         TimePoint time;
     };
 
-    struct SnapshotQueue
-    {
-        std::deque<Snapshot> data;
-    };
+    namespace _ { struct EntityReplicationModuleTag {}; };
+    using CSnapshotQueue = ComponentWrapper<std::deque<Snapshot>, _::EntityReplicationModuleTag>;
 
 }
 

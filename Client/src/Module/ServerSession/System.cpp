@@ -15,16 +15,16 @@ namespace Mcc
         SessionState::Inactive    ::Enter(it.world());
     }
 
-    void HandleConnectionResultSystem(const flecs::iter& it, size_t, SrvConnResult& result)
+    void HandleConnectionResultSystem(const flecs::iter& it, size_t, CSrvConnTask& task)
     {
         const auto world = it.world();
-        switch (result.GetState())
+        switch (task.GetState())
         {
             case Hx::TaskState::Cancelled:
                 SrvConnState::Failed::Enter(world);
                 break;
             case Hx::TaskState::Done:
-                if (!result.GetResult()->get())
+                if (!task.GetResult()->get())
                 {
                     SrvConnState::Failed::Enter(world);
                     break;
@@ -35,19 +35,19 @@ namespace Mcc
             default:
                 return;
         }
-        world.remove<SrvConnResult>();
+        world.remove<CSrvConnTask>();
     }
 
-    void HandleDisconnectionResultSystem(const flecs::iter& it, size_t, SrvDConnResult& result)
+    void HandleDisconnectionResultSystem(const flecs::iter& it, size_t, CSrvDConnTask& task)
     {
         const auto world = it.world();
-        switch (result.GetState())
+        switch (task.GetState())
         {
             case Hx::TaskState::Cancelled:
                 SrvConnState::Failed::Enter(world);
                 break;
             case Hx::TaskState::Done:
-                if (!result.GetResult()->get())
+                if (!task.GetResult()->get())
                 {
                     SrvConnState::Failed::Enter(world);
                     break;
@@ -58,7 +58,7 @@ namespace Mcc
             default:
                 return;
         }
-        world.remove<SrvDConnResult>();
+        world.remove<CSrvDConnTask>();
     }
 
 }

@@ -12,13 +12,14 @@ namespace Mcc
     template<typename T, typename... Ds>
     BaseModule<T, Ds...>::BaseModule(flecs::world& world)
     {
-        (world.import <Ds>(), ...);
+        (world.import<Ds>(), ...);
         MCC_LOG_DEBUG("Import {}...", Hx::TypeName<T>());
         world.module<T>();
 
         static_cast<T*>(this)->RegisterComponent(world);
-        static_cast<T*>(this)->RegisterSystem(world);
-        static_cast<T*>(this)->RegisterHandler(world);
+        static_cast<T*>(this)->RegisterPrefab   (world);
+        static_cast<T*>(this)->RegisterSystem   (world);
+        static_cast<T*>(this)->RegisterObserver (world);
     }
 
 }

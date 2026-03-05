@@ -21,8 +21,9 @@ namespace Mcc
         TerrainReplicationModule(flecs::world& world);
 
         void RegisterComponent(flecs::world& world) override;
-        void RegisterSystem(flecs::world& world) override;
-        void RegisterHandler(flecs::world& world) override;
+        void RegisterPrefab   (flecs::world& world) override;
+        void RegisterSystem   (flecs::world& world) override;
+        void RegisterObserver (flecs::world& world) override;
 
         static void ReplicateChunk(UserSession* session, const flecs::world& world, flecs::entity_t chunk);
     };

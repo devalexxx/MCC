@@ -11,22 +11,14 @@
 
 #include <Hexis/Core/Task.h>
 
-#include <vector>
-
 namespace Mcc
 {
 
     REGISTER_STATE(StateTargetEntity, GenerationState, Planned, Progress, Done, Failed)
 
-    struct PendingChunk
-    {
-        Hx::UniqueTaskRef<Chunk> pendingChunk;
-    };
-
-    struct PendingReplication
-    {
-        std::vector<UserSession*> sessions;
-    };
+    namespace _ { struct TerrainGenerationModuleTag {}; };
+    using CChunkGenTask       = ComponentWrapper<Hx::UniqueTaskRef<Chunk>        , _::TerrainGenerationModuleTag>;
+    using CPendingReplication = ComponentWrapper<std::unordered_set<UserSession*>, _::TerrainGenerationModuleTag>;
 
 }
 

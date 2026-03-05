@@ -13,8 +13,8 @@ namespace Mcc
 {
 
     void SetupSessionStateSystem        (const flecs::iter& it);
-    void HandleConnectionResultSystem   (const flecs::iter& it, size_t, SrvConnResult&    result);
-    void HandleDisconnectionResultSystem(const flecs::iter& it, size_t, SrvDConnResult& result);
+    void HandleConnectionResultSystem   (const flecs::iter& it, size_t, CSrvConnTask& task);
+    void HandleDisconnectionResultSystem(const flecs::iter& it, size_t, CSrvDConnTask& task);
 
 }
 

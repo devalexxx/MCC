@@ -14,44 +14,49 @@
 #include "Common/Network/Packet.h"
 #include "Common/Phase.h"
 #include "Common/SceneImporter.h"
-#include "Common/Utils/Assert.h"
-#include "Common/Utils/Logging.h"
 
 namespace Mcc
 {
 
     EntityReplicationModule::EntityReplicationModule(flecs::world& world) : BaseModule(world)
-    {}
+    {
+        const auto* ctx = ClientWorldContext::Get(world);
+        ctx->networkManager.Subscribe<OnEntitiesCreated>  (OnEntitiesCreatedHandler, world);
+        ctx->networkManager.Subscribe<OnEntitiesUpdated>  (OnEntitiesUpdatedHandler, world);
+        ctx->networkManager.Subscribe<OnEntitiesDestroyed>(OnEntitiesDestroyedHandler, world);
+    }
 
     void EntityReplicationModule::RegisterComponent(flecs::world& world)
     {
-        world.component<InterpolationExcludedTag>();
-        world.component<SnapshotQueue>();
+        world.component<TInterpolationExcluded>();
+
+        world.component<TimePoint>()
+            .opaque(flecs::String)
+            .serialize([](const flecs::serializer* s, const TimePoint* data) {
+                const std::string str = std::to_string(data->time_since_epoch().count());
+                return s->value(flecs::String, str.c_str());
+            });
+
+        world.component<Snapshot>()
+            .member<CTransform>("transform")
+            .member<TimePoint>("time");
+
+        AutoRegister<CSnapshotQueue>::Register(world, "CSnapshotQueue");
     }
+
+    void EntityReplicationModule::RegisterPrefab(flecs::world& /* world*/ ) {}
 
     void EntityReplicationModule::RegisterSystem(flecs::world& world)
     {
-        world.system<Transform, SnapshotQueue>("EntityInterpolation")
+        world.system<CTransform, CSnapshotQueue>("EntityInterpolation")
             .kind<Phase::OnUpdate>()
-            .without<InterpolationExcludedTag>()
+            .without<TInterpolationExcluded>()
             .each(EntityInterpolationSystem);
     }
 
-    void EntityReplicationModule::RegisterHandler(flecs::world& world)
-    {
-        const auto* ctx = ClientWorldContext::Get(world);
-        ctx->networkManager.Subscribe<OnEntitiesCreated>([&world](const auto& event) {
-            OnEntitiesCreatedHandler(world, event);
-        });
-        ctx->networkManager.Subscribe<OnEntitiesUpdated>([&world](const auto& event) {
-            OnEntitiesUpdatedHandler(world, event);
-        });
-        ctx->networkManager.Subscribe<OnEntitiesDestroyed>([&world](const auto& event) {
-            OnEntitiesDestroyedHandler(world, event);
-        });
-    }
+    void EntityReplicationModule::RegisterObserver(flecs::world& /* world */) {}
 
-    void EntityReplicationModule::OnEntitiesCreatedHandler(const flecs::world& world, const OnEntitiesCreated& event)
+    void EntityReplicationModule::OnEntitiesCreatedHandler(const OnEntitiesCreated& event, const flecs::world& world)
     {
         const auto* ctx = ClientWorldContext::Get(world);
 
@@ -59,40 +64,24 @@ namespace Mcc
         {
             if (const auto lid = ctx->networkMapping.GetLHandle(state.handle); lid.has_value())
             {
-                MCC_LOG_WARN("The network id {} is already associated to a local entity(#{})", state.handle, *lid);
+                MCC_LOG_WARN(
+                    "[EntityCreatedHandler] The network id {} is already associated to a local entity(#{})",
+                    state.handle, *lid
+                );
                 continue;
             }
 
             world.entity()
-                .is_a<NetworkEntityPrefab>()
-                .set<NetworkProps>({ state.handle })
+                .is_a<PNetEntity>()
+                .set<CNetProps>({ state.handle })
                 .set(state.transform)
-                .set<SnapshotQueue>({})
+                .set<CSnapshotQueue>({})
                 .child_of<SceneRoot>();
         }
     }
 
-    void
-    EntityReplicationModule::OnEntitiesDestroyedHandler(const flecs::world& world, const OnEntitiesDestroyed& event)
-    {
-        const auto* ctx = ClientWorldContext::Get(world);
 
-        for (const auto handle: event.handles)
-        {
-            if (auto id = ctx->networkMapping.GetLHandle(handle); id.has_value())
-            {
-                if (!world.is_alive(*id))
-                {
-                    MCC_LOG_WARN("The local entity associated to the network id {} isn't alive", handle);
-                    continue;
-                }
-
-                world.entity(*id).destruct();
-            }
-        }
-    }
-
-    void EntityReplicationModule::OnEntitiesUpdatedHandler(const flecs::world& world, const OnEntitiesUpdated& event)
+    void EntityReplicationModule::OnEntitiesUpdatedHandler(const OnEntitiesUpdated& event, const flecs::world& world)
     {
         const auto* ctx = ClientWorldContext::Get(world);
 
@@ -102,13 +91,38 @@ namespace Mcc
             {
                 if (!world.is_alive(*id))
                 {
-                    MCC_LOG_WARN("The local entity associated to the network id {} isn't alive", state.handle);
+                    MCC_LOG_WARN("[EntityUpdateHandler] Entity(#{}, {}) isn't alive", *id, state.handle);
                     continue;
                 }
 
-                world.entity(*id).get([&state](SnapshotQueue& queue) {
-                    queue.data.push_front({ state.transform, TimeClock::now() });
-                });
+                const auto queue = world.entity(*id).try_get_mut<CSnapshotQueue>();
+                if (!queue)
+                {
+                    MCC_LOG_WARN("[EntityUpdateHandler] Entity(#{}, {}) doesn't have a snapshot queue", *id,state.handle);
+                    return;
+                }
+
+                queue->push_front({ .transform = state.transform, .time = TimeClock::now() });
+            }
+        }
+    }
+
+    void
+    EntityReplicationModule::OnEntitiesDestroyedHandler(const OnEntitiesDestroyed& event, const flecs::world& world)
+    {
+        const auto* ctx = ClientWorldContext::Get(world);
+
+        for (const auto handle: event.handles)
+        {
+            if (auto id = ctx->networkMapping.GetLHandle(handle); id.has_value())
+            {
+                if (!world.is_alive(*id))
+                {
+                    MCC_LOG_WARN("[EntityDestroyedHandler] Entity(#{}, {}) isn't alive", *id, handle);
+                    continue;
+                }
+
+                world.entity(*id).destruct();
             }
         }
     }

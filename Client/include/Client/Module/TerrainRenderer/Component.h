@@ -9,19 +9,18 @@
 #include "Client/Graphics/Mesh.h"
 #include "Client/Graphics/VertexArray.h"
 
+#include "Common/Utils/FlecsUtils.h"
+
 #include "Hexis/Core/Task.h"
 
 namespace Mcc
 {
 
-    struct ShouldBuildMeshTag
-    {};
-    struct CouldRenderChunkTag
-    {};
-    struct ShouldRenderChunkTag
-    {};
+    struct TShouldBuildMesh   {};
+    struct TCouldRenderChunk  {};
+    struct TShouldRenderChunk {};
 
-    struct ChunkMesh
+    struct CChunkMesh
     {
         VertexArray vertexArray;
         Buffer      vertexBuffer { GL_ARRAY_BUFFER };
@@ -29,11 +28,8 @@ namespace Mcc
         size_t      indexCount;
     };
 
-
-    struct MeshHolder
-    {
-        Hx::UniqueTaskRef<Mesh> pendingMesh;
-    };
+    namespace _ { struct TerrainRendererModuleTag {}; }
+    using CChunkMeshGenTask = ComponentWrapper<Hx::UniqueTaskRef<Mesh>, _::TerrainRendererModuleTag>;
 
 }
 

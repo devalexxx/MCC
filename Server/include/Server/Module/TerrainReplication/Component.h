@@ -8,19 +8,13 @@
 namespace Mcc
 {
 
-    struct ChunkDirtyTag
-    {};
-    struct ChunkCreatedTag
-    {};
-    struct ChunkDestroyedTag
-    {};
+    struct TChunkDirty     {};
+    struct TChunkCreated   {};
+    struct TChunkDestroyed {};
 
-    struct BlockDirtyTag
-    {};
-    struct BlockCreatedTag
-    {};
-    struct BlockDestroyedTag
-    {};
+    struct TBlockDirty     {};
+    struct TBlockCreated   {};
+    struct TBlockDestroyed {};
 
 }
 

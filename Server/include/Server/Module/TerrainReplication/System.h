@@ -10,10 +10,10 @@
 namespace Mcc
 {
 
-    struct Transform;
+    struct CTransform;
 
-    void OnPlayerCreatedObserver(flecs::entity entity, const Transform& transform);
-    void OnPlayerMoveObserver(flecs::iter& it, size_t row);
+    void OnPlayerCreatedObserver(flecs::entity entity, const CTransform& transform);
+    void OnPlayerMoveObserver   (flecs::iter& it, size_t row);
 
 }
 

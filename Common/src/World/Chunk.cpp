@@ -6,6 +6,7 @@
 
 #include "Common/Module/Network/Component.h"
 #include "Common/Module/Terrain/Component.h"
+#include "Common/Utils/BlockUtils.h"
 #include "Common/Utils/Logging.h"
 #include "Common/WorldContext.h"
 
@@ -120,11 +121,12 @@ namespace Mcc
                 if (count > 0)
                 {
                     const auto id = data.palette[currentIndex];
-                    if (const auto props = world.entity(id).try_get<NetworkProps>(); props)
+                    const auto e  = world.entity(id);
+                    if (const auto props = e.try_get<CNetProps>(); props)
                     {
                         if (!IsValid(props->handle))
                         {
-                            MCC_LOG_WARN("The network id attached to #{} is invalid", id);
+                            MCC_LOG_WARN("[RLECompression] The network id assigned to the block({}, #{}) is invalid", GetBlockName(e), id);
                             return std::nullopt;
                         }
 
@@ -132,7 +134,7 @@ namespace Mcc
                     }
                     else
                     {
-                        MCC_LOG_WARN("No network id attached to #{}", id);
+                        MCC_LOG_WARN("[RLECompression] No network id assigned to block({}, #{})", GetBlockName(e), id);
                         return std::nullopt;
                     }
                 }
@@ -144,22 +146,22 @@ namespace Mcc
             return compressed;
         }
 
-        std::optional<ChunkData<flecs::entity_t>> FromNetwork(const RLEChunkData& compressed, const flecs::world& world)
+        std::optional<ChunkData<flecs::entity_t>> FromNetwork(const RLEChunkData& rle, const flecs::world& world)
         {
             const auto* ctx = WorldContext<>::Get(world);
 
             ChunkData<flecs::entity_t> data {
-                {},
-                { Chunk::Size * Chunk::Size * Chunk::Height, 2 }
+                .palette={},
+                .mapping={ Chunk::Size * Chunk::Size * Chunk::Height, 2 }
             };
             size_t currentOffset = 0;
-            for (auto [handle, count]: compressed.data)
+            for (auto [handle, count]: rle.data)
             {
                 if (const auto id = ctx->networkMapping.GetLHandle(handle); id.has_value())
                 {
                     if (!world.is_valid(*id))
                     {
-                        MCC_LOG_WARN("The local id attached to #{} is invalid", handle);
+                        MCC_LOG_WARN("[RLEDecompression] The local id assigned to the block({}) is invalid", handle);
                         return std::nullopt;
                     }
 
@@ -180,7 +182,7 @@ namespace Mcc
                 }
                 else
                 {
-                    MCC_LOG_WARN("No local id attached to {}", handle);
+                    MCC_LOG_WARN("[RLEDecompression] No local id attached to the block({})", handle);
                     return std::nullopt;
                 }
             }

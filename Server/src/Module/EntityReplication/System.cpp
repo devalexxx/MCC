@@ -22,9 +22,9 @@ namespace Mcc
 
         while (it.next())
         {
-            auto t = it.field<const Transform>(0);
-            auto e = it.field<const Extra>(1);
-            auto n = it.field<const NetworkProps>(2);
+            auto t = it.field<const CTransform>(0);
+            auto e = it.field<const CEntityDataMap>(1);
+            auto n = it.field<const CNetProps>(2);
 
             OnEntitiesCreated packet;
             for (const auto i: it)
@@ -34,13 +34,13 @@ namespace Mcc
 
                 if (!IsValid(handle))
                 {
-                    MCC_LOG_WARN("The network id attached to #{} is invalid", entity.id());
+                    MCC_LOG_WARN("[BroadcastEntitiesCreated] Entity(#{})'s network id is invalid", entity.id());
                     continue;
                 }
 
-                packet.states.push_back({ handle, t[i], e[i].data });
-                entity.remove<EntityCreatedTag>();
-                MCC_LOG_INFO("Entity({}) has been created and replicated", handle);
+                packet.states.push_back({ .handle=handle, .transform=t[i], .extra=e[i] });
+                entity.remove<TEntityCreated>();
+                MCC_LOG_INFO("[BroadcastEntitiesCreated] Entity({}) has been created and replicated", handle);
             }
             ctx->networkManager.Broadcast(std::move(packet), ENET_PACKET_FLAG_RELIABLE, 0);
         }
@@ -52,9 +52,9 @@ namespace Mcc
 
         while (it.next())
         {
-            auto t = it.field<const Transform>(0);
-            auto e = it.field<const Extra>(1);
-            auto n = it.field<const NetworkProps>(2);
+            auto t = it.field<const CTransform>(0);
+            auto e = it.field<const CEntityDataMap>(1);
+            auto n = it.field<const CNetProps>(2);
 
             OnEntitiesUpdated packet;
             for (const auto i: it)
@@ -64,13 +64,13 @@ namespace Mcc
 
                 if (!IsValid(handle))
                 {
-                    MCC_LOG_WARN("The network id attached to #{} is invalid", entity.id());
+                    MCC_LOG_WARN("[BroadcastEntitiesUpdated] Entity(#{})'s network id is invalid", entity.id());
                     entity.destruct();
                     continue;
                 }
 
-                packet.states.push_back({ handle, t[i], e[i].data });
-                entity.remove<EntityDirtyTag>();
+                packet.states.push_back({ .handle=handle, .transform=t[i], .extra=e[i] });
+                entity.remove<TEntityDirty>();
             }
             ctx->networkManager.Broadcast(std::move(packet), ENET_PACKET_FLAG_RELIABLE, 0);
         }
@@ -82,7 +82,7 @@ namespace Mcc
 
         while (it.next())
         {
-            auto n = it.field<const NetworkProps>(0);
+            auto n = it.field<const CNetProps>(0);
 
             OnEntitiesDestroyed packet;
             for (const auto i: it)
@@ -92,14 +92,14 @@ namespace Mcc
 
                 if (!IsValid(handle))
                 {
-                    MCC_LOG_WARN("The network id attached to #{} is invalid", entity.id());
+                    MCC_LOG_WARN("[BroadcastEntitiesDestroyed] Entity(#{})'s network id is invalid", entity.id());
                     entity.destruct();
                     continue;
                 }
 
                 packet.handles.push_back(handle);
                 entity.destruct();
-                MCC_LOG_INFO("Entity({}) has been destroyed and replicated", handle);
+                MCC_LOG_INFO("[BroadcastEntitiesDestroyed] Entity({}) has been destroyed and replicated", handle);
             }
             ctx->networkManager.Broadcast(std::move(packet), ENET_PACKET_FLAG_RELIABLE, 0);
         }

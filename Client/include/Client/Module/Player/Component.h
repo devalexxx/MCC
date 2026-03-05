@@ -6,21 +6,17 @@
 #define MCC_CLIENT_MODULE_PLAYER_COMPONENT_H
 
 #include "Common/Module/Entity/Component.h"
+#include "Common/Utils/FlecsUtils.h"
 
 namespace Mcc
 {
 
-    struct PlayerEntityTag
-    {};
+    struct TPlayerEntity {};
 
-    struct PlayerEntityPrefab
-    {};
+    struct PPlayerEntity {};
 
-    struct CurrentPlayerInput
-    {
-        UserInput input;
-    };
-
+    namespace _ { struct PlayerModuleTag {}; };
+    using CCurrentPlayerInput = ComponentWrapper<UserInput, _::PlayerModuleTag>;
 }
 
 #endif

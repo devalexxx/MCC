@@ -23,26 +23,28 @@ namespace Mcc
     {
         GenerationState::Register(world);
 
-        world.component<PendingChunk>();
-        world.component<PendingReplication>();
+        AutoRegister<CChunkGenTask>      ::Register(world, "CChunkGenTask");
+        AutoRegister<CPendingReplication>::Register(world, "CPendingReplication");
     }
+
+    void TerrainGenerationModule::RegisterPrefab(flecs::world& /* world */) {}
 
     void TerrainGenerationModule::RegisterSystem(flecs::world& world)
     {
-        world.system()
+        world.system("SetupBlockRegistry")
             .kind<Phase::OnLoad>()
             .run(SetupBlockRegistrySystem);
 
-        world.system<PendingChunk, ChunkHolder>("HandleGenerationEndingSystem")
+        world.system<CChunkGenTask>("HandleGenerationEnding")
             .kind<Phase::OnSetup>()
             .with<GenerationState, GenerationState::Progress>()
             .each(HandleGenerationEndingSystem);
     }
 
-    void TerrainGenerationModule::RegisterHandler(flecs::world& world)
+    void TerrainGenerationModule::RegisterObserver(flecs::world& world)
     {
         GenerationState::Done::OnEnter(world)
-            .with<PendingReplication>()
+            .with<CPendingReplication>()
             .each(DispatchPendingReplication);
     }
 
@@ -56,14 +58,14 @@ namespace Mcc
     {
         const auto ctx    = ServerWorldContext::Get(world);
         const auto entity = world.entity()
-            .is_a<ChunkPrefab>()
-            .set<ChunkPosition>({ position })
+            .is_a<PChunk>()
+            .set<CChunkPos>(position)
             .child_of<SceneRoot>();
 
         GenerationState::Planned::Enter(entity);
         auto task = ctx->scheduler.Insert([=, this] { return mGenerator.Generate(position); }).AsUnique().Enqueue();
 
-        entity.emplace<PendingChunk>(std::move(task));
+        entity.emplace<CChunkGenTask>(std::move(task));
         // Should be set in the task
         GenerationState::Progress::Enter(entity);
 

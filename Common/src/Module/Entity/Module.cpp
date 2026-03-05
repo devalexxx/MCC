@@ -6,50 +6,74 @@
 
 #include "Common/Module/Entity/Component.h"
 #include "Common/Module/Network/Component.h"
-#include "Common/Utils/Logging.h"
+#include "Common/Utils/FlecsUtils.h"
 
 namespace Mcc
 {
 
-    EntityModule::EntityModule(flecs::world& world) : BaseModule(world)
-    {
-        world.prefab<EntityPrefab>().add<EntityTag>().set_auto_override<Transform>({
-            { 0.f, 0.f, 0.f },
-            {},
-            { 1.f, 1.f, 1.f }
-        });
-
-        world.prefab<NetworkEntityPrefab>()
-            .is_a<NetworkObjectPrefab>()
-            .is_a<EntityPrefab>()
-            .add<NetworkEntityTag>()
-            .set_auto_override<Extra>({});
-
-        world.prefab<UserEntityPrefab>()
-            .is_a<NetworkEntityPrefab>()
-            .add<UserEntityTag>()
-            .set_auto_override<UserInputQueue>({});
-    }
+    EntityModule::EntityModule(flecs::world& world) : BaseModule(world) {}
 
     void EntityModule::RegisterComponent(flecs::world& world)
     {
-        world.component<EntityTag>();
-        world.component<NetworkEntityTag>();
-        world.component<UserEntityTag>();
+        world.component<TEntity>();
+        world.component<TNetworkEntity>();
+        world.component<TUserEntity>();
 
-        world.component<EntityPrefab>();
-        world.component<NetworkEntityPrefab>();
-        world.component<UserEntityPrefab>();
+        world.component<PEntity>();
+        world.component<PNetEntity>();
+        world.component<PUserEntity>();
 
-        world.component<Transform>();
-        world.component<Extra>();
-        world.component<UserInputQueue>();
+        world.component<CTransform>()
+            .member<glm::vec3>("position")
+            .member<glm::quat>("rotation")
+            .member<glm::vec3>("scale");
+
+        AutoRegister<CEntityDataMap>::Register(world, "CEntityDataMap");
+
+        world.component<UserInput::Meta>()
+            .member<uint16_t>("id")
+            .member<float>   ("dt");
+
+        world.component<UserInput::Movement>()
+            .member<bool>("forward")
+            .member<bool>("backward")
+            .member<bool>("left")
+            .member<bool>("right")
+            .member<bool>("up")
+            .member<bool>("down");
+
+        world.component<UserInput::Axis>()
+            .member<float>("x")
+            .member<float>("y");
+
+        world.component<UserInput>()
+            .member<UserInput::Meta>    ("meta")
+            .member<UserInput::Movement>("movement")
+            .member<UserInput::Axis>    ("axis");
+
+        AutoRegister<CUserInputQueue>::Register(world, "CUserInputQueue");
     }
 
-    void EntityModule::RegisterSystem(flecs::world& /* world */)
-    {}
+    void EntityModule::RegisterPrefab(flecs::world& world)
+    {
+        world.prefab<PEntity>()
+            .add<TEntity>()
+            .set<CTransform>(CTransform::Identity());
 
-    void EntityModule::RegisterHandler(flecs::world& /* world */)
-    {}
+        world.prefab<PNetEntity>()
+            .is_a<PNetObject>()
+            .is_a<PEntity>()
+            .add<TNetworkEntity>()
+            .set<CEntityDataMap>({});
+
+        world.prefab<PUserEntity>()
+            .is_a<PNetEntity>()
+            .add<TUserEntity>()
+            .set<CUserInputQueue>({});
+    }
+
+    void EntityModule::RegisterSystem(flecs::world& /* world */) {}
+
+    void EntityModule::RegisterObserver(flecs::world& /* world */) {}
 
 }

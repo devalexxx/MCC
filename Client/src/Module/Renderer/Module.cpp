@@ -18,38 +18,48 @@ namespace Mcc
     RendererModule::RendererModule(flecs::world& world) : BaseModule(world)
     {}
 
-    void RendererModule::RegisterComponent(flecs::world& /* world */)
-    {}
+    void RendererModule::RegisterComponent(flecs::world& /* world */) {}
+
+    void RendererModule::RegisterPrefab(flecs::world& /* world */) {}
 
     void RendererModule::RegisterSystem(flecs::world& world)
     {
-        world.system("SetupRenderer").kind<Phase::OnLoad>().run(SetupRendererSystem);
+        world.system("SetupRenderer")
+            .kind<Phase::OnLoad>()
+            .run(SetupRendererSystem);
 
-        world.system("PollWindowEvent").kind<Phase::OnSetup>().run(PollWindowEventSystem);
+        world.system("PollWindowEvent")
+            .kind<Phase::OnSetup>()
+            .run(PollWindowEventSystem);
 
-        world.system("ClearFrame").kind<Phase::OnClear>().run(ClearFrameSystem);
+        world.system("ClearFrame")
+            .kind<Phase::OnClear>()
+            .run(ClearFrameSystem);
 
-        world.system("RenderFrame").kind<Phase::OnRender>().run(RenderFrameSystem);
+        world.system("RenderFrame")
+            .kind<Phase::OnRender>()
+            .run(RenderFrameSystem);
     }
 
-    void RendererModule::RegisterHandler(flecs::world& /* world */)
-    {}
+    void RendererModule::RegisterObserver(flecs::world& /* world */) {}
 
     std::tuple<glm::vec3, glm::mat4, glm::mat4> RendererModule::GetView(const flecs::world& world)
     {
         const auto* ctx = ClientWorldContext::Get(world);
 
-        Transform      cTransform {};
-        CameraSettings cSettings {};
-        world.query_builder<const Transform, const CameraSettings>().with<ActiveCameraTag>().build().run(
-            [&](flecs::iter& it) {
+        CTransform      cTransform {};
+        CCameraSettings cSettings {};
+        world.query_builder<const CTransform, const CCameraSettings>()
+            .with<TActiveCamera>()
+            .build()
+            .run([&](flecs::iter& it) {
                 bool isSet = false;
                 while (it.next())
                 {
                     if (!isSet)
                     {
-                        auto t = it.field<const Transform>(0);
-                        auto s = it.field<const CameraSettings>(1);
+                        auto t = it.field<const CTransform>(0);
+                        auto s = it.field<const CCameraSettings>(1);
 
                         if (it.count() > 1)
                             MCC_LOG_WARN("More than one camera active");
@@ -66,15 +76,11 @@ namespace Mcc
                         }
                     }
                 }
-            }
-        );
+            });
 
-        const glm::vec3 up =
-            glm::normalize(glm::cross(cTransform.rotation * glm::right, cTransform.rotation * glm::forward));
-        const glm::mat4 view =
-            glm::lookAt(cTransform.position, cTransform.position + cTransform.rotation * glm::forward, up);
-        const glm::mat4 proj =
-            glm::perspective(cSettings.fov, ctx->window.GetAspectRatio(), cSettings.zNear, cSettings.zFar);
+        const glm::vec3 up   = glm::normalize(glm::cross(cTransform.rotation * glm::right, cTransform.rotation * glm::forward));
+        const glm::mat4 view = glm::lookAt(cTransform.position, cTransform.position + cTransform.rotation * glm::forward, up);
+        const glm::mat4 proj = glm::perspective(cSettings.fov, ctx->window.GetAspectRatio(), cSettings.zNear, cSettings.zFar);
 
         return { cTransform.position, view, proj };
     }

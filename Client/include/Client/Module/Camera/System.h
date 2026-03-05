@@ -14,7 +14,7 @@
 namespace Mcc
 {
 
-    void CameraFollowSystem(const flecs::iter& it, size_t, Transform& transform, const CameraFollowSettings& settings);
+    void CameraFollowSystem(const flecs::iter& it, size_t, CTransform& transform, const CCameraFollowSettings& settings);
 
 }
 

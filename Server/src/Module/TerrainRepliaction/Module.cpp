@@ -5,7 +5,6 @@
 #include "Server/Module/TerrainReplication/Module.h"
 
 #include "Server/Module/Player/Component.h"
-#include "Server/Module/TerrainGeneration/Component.h"
 #include "Server/Module/TerrainReplication/Component.h"
 #include "Server/Module/TerrainReplication/System.h"
 #include "Server/Module/UserSession/Module.h"
@@ -14,39 +13,35 @@
 #include "Common/Module/Network/Component.h"
 #include "Common/Module/Terrain/Component.h"
 #include "Common/Module/Terrain/Module.h"
-#include "Common/Utils/Assert.h"
-#include "Common/Utils/Logging.h"
 
 namespace Mcc
 {
 
-    TerrainReplicationModule::TerrainReplicationModule(flecs::world& world) : BaseModule(world)
-    {}
+    TerrainReplicationModule::TerrainReplicationModule(flecs::world& world) : BaseModule(world) {}
 
     void TerrainReplicationModule::RegisterComponent(flecs::world& world)
     {
-        world.component<BlockCreatedTag>();
-        world.component<BlockDirtyTag>();
-        world.component<BlockDestroyedTag>();
+        world.component<TBlockCreated>();
+        world.component<TBlockDirty>();
+        world.component<TBlockDestroyed>();
 
-        world.component<ChunkCreatedTag>();
-        world.component<ChunkDirtyTag>();
-        world.component<ChunkDestroyedTag>();
+        world.component<TChunkCreated>();
+        world.component<TChunkDirty>();
+        world.component<TChunkDestroyed>();
     }
 
-    void TerrainReplicationModule::RegisterSystem(flecs::world& /* world */)
-    {
+    void TerrainReplicationModule::RegisterPrefab(flecs::world& /* world */) {}
 
-    }
+    void TerrainReplicationModule::RegisterSystem(flecs::world& /* world */) {}
 
-    void TerrainReplicationModule::RegisterHandler(flecs::world& world)
+    void TerrainReplicationModule::RegisterObserver(flecs::world& world)
     {
-        world.observer("OnPlayerMoveObserver")
+        world.observer("OnPlayerMove")
             .with(flecs::Any)
             .event<OnPlayerMoveEvent>()
             .each(OnPlayerMoveObserver);
 
-        world.observer<const Transform>("OnPlayerCreatedObserver")
+        world.observer<const CTransform>("OnPlayerCreated")
             .event<OnPlayerCreatedEvent>()
             .each(OnPlayerCreatedObserver);
     }
@@ -61,10 +56,10 @@ namespace Mcc
         OnChunk      chunkPacket;
         OnBlockBatch blockPacket;
 
-        const auto chunkEntity = stage.entity(chunk);
-        const auto& [handle]   = chunkEntity.get<const NetworkProps>();
-        const auto& position   = chunkEntity.get<const ChunkPosition>();
-        const auto  chunkPtr   = chunkEntity.get<const ChunkHolder>().chunk;
+        const auto  chunkEntity = stage.entity(chunk);
+        const auto& [handle]   = chunkEntity.get<const CNetProps>();
+        const auto& position   = chunkEntity.get<const CChunkPos>();
+        const auto& chunkPtr   = chunkEntity.get<const CChunkPtr>();
 
         chunkPacket.handle   = handle;
         chunkPacket.position = position;
@@ -79,10 +74,10 @@ namespace Mcc
             {
                 auto    blockEntity = stage.entity(block);
                 OnBlock packet;
-                packet.handle = blockEntity.get<const NetworkProps>().handle;
-                packet.color  = blockEntity.get<const BlockColor>().color;
-                packet.meta   = blockEntity.get<const BlockMeta>();
-                packet.type   = blockEntity.get<const BlockType>();
+                packet.handle = blockEntity.get<const CNetProps>().handle;
+                packet.color  = blockEntity.get<const CBlockColor>();
+                packet.meta   = blockEntity.get<const CBlockMeta>();
+                packet.type   = blockEntity.get<const CBlockType>();
                 blockPacket.push_back(std::move(packet));
 
                 session->replicatedBlocks->insert(block);

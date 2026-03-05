@@ -13,21 +13,15 @@ namespace Mcc
 
     SceneModule<GameScene>::SceneModule(flecs::world& world) : BaseModule(world)
     {
-        world.add<ServerTag>();
+        world.add<TServer>();
     }
 
-    void SceneModule<GameScene>::RegisterComponent(flecs::world& /* world */)
-    {
+    void SceneModule<GameScene>::RegisterComponent(flecs::world& /* world */) {}
 
-    }
+    void SceneModule<GameScene>::RegisterPrefab(flecs::world& /* world */) {}
 
-    void SceneModule<GameScene>::RegisterSystem(flecs::world& /* world */)
-    {
-    }
+    void SceneModule<GameScene>::RegisterSystem(flecs::world& /* world */) {}
 
-    void SceneModule<GameScene>::RegisterHandler(flecs::world& /* world */)
-    {
-
-    }
+    void SceneModule<GameScene>::RegisterObserver(flecs::world& /* world */) {}
 
 }
