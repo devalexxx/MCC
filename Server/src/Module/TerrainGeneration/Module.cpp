@@ -8,66 +8,65 @@
 #include "Server/Module/TerrainGeneration/System.h"
 #include "Server/WorldContext.h"
 
-#include "Common/Utils/Logging.h"
+#include "Common/Phase.h"
+#include "Common/SceneImporter.h"
 
 namespace Mcc
 {
 
-    TerrainGenerationModule::TerrainGenerationModule(const flecs::world& world) : mGenerator(123456789u)
-    {
-        MCC_LOG_DEBUG("Import TerrainGenerationModule...");
-        world.module<TerrainGenerationModule>();
+    TerrainGenerationModule::TerrainGenerationModule(flecs::world& world) :
+        BaseModule(world),
+        mGenerator(123456789u)
+    {}
 
-        world.component<GenerationPlannedTag>();
-        world.component<GenerationProgressTag>();
-        world.component<GenerationDoneTag>();
+    void TerrainGenerationModule::RegisterComponent(flecs::world& world)
+    {
+        GenerationState::Register(world);
 
         world.component<PendingChunk>();
         world.component<PendingReplication>();
+    }
+
+    void TerrainGenerationModule::RegisterSystem(flecs::world& world)
+    {
+        world.system()
+            .kind<Phase::OnLoad>()
+            .run(SetupBlockRegistrySystem);
 
         world.system<PendingChunk, ChunkHolder>("HandleGenerationEndingSystem")
-            .with<GenerationProgressTag>()
+            .kind<Phase::OnSetup>()
+            .with<GenerationState, GenerationState::Progress>()
             .each(HandleGenerationEndingSystem);
+    }
 
-        world.observer<const GenerationDoneTag>("DispatchPendingReplication")
-            .event(flecs::OnAdd)
+    void TerrainGenerationModule::RegisterHandler(flecs::world& world)
+    {
+        GenerationState::Done::OnEnter(world)
             .with<PendingReplication>()
             .each(DispatchPendingReplication);
+    }
 
-        world.entity("mcc:block:air")
-            .is_a<BlockPrefab>()
-            .set<BlockType>(BlockType::Gas)
-            .set<BlockMeta>({ "mcc:block:air" });
-
-        world.entity("mcc:block:stone")
-            .is_a<BlockPrefab>()
-            .set<BlockType>(BlockType::Solid)
-            .set<BlockColor>({
-                { .5f, .5f, .5f }
-        })
-            .set<BlockMeta>({ "mcc:block:stone" });
-
-        world.entity("mcc:block:dirt")
-            .is_a<BlockPrefab>()
-            .set<BlockType>(BlockType::Solid)
-            .set<BlockColor>({
-                { .0f, .7f, .3f }
-        })
-            .set<BlockMeta>({ "mcc:block:dirt" });
-
+    void TerrainGenerationModule::InitializeGenerator(const flecs::world& world)
+    {
         mGenerator.Setup(world);
     }
 
     flecs::entity
     TerrainGenerationModule::LaunchGenerationTask(const flecs::world& world, const glm::ivec3& position) const
     {
-        const auto ctx = ServerWorldContext::Get(world);
-        const auto entity =
-            world.entity().is_a<ChunkPrefab>().set<ChunkPosition>({ position }).add<GenerationProgressTag>();
+        const auto ctx    = ServerWorldContext::Get(world);
+        const auto entity = world.entity()
+            .is_a<ChunkPrefab>()
+            .set<ChunkPosition>({ position })
+            .child_of<SceneRoot>();
 
+        GenerationState::Planned::Enter(entity);
         auto task = ctx->scheduler.Insert([=, this] { return mGenerator.Generate(position); }).AsUnique().Enqueue();
 
         entity.emplace<PendingChunk>(std::move(task));
+        // Should be set in the task
+        GenerationState::Progress::Enter(entity);
+
         ctx->chunkMap[position] = entity.id();
 
         return entity;

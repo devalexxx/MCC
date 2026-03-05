@@ -10,8 +10,9 @@
 namespace Mcc
 {
 
+    void SetupBlockRegistrySystem(flecs::iter& it);
     void HandleGenerationEndingSystem(flecs::entity entity, PendingChunk& pending, ChunkHolder& holder);
-    void DispatchPendingReplication(flecs::entity entity, GenerationDoneTag);
+    void DispatchPendingReplication(flecs::entity entity, GenerationState);
 
 }
 

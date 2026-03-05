@@ -7,6 +7,8 @@
 
 #include "Server/Module/UserSession/Module.h"
 
+#include "Common/State.h"
+
 #include <Hexis/Core/Task.h>
 
 #include <vector>
@@ -14,12 +16,7 @@
 namespace Mcc
 {
 
-    struct GenerationPlannedTag
-    {};
-    struct GenerationProgressTag
-    {};
-    struct GenerationDoneTag
-    {};
+    REGISTER_STATE(StateTargetEntity, GenerationState, Planned, Progress, Done, Failed)
 
     struct PendingChunk
     {

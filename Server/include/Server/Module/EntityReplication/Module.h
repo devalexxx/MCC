@@ -5,14 +5,22 @@
 #ifndef MCC_SERVER_MODULE_ENTITY_REPLICATION_MODULE_H
 #define MCC_SERVER_MODULE_ENTITY_REPLICATION_MODULE_H
 
+#include "Common/Module/Base/Module.h"
+#include "Common/Module/Entity/Module.h"
+#include "Common/Module/Network/Module.h"
+
 #include <flecs.h>
 
 namespace Mcc
 {
 
-    struct EntityReplicationModule
+    struct EntityReplicationModule final : BaseModule<EntityReplicationModule, EntityModule>
     {
-        explicit EntityReplicationModule(const flecs::world& world);
+        explicit EntityReplicationModule(flecs::world& world);
+
+        void RegisterComponent(flecs::world& world) override;
+        void RegisterSystem(flecs::world& world) override;
+        void RegisterHandler(flecs::world& world) override;
     };
 
 }

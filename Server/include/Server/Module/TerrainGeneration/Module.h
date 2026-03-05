@@ -7,16 +7,24 @@
 
 #include "Server/World/ChunkGenerator.h"
 
+#include "Common/Module/Base/Module.h"
+#include "Common/Module/Terrain/Module.h"
+
 #include <flecs.h>
 
 namespace Mcc
 {
 
-    class TerrainGenerationModule
+    class TerrainGenerationModule final : public BaseModule<TerrainGenerationModule, TerrainModule>
     {
       public:
-        TerrainGenerationModule(const flecs::world& world);
+        TerrainGenerationModule(flecs::world& world);
 
+        void RegisterComponent(flecs::world& world) override;
+        void RegisterSystem(flecs::world& world) override;
+        void RegisterHandler(flecs::world& world) override;
+
+        void          InitializeGenerator(const flecs::world& world);
         flecs::entity LaunchGenerationTask(const flecs::world& world, const glm::ivec3& position) const;
 
       private:

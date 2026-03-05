@@ -10,9 +10,9 @@
 #include "Server/WorldContext.h"
 
 #include "Common/Module/Entity/Component.h"
-#include "Common/Module/Entity/Module.h"
+#include "Common/Module/Network/Component.h"
+#include "Common/SceneImporter.h"
 #include "Common/Utils/Assert.h"
-#include "Common/Utils/Benchmark.h"
 #include "Common/Utils/Logging.h"
 #include "Common/WorldContext.h"
 
@@ -24,25 +24,27 @@ namespace Mcc
         return static_cast<UserSession*>(peer->data);
     }
 
-    UserSessionModule::UserSessionModule(flecs::world& world)
+    UserSessionModule::UserSessionModule(flecs::world& world) : BaseModule(world)
+    {}
+
+    void UserSessionModule::RegisterComponent(flecs::world& world)
     {
-        MCC_ASSERT(world.has<EntityModule>(), "UserSessionModule require EntityModule, you must import it before.");
-        MCC_LOG_DEBUG("Import PlayerSessionModule...");
-        world.module<UserSessionModule>();
-
         world.component<UserSessionHolder>();
-
-        const auto* ctx = WorldContext<>::Get(world);
-
-        ctx->networkManager.Subscribe<ConnectEvent>([&](const auto& event) { OnConnectEventHandler(world, event); });
-        ctx->networkManager.Subscribe<DisconnectEvent>([&](const auto& event) {
-            OnDisconnectEventHandler(world, event);
-        });
-
-        ctx->networkManager.Subscribe<From<OnClientInfo>>([&](const auto& from) { OnClientInfoHandler(world, from); });
     }
 
-    void UserSessionModule::OnConnectEventHandler(const flecs::world& world, const ConnectEvent& event)
+    void UserSessionModule::RegisterSystem(flecs::world& /* world */)
+    {}
+
+    void UserSessionModule::RegisterHandler(flecs::world& world)
+    {
+        const auto* ctx = WorldContext<>::Get(world);
+
+        ctx->networkManager.Subscribe<ConnectEvent>(OnConnectEventHandler, world);
+        ctx->networkManager.Subscribe<DisconnectEvent>(OnDisconnectEventHandler, world);
+        ctx->networkManager.Subscribe<From<OnClientInfo>>(OnClientInfoHandler, world);
+    }
+
+    void UserSessionModule::OnConnectEventHandler(const ConnectEvent& event, const flecs::world& world)
     {
         const auto* ctx = ServerWorldContext::Get(world);
 
@@ -58,7 +60,7 @@ namespace Mcc
         ctx->networkManager.Send<OnWaitingInfo>(event.peer, {}, ENET_PACKET_FLAG_RELIABLE, 0);
     }
 
-    void UserSessionModule::OnClientInfoHandler(const flecs::world& world, const From<OnClientInfo>& from)
+    void UserSessionModule::OnClientInfoHandler(const From<OnClientInfo>& from, const flecs::world& world)
     {
         const auto* ctx = ServerWorldContext::Get(world);
         if (auto* session = UserSession::Get(from.peer))
@@ -70,12 +72,11 @@ namespace Mcc
 
             world.entity()
                 .is_a<UserEntityPrefab>()
-                .set<UserSessionHolder>({
-                    session
-            })
+                .set<UserSessionHolder>({ session })
                 .set<NetworkProps>({ session->pInfo.handle })
                 .set<Transform>({ { 0, 100, 0 }, {}, { 1, 1, 1 } })
-                .add<EntityCreatedTag>();
+                .add<EntityCreatedTag>()
+                .child_of<SceneRoot>();
         }
         else
         {
@@ -85,7 +86,7 @@ namespace Mcc
         }
     }
 
-    void UserSessionModule::OnDisconnectEventHandler(const flecs::world& world, const DisconnectEvent& event)
+    void UserSessionModule::OnDisconnectEventHandler(const DisconnectEvent& event, const flecs::world& world)
     {
         const auto* ctx = WorldContext<>::Get(world);
         if (const auto* session = UserSession::Get(event.peer))

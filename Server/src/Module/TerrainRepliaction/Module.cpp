@@ -20,14 +20,11 @@
 namespace Mcc
 {
 
-    TerrainReplicationModule::TerrainReplicationModule(const flecs::world& world)
-    {
-        MCC_ASSERT(
-            world.has<TerrainModule>(), "TerrainReplicationModule require TerrainModule, you must import it before."
-        );
-        MCC_LOG_DEBUG("Import TerrainReplicationModule...");
-        world.module<TerrainReplicationModule>();
+    TerrainReplicationModule::TerrainReplicationModule(flecs::world& world) : BaseModule(world)
+    {}
 
+    void TerrainReplicationModule::RegisterComponent(flecs::world& world)
+    {
         world.component<BlockCreatedTag>();
         world.component<BlockDirtyTag>();
         world.component<BlockDestroyedTag>();
@@ -35,19 +32,23 @@ namespace Mcc
         world.component<ChunkCreatedTag>();
         world.component<ChunkDirtyTag>();
         world.component<ChunkDestroyedTag>();
+    }
 
-        world.observer("OnPlayerMoveObserver").with(flecs::Any).event<OnPlayerMoveEvent>().each(OnPlayerMoveObserver);
+    void TerrainReplicationModule::RegisterSystem(flecs::world& /* world */)
+    {
+
+    }
+
+    void TerrainReplicationModule::RegisterHandler(flecs::world& world)
+    {
+        world.observer("OnPlayerMoveObserver")
+            .with(flecs::Any)
+            .event<OnPlayerMoveEvent>()
+            .each(OnPlayerMoveObserver);
 
         world.observer<const Transform>("OnPlayerCreatedObserver")
             .event<OnPlayerCreatedEvent>()
             .each(OnPlayerCreatedObserver);
-    }
-
-    [[maybe_unused]] static int32_t GetThreadIndex()
-    {
-        static std::atomic<int32_t> counter   = 0;
-        static thread_local int32_t thread_id = counter++;
-        return thread_id;
     }
 
     void

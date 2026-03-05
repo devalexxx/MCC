@@ -4,19 +4,10 @@
 
 #include "Server/ServerApplication.h"
 
-#include "Server/Module/EntityReplication/Module.h"
-#include "Server/Module/Player/Module.h"
-#include "Server/Module/TerrainGeneration/Module.h"
-#include "Server/Module/TerrainReplication/Module.h"
-#include "Server/Module/UserSession/Module.h"
+#include "Server/Scene/Scene.h"
 #include "Server/World/ChunkGenerator.h"
 #include "Server/WorldContext.h"
 
-#include "Common/Module/Entity/Module.h"
-#include "Common/Module/Network/Module.h"
-#include "Common/Module/Terrain/Component.h"
-#include "Common/Module/Terrain/Module.h"
-#include "Common/Network/Packet.h"
 #include "Common/Utils/Logging.h"
 
 #include <fmt/format.h>
@@ -89,20 +80,14 @@ namespace Mcc
         },
             [](void* ptr) { delete static_cast<ServerWorldContext*>(ptr); }
         );
-        mWorld.import <NetworkModule>();
-        mWorld.add<ServerTag>();
-        mWorld.import <EntityModule>();
-        mWorld.import <UserSessionModule>();
-        mWorld.import <EntityReplicationModule>();
-        mWorld.import <PlayerModule>();
-        mWorld.import <TerrainModule>();
-        mWorld.import <TerrainReplicationModule>();
-        mWorld.import <TerrainGenerationModule>();
+        mWorld.import<SSceneImporter>();
 
         MCC_LOG_INFO("Application started and listening on port {}", mNetworkManager.mAddr.port);
         mWorld.set_target_fps(mSettings.tickRate);
+        const auto builtinPipeline = mWorld.lookup("flecs::pipeline::BuiltinPipeline");
         while (!mWorld.should_quit())
         {
+            mWorld.run_pipeline(builtinPipeline);
             mWorld.progress();
             mNetworkManager.Poll();
         }

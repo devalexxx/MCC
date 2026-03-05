@@ -11,6 +11,7 @@
 
 #include "Common/Module/Entity/Component.h"
 #include "Common/Module/Entity/Module.h"
+#include "Common/Phase.h"
 #include "Common/Utils/Assert.h"
 #include "Common/Utils/Logging.h"
 #include "Common/WorldContext.h"
@@ -18,28 +19,37 @@
 namespace Mcc
 {
 
-    PlayerModule::PlayerModule(flecs::world& world)
-    {
-        MCC_ASSERT(world.has<EntityModule>(), "PlayerModule require EntityModule, you must import it before.");
-        MCC_LOG_DEBUG("Import PlayerInputModule...");
-        world.module<PlayerModule>();
+    PlayerModule::PlayerModule(flecs::world& world) : BaseModule(world)
+    {}
 
+    void PlayerModule::RegisterComponent(flecs::world& world)
+    {
         world.component<OnPlayerCreatedEvent>();
         world.component<OnPlayerMoveEvent>();
+    }
 
-        world.system<UserInputQueue>("ProcessPlayerInputsSystem").with<UserEntityTag>().each(ProcessPlayerInputs);
+    void PlayerModule::RegisterSystem(flecs::world& world)
+    {
+        world.system<UserInputQueue>("ProcessPlayerInputsSystem")
+            .kind<Phase::OnUpdate>()
+            .with<UserEntityTag>()
+            .each(ProcessPlayerInputs);
 
         world.system("HandlePlayerCreationSystem")
+            .kind<Phase::OnSetup>()
             .with<EntityCreatedTag>()
             .with<UserEntityTag>()
             .each(HandlePlayerCreation);
+    }
 
+    void PlayerModule::RegisterHandler(flecs::world& world)
+    {
         const auto* ctx = WorldContext<>::Get(world);
-
         ctx->networkManager.Subscribe<From<OnPlayerInput>>([&](const auto& event) {
             OnPlayerInputHandler(world, event);
         });
     }
+
 
     void PlayerModule::OnPlayerInputHandler(const flecs::world& world, const From<OnPlayerInput>& from)
     {
@@ -62,7 +72,6 @@ namespace Mcc
 
         world.entity(*lHandle).get([&from](UserInputQueue& queue) {
             queue.data.push_back(from.packet.input);
-            ;
         });
     }
 

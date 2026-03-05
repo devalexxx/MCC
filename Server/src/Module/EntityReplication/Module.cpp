@@ -10,35 +10,43 @@
 #include "Common/Module/Entity/Component.h"
 #include "Common/Module/Entity/Module.h"
 #include "Common/Module/Network/Component.h"
+#include "Common/Phase.h"
 #include "Common/Utils/Assert.h"
 #include "Common/Utils/Logging.h"
 
 namespace Mcc
 {
 
-    EntityReplicationModule::EntityReplicationModule(const flecs::world& world)
-    {
-        MCC_ASSERT(
-            world.has<EntityModule>(), "EntityReplicationModule require EntityModule, you must import it before."
-        );
-        MCC_LOG_DEBUG("Import EntityReplicationModule...");
-        world.module<EntityReplicationModule>();
+    EntityReplicationModule::EntityReplicationModule(flecs::world& world) : BaseModule(world)
+    {}
 
+    void EntityReplicationModule::RegisterComponent(flecs::world& world)
+    {
         world.component<EntityDirtyTag>();
         world.component<EntityCreatedTag>();
         world.component<EntityDestroyedTag>();
+    }
 
+    void EntityReplicationModule::RegisterSystem(flecs::world& world)
+    {
         world.system<const Transform, const Extra, const NetworkProps>("BroadcastEntitiesCreated")
+            .kind<Phase::PostUpdate>()
             .with<EntityCreatedTag>()
             .run(BroadcastEntitiesCreated);
 
         world.system<const Transform, const Extra, const NetworkProps>("BroadcastEntitiesUpdated")
+            .kind<Phase::PostUpdate>()
             .with<EntityDirtyTag>()
             .run(BroadcastEntitiesUpdated);
 
         world.system<const NetworkProps>("BroadcastEntitiesDestroyed")
+            .kind<Phase::PostUpdate>()
             .with<EntityDestroyedTag>()
             .run(BroadcastEntitiesDestroyed);
+    }
+
+    void EntityReplicationModule::RegisterHandler(flecs::world& /* world */)
+    {
     }
 
 }

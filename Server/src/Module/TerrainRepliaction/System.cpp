@@ -37,7 +37,7 @@ namespace Mcc
                 }
 
                 auto chunk = world.entity(it->second);
-                if (chunk.has<GenerationDoneTag>())
+                if (GenerationState::Done::IsActive(chunk))
                 {
                     chunks.emplace_back(chunk, chunk.get<ChunkPosition>());
                     session->replicatedChunksPending->insert(it->second);
