@@ -5,6 +5,8 @@
 #include "Common/Phase.h"
 #include "Common/Utils/Logging.h"
 
+#include "Utils/FlecsUtils.h"
+
 namespace Mcc
 {
 
@@ -141,8 +143,11 @@ namespace Mcc
         SceneList::template Apply<decltype(registerScene)>(std::move(registerScene));
 
         world.system().kind(flecs::OnStart).run([](flecs::iter& it) {
-            while (it.next()) {};
-            it.world().add<ActiveScene, DefaultScene>();
+            const auto _world = it.world();
+            _world.entity<SceneRoot>().clear();
+            _world.add<ActiveScene, DefaultScene>();
+
+            IgnoreIter(it);
         });
     }
 
