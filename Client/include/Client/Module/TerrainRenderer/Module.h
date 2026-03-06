@@ -23,7 +23,7 @@ namespace Mcc
         void RegisterHandler(flecs::world& world) override;
 
         void SetupChunkRenderingMeshSystem(flecs::entity entity, MeshHolder& holder) const;
-        void SetupChunkProgramSystem(flecs::iter& it) const;
+        void SetupChunkProgramSystem(flecs::iter& it);
         void RenderChunkMeshSystem(flecs::iter& it);
 
       private:

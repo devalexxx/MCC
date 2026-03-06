@@ -49,6 +49,7 @@ namespace Mcc
 			}
 		)""");
 
+        mProgram.Create();
         mProgram.Attach(vertexShader);
         mProgram.Attach(fragmentShader);
 

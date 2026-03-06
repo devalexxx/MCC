@@ -24,10 +24,7 @@ namespace Mcc
 
     VertexArray::~VertexArray()
     {
-        if (IsValid())
-        {
-            glCheck(glDeleteVertexArrays(1, &mId));
-        }
+        Delete();
     }
 
     VertexArray::VertexArray(VertexArray&& other) noexcept : mId(other.mId)
@@ -62,6 +59,15 @@ namespace Mcc
         glCheck(glGenVertexArrays(1, &mId));
         glBindVertexArray(mId);
         MCC_ASSERT(IsValid(), "VertexArray creation failed");
+    }
+
+    void VertexArray::Delete()
+    {
+        if (IsValid())
+        {
+            glCheck(glDeleteVertexArrays(1, &mId));
+            mId = 0;
+        }
     }
 
     void VertexArray::Bind() const

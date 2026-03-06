@@ -29,6 +29,7 @@ namespace Mcc
         [[nodiscard]] bool IsValid() const;
 
         void Create();
+        void Delete();
         void Bind() const;
 
       private:

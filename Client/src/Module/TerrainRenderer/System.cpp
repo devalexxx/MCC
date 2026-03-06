@@ -339,7 +339,7 @@ namespace Mcc
         }
     }
 
-    void TerrainRendererModule::SetupChunkProgramSystem(flecs::iter& it) const
+    void TerrainRendererModule::SetupChunkProgramSystem(flecs::iter& it)
     {
         while (it.next()) {}
 
@@ -405,6 +405,7 @@ namespace Mcc
 			}
 		)""");
 
+        mProgram.Create();
         mProgram.Attach(vertexShader);
         mProgram.Attach(fragmentShader);
 

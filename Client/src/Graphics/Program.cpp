@@ -17,15 +17,11 @@ namespace Mcc
 
     GLuint Program::sUsedProgram = 0;
 
-    Program::Program()
-    {
-        glCheck(mId = glCreateProgram());
-        MCC_ASSERT(IsValid(), "Program creation failed");
-    }
+    Program::Program() : mId(0) {}
 
     Program::~Program()
     {
-        glCheck(glDeleteProgram(mId));
+        Delete();
     }
 
     Program::Program(Program&& other) noexcept : mId(other.mId)
@@ -47,6 +43,20 @@ namespace Mcc
             other.mId = 0;
         }
         return *this;
+    }
+
+    void Program::Create()
+    {
+        glCheck(mId = glCreateProgram());
+    }
+
+    void Program::Delete()
+    {
+        if (IsValid())
+        {
+            glCheck(glDeleteProgram(mId));
+            mId = 0;
+        }
     }
 
     void Program::Attach(const Shader& shader) const

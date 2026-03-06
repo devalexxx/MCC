@@ -26,6 +26,9 @@ namespace Mcc
         Program(Program&&) noexcept;
         Program& operator=(Program&&) noexcept;
 
+        void Create();
+        void Delete();
+
         void Attach(const Shader& shader) const;
         void Detach(const Shader& shader) const;
         void Link() const;

@@ -20,10 +20,7 @@ namespace Mcc
 
     Buffer::~Buffer()
     {
-        if (IsValid())
-        {
-            glCheck(glDeleteBuffers(1, &mId));
-        }
+        Delete();
     }
 
     Buffer::Buffer(Buffer&& other) noexcept : mId(other.mId), mTarget(other.mTarget)
@@ -63,6 +60,15 @@ namespace Mcc
         glCheck(glGenBuffers(1, &mId));
         glBindBuffer(mTarget, mId);
         MCC_ASSERT(IsValid(), "Buffer creation failed");
+    }
+
+    void Buffer::Delete()
+    {
+        if (IsValid())
+        {
+            glCheck(glDeleteBuffers(1, &mId));
+            mId = 0;
+        }
     }
 
     void Buffer::Bind() const

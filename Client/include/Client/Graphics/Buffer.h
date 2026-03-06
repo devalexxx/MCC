@@ -28,6 +28,7 @@ namespace Mcc
         [[nodiscard]] bool IsValid() const;
 
         void Create();
+        void Delete();
         void Bind() const;
 
         void SetData(GLsizeiptr size, const void* data, GLenum usage) const;
