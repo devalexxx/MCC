@@ -2,8 +2,8 @@
 // Distributed under the MIT License.
 // https://opensource.org/licenses/MIT
 
-#ifndef MCC_CLIENT_GRAPHICS_COMMON_H
-#define MCC_CLIENT_GRAPHICS_COMMON_H
+#ifndef MCC_CLIENT_GRAPHICS_OPENGL_COMMON_H
+#define MCC_CLIENT_GRAPHICS_OPENGL_COMMON_H
 
 namespace Mcc
 {

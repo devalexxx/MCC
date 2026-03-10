@@ -5,7 +5,7 @@
 #ifndef MCC_CLIENT_MODULE_TERRAIN_RENDERER_MODULE_H
 #define MCC_CLIENT_MODULE_TERRAIN_RENDERER_MODULE_H
 
-#include "Client/Graphics/Program.h"
+#include "Client/Graphics/OpenGL/OpenGLProgram.h"
 
 #include "Common/Module/Terrain/Module.h"
 
@@ -23,7 +23,7 @@ namespace Mcc
         void RegisterSystem   (flecs::world& world) override;
         void RegisterObserver (flecs::world& world) override;
 
-        Program program;
+        OpenGLProgram program;
     };
 
 }

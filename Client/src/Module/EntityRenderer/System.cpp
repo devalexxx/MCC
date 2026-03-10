@@ -5,7 +5,7 @@
 #include "Client/Module/EntityRenderer/System.h"
 
 #include "Client/Graphics/Mesh.h"
-#include "Client/Graphics/Shader.h"
+#include "Client/Graphics/OpenGL/OpenGLShader.h"
 #include "Client/Module/EntityRenderer/Module.h"
 #include "Client/Module/Renderer/Module.h"
 
@@ -21,7 +21,7 @@ namespace Mcc
     {
         auto& module = it.world().get_mut<EntityRendererModule>();
 
-        const Shader vertexShader(GL_VERTEX_SHADER, R"""(
+        OpenGLShader vertexShader(GL_VERTEX_SHADER, R"""(
 			#version 330
 
 			in vec3 inVertex;
@@ -38,7 +38,7 @@ namespace Mcc
 				passColor = color;
 			}
 		)""");
-        const Shader fragmentShader(GL_FRAGMENT_SHADER, R"""(
+        OpenGLShader fragmentShader(GL_FRAGMENT_SHADER, R"""(
 			#version 330
 
 			in vec3 passColor;
@@ -50,6 +50,9 @@ namespace Mcc
 			}
 		)""");
 
+        vertexShader  .Create();
+        fragmentShader.Create();
+
         module.program.Create();
         module.program.Attach(vertexShader);
         module.program.Attach(fragmentShader);
@@ -58,6 +61,9 @@ namespace Mcc
 
         module.program.Detach(vertexShader);
         module.program.Detach(fragmentShader);
+
+        vertexShader  .Delete();
+        fragmentShader.Delete();
 
         module.vertexArray.Create();
         module.vertexArray.Bind();
@@ -84,7 +90,7 @@ namespace Mcc
         const auto modelLocation = module.program.GetUniformLocation("model");
         const auto colorLocation = module.program.GetUniformLocation("color");
 
-        module.program.Use();
+        module.program.Bind();
 
         const auto&& [_, view, proj] = RendererModule::GetView(it.world());
         module.program.SetUniformMatrix(module.program.GetUniformLocation("view"), view);

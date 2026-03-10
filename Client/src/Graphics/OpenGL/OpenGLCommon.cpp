@@ -2,7 +2,7 @@
 // Distributed under the MIT License.
 // https://opensource.org/licenses/MIT
 
-#include "Client/Graphics/Common.h"
+#include "Client/Graphics/OpenGL/OpenGLCommon.h"
 
 #include "Common/Utils/Logging.h"
 

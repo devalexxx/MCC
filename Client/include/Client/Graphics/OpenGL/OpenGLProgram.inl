@@ -2,17 +2,17 @@
 // Distributed under the MIT License.
 // https://opensource.org/licenses/MIT
 
-#include "Client/Graphics/Common.h"
-
 #include "Common/Utils/Logging.h"
+
+#include "OpenGLCommon.h"
 
 namespace Mcc
 {
     template<glm::length_t R, glm::length_t C, glm::qualifier Q>
-    void Program::SetUniformMatrix(GLint location, const glm::mat<R, C, float, Q>& matrix)
+    void OpenGLProgram::SetUniformMatrix(GLint location, const glm::mat<R, C, float, Q>& matrix)
     {
-        if (sUsedProgram != mId)
-            Use();
+        if (sUsedProgram != mObjectID)
+            Bind();
 
         if (R == C)
         {
@@ -38,10 +38,10 @@ namespace Mcc
     }
 
     template<glm::length_t L, glm::qualifier Q>
-    void Program::SetUniformVector(GLint location, const glm::vec<L, float, Q>& vec)
+    void OpenGLProgram::SetUniformVector(GLint location, const glm::vec<L, float, Q>& vec)
     {
-        if (sUsedProgram != mId)
-            Use();
+        if (sUsedProgram != mObjectID)
+            Bind();
 
         switch (L)
         {

@@ -6,8 +6,8 @@
 
 #include "Client/ClientApplication.h"
 #include "Client/Graphics/Mesh.h"
-#include "Client/Graphics/Program.h"
-#include "Client/Graphics/Shader.h"
+#include "Client/Graphics/OpenGL/OpenGLProgram.h"
+#include "Client/Graphics/OpenGL/OpenGLShader.h"
 #include "Client/Module/Renderer/Module.h"
 #include "Client/Module/TerrainRenderer/Component.h"
 #include "Client/Module/TerrainRenderer/Module.h"
@@ -321,11 +321,11 @@ namespace Mcc
                 const auto result  = task.GetResult();
                 MCC_ASSERT(result, "Mesh task data has already been retrieve");
                 auto [vertex, index] = result->get();
-                VertexArray vArray {};
-                Buffer      vBuffer { GL_ARRAY_BUFFER };
-                Buffer      iBuffer { GL_ELEMENT_ARRAY_BUFFER };
+                OpenGLVertexArray vArray {};
+                OpenGLBuffer      vBuffer { GL_ARRAY_BUFFER };
+                OpenGLBuffer      iBuffer { GL_ELEMENT_ARRAY_BUFFER };
 
-                module.program.Use();
+                module.program.Bind();
                 vArray.Create();
                 vArray.Bind();
 
@@ -348,7 +348,7 @@ namespace Mcc
 
     void SetupChunkProgramSystem(flecs::iter& it)
     {
-        const Shader vertexShader(GL_VERTEX_SHADER, R"""(
+        OpenGLShader vertexShader(GL_VERTEX_SHADER, R"""(
 			#version 330
 
 			in vec3 inVertex;
@@ -370,7 +370,8 @@ namespace Mcc
                 passNormal = inNormal;
 			}
 		)""");
-        const Shader fragmentShader(GL_FRAGMENT_SHADER, R"""(
+
+        OpenGLShader fragmentShader(GL_FRAGMENT_SHADER, R"""(
 			#version 330
 
 			in vec3 passColor;
@@ -412,6 +413,9 @@ namespace Mcc
 
         auto& module = it.world().get_mut<TerrainRendererModule>();
 
+        vertexShader  .Create();
+        fragmentShader.Create();
+
         module.program.Create();
         module.program.Attach(vertexShader);
         module.program.Attach(fragmentShader);
@@ -420,6 +424,9 @@ namespace Mcc
 
         module.program.Detach(vertexShader);
         module.program.Detach(fragmentShader);
+
+        vertexShader  .Delete();
+        fragmentShader.Delete();
 
         IgnoreIter(it);
     }
@@ -431,7 +438,7 @@ namespace Mcc
         const auto modelLocation    = module.program.GetUniformLocation("model");
         const auto invModelLocation = module.program.GetUniformLocation("invModel");
 
-        module.program.Use();
+        module.program.Bind();
 
         const auto&& [p, view, proj] = RendererModule::GetView(it.world());
         module.program.SetUniformMatrix(module.program.GetUniformLocation("view"), view);

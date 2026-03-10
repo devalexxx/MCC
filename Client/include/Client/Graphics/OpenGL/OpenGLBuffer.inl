@@ -6,7 +6,7 @@ namespace Mcc
 {
 
     template<typename T>
-    void Buffer::SetData(std::span<T> data, GLenum usage)
+    void OpenGLBuffer::SetData(std::span<T> data, GLenum usage)
     {
         SetData(static_cast<GLsizeiptr>(sizeof(T) * data.size()), data.data(), usage);
     }

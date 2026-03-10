@@ -4,7 +4,7 @@
 
 #include "Client/Module/Renderer/System.h"
 
-#include "Client/Graphics/Common.h"
+#include "Client/Graphics/OpenGL/OpenGLCommon.h"
 #include "Client/Module/Renderer/Module.h"
 #include "Client/WorldContext.h"
 

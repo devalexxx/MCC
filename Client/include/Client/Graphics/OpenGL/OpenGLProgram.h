@@ -2,39 +2,38 @@
 // Distributed under the MIT License.
 // https://opensource.org/licenses/MIT
 
-#ifndef MCC_CLIENT_GRAPHICS_PROGRAM_H
-#define MCC_CLIENT_GRAPHICS_PROGRAM_H
+#ifndef MCC_CLIENT_GRAPHICS_OPENGL_OPENGL_PROGRAM_H
+#define MCC_CLIENT_GRAPHICS_OPENGL_OPENGL_PROGRAM_H
 
 #include <glad/glad.h>
 #include <glm/glm.hpp>
 
+#include "OpenGLObject.h"
+
 namespace Mcc
 {
 
-    class Shader;
+    class OpenGLShader;
 
-    class Program
+    class OpenGLProgram final : public OpenGLObject
     {
-      private:
-        static GLuint sUsedProgram;
-
       public:
-        Program();
-        ~Program();
-        Program(const Program&)            = delete;
-        Program& operator=(const Program&) = delete;
-        Program(Program&&) noexcept;
-        Program& operator=(Program&&) noexcept;
+        OpenGLProgram();
+        ~OpenGLProgram() override;
+        OpenGLProgram(const OpenGLProgram&)            = delete;
+        OpenGLProgram& operator=(const OpenGLProgram&) = delete;
+        OpenGLProgram(OpenGLProgram&&)            noexcept;
+        OpenGLProgram& operator=(OpenGLProgram&&) noexcept;
 
-        void Create();
-        void Delete();
+        void Create() override;
+        void Delete() override;
 
-        void Attach(const Shader& shader) const;
-        void Detach(const Shader& shader) const;
+        bool IsValid() const override;
+        void Bind   () const override;
+
+        void Attach(const OpenGLShader& shader) const;
+        void Detach(const OpenGLShader& shader) const;
         void Link() const;
-        void Use() const;
-
-        [[nodiscard]] bool IsValid() const;
 
         GLint GetAttributeLocation(const char* name) const;
         GLint GetUniformLocation(const char* name) const;
@@ -53,11 +52,13 @@ namespace Mcc
       private:
         void HandleError() const;
 
-        GLuint mId;
+        GLuint mObjectID;
+
+        static GLuint sUsedProgram;
     };
 
 }
 
-#include <Client/Graphics/Program.inl>
+#include <Client/Graphics/OpenGL/OpenGLProgram.inl>
 
 #endif
