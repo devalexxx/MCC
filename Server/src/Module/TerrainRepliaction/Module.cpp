@@ -57,9 +57,9 @@ namespace Mcc
         OnBlockBatch blockPacket;
 
         const auto  chunkEntity = stage.entity(chunk);
-        const auto& [handle]   = chunkEntity.get<const CNetProps>();
-        const auto& position   = chunkEntity.get<const CChunkPos>();
-        const auto& chunkPtr   = chunkEntity.get<const CChunkPtr>();
+        const auto [handle] = chunkEntity.get<const CNetProps>();
+        const auto position = chunkEntity.get<const CChunkPos>();
+        const auto chunkPtr = chunkEntity.get<const CChunkPtr>();
 
         chunkPacket.handle   = handle;
         chunkPacket.position = position;
