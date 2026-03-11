@@ -104,6 +104,18 @@ namespace Mcc
         return location;
     }
 
+    void OpenGLProgram::SetUniform(const GLint location, const int value) const
+    {
+        Bind();
+        glCheck(glUniform1i(location, value));
+    }
+
+    void OpenGLProgram::SetUniform(const GLint location, const float value) const
+    {
+        Bind();
+        glCheck(glUniform1f(location, value));
+    }
+
     void OpenGLProgram::SetVertexAttribPointer(GLuint location, GLint size, GLenum type, GLsizei stride, GLsizei offset) const
     {
         Bind();

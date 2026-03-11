@@ -50,6 +50,12 @@ local packages = {
         rconf = {}
     },
     {
+        name  = "stb",
+        extra = "",
+        usage = { ["MCCClient"] = true },
+        rconf = {}
+    },
+    {
         name  = "imgui",
         extra = "",
         usage = { ["MCCClient"] = true },

@@ -44,6 +44,9 @@ namespace Mcc
         template<glm::length_t L, glm::qualifier Q>
         void SetUniformVector(GLint location, const glm::vec<L, float, Q>& vec);
 
+        void SetUniform(GLint location, int   value) const;
+        void SetUniform(GLint location, float value) const;
+
         void SetVertexAttribPointer(GLuint location, GLint size, GLenum type, GLsizei stride, GLsizei offset) const;
         void SetVertexAttribPointer(const char* name, GLint size, GLenum type, GLsizei stride, GLsizei offset) const;
         void SetVertexAttribPointer(GLuint location, GLint size, GLenum type) const;
