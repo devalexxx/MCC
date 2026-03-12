@@ -20,14 +20,6 @@ namespace Mcc
     struct TCouldRenderChunk  {};
     struct TShouldRenderChunk {};
 
-    struct CChunkMesh
-    {
-        OpenGLVertexArray vertexArray;
-        OpenGLBuffer      vertexBuffer { GL_ARRAY_BUFFER };
-        OpenGLBuffer      indexBuffer { GL_ELEMENT_ARRAY_BUFFER };
-        size_t            indexCount;
-    };
-
     namespace _ { struct TerrainRendererModuleTag {}; }
     using CChunkMeshGenTask = ComponentWrapper<Hx::UniqueTaskRef<Mesh>, _::TerrainRendererModuleTag>;
 

@@ -21,9 +21,8 @@ namespace Mcc
 
     void SetupChunkRenderingMeshSystem(flecs::entity entity, CChunkMeshGenTask& task);
     void SetupChunkProgramSystem      (flecs::iter& it);
-    void CleanChunkProgramSystem      (flecs::iter& it);
-    void RenderChunkMeshSystem        (flecs::iter& it);
 
+    void LoadTextureSystem   (flecs::iter& it);
     void BuildChunkMeshSystem(flecs::entity entity, const CChunkPtr& ptr, const CChunkPos& pos);
 
 }

@@ -10,6 +10,7 @@
 
 #include <memory>
 #include <string>
+#include <variant>
 
 namespace Mcc
 {
@@ -35,6 +36,11 @@ namespace Mcc
         std::string id;
     };
 
+    struct CBlockAsset
+    {
+        std::variant<std::string, Hx::EnumArray<BlockFace, std::string>> texture;
+    };
+
     namespace _ { struct TerrainModuleTag {}; };
     using CBlockColor = ComponentWrapper<glm::vec3             , _::TerrainModuleTag>;
     using CChunkPos   = ComponentWrapper<glm::ivec3            , _::TerrainModuleTag>;
@@ -42,6 +48,8 @@ namespace Mcc
 
     template<typename Archive>
     void serialize(Archive& ar, CBlockMeta& packet);
+    template<typename Archive>
+    void serialize(Archive& ar, CBlockAsset& packet);
 
 }
 

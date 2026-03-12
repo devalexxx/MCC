@@ -194,7 +194,6 @@ namespace Mcc
             // const auto totalChunk = it.world().count<ChunkTag>();
             const auto queued     = it.world().count<CChunkMeshGenTask>();
             ImGui::Text("queued : %d", queued);
-            ImGui::Text("meshed : %d", it.world().count<CChunkMesh>());
             ImGui::Text("display: %d", it.world().count<TShouldRenderChunk>());
         }
         ImGui::End();

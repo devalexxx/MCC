@@ -16,7 +16,15 @@
 namespace Mcc
 {
 
-    TerrainRendererModule::TerrainRendererModule(flecs::world& world) : BaseModule(world) {}
+    TerrainRendererModule::TerrainRendererModule(flecs::world& world) :
+        BaseModule(world),
+        programEntity     (flecs::entity::null()),
+        textureArrayEntity(flecs::entity::null()),
+        program     (std::make_shared<OpenGLProgram>()),
+        textureArray(std::make_shared<OpenGLTexture2DArray>()),
+        textureIndex(std::make_shared<SafeAccess<std::unordered_map<std::string, size_t>>>()),
+        textureToLoad(std::make_shared<SafeAccess<std::unordered_set<std::string>>>())
+    {}
 
     void TerrainRendererModule::RegisterComponent(flecs::world& world)
     {
@@ -24,7 +32,6 @@ namespace Mcc
         world.component<TCouldRenderChunk>();
         world.component<TShouldRenderChunk>();
 
-        world.component<CChunkMesh>();
         world.component<CChunkMeshGenTask>("CChunkMeshGenTask");
     }
 
@@ -32,6 +39,10 @@ namespace Mcc
 
     void TerrainRendererModule::RegisterSystem(flecs::world& world)
     {
+        world.system("LoadTexture")
+            .kind<Phase::OnSetup>()
+            .run(LoadTextureSystem);
+
         world.system<const CChunkPtr, const CChunkPos>("BuildChunkMesh")
             .kind<Phase::PostUpdate>()
             .with<TShouldBuildMesh>()
@@ -46,12 +57,6 @@ namespace Mcc
         world.system("SetupChunkProgram")
             .kind<Phase::OnLoad>()
             .run(SetupChunkProgramSystem);
-
-        world.system<const CChunkPos, const CChunkMesh>("RenderChunkMeshSystem")
-            .kind<Phase::OnDraw>()
-            .with<TShouldRenderChunk>()
-            .run(RenderChunkMeshSystem)
-            .add<GameScene>();
     }
 
     void TerrainRendererModule::RegisterObserver(flecs::world& world)

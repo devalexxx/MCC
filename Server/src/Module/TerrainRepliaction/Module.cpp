@@ -75,9 +75,9 @@ namespace Mcc
                 auto    blockEntity = stage.entity(block);
                 OnBlock packet;
                 packet.handle = blockEntity.get<const CNetProps>().handle;
-                packet.color  = blockEntity.get<const CBlockColor>();
-                packet.meta   = blockEntity.get<const CBlockMeta>();
                 packet.type   = blockEntity.get<const CBlockType>();
+                packet.meta   = blockEntity.get<const CBlockMeta>();
+                packet.asset  = blockEntity.get<const CBlockAsset>();
                 blockPacket.push_back(std::move(packet));
 
                 session->replicatedBlocks->insert(block);

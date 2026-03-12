@@ -5,11 +5,9 @@
 #ifndef MCC_CLIENT_MODULE_ENTITY_RENDERER_MODULE_H
 #define MCC_CLIENT_MODULE_ENTITY_RENDERER_MODULE_H
 
-#include "Client/Module/Renderer/Module.h"
-
-#include "Client/Graphics/OpenGL/OpenGLBuffer.h"
 #include "Client/Graphics/OpenGL/OpenGLProgram.h"
-#include "Client/Graphics/OpenGL/OpenGLVertexArray.h"
+#include "Client/Graphics/OpenGL/OpenGLTexture2D.h"
+#include "Client/Module/Renderer/Module.h"
 
 #include "Common/Module/Base/Module.h"
 
@@ -28,11 +26,12 @@ namespace Mcc
         void RegisterSystem   (flecs::world& world) override;
         void RegisterObserver (flecs::world& world) override;
 
-        OpenGLVertexArray vertexArray;
-        OpenGLBuffer      vertexBuffer;
-        OpenGLBuffer      indexBuffer;
-        size_t            indexCount;
-        OpenGLProgram     program;
+        std::shared_ptr<OpenGLProgram>   program;
+        std::shared_ptr<OpenGLTexture2D> texture;
+
+        flecs::entity programEntity;
+        flecs::entity textureEntity;
+        flecs::entity capsuleEntity;
     };
 }
 

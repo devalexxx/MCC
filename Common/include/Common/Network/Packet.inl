@@ -26,7 +26,7 @@ namespace Mcc
     template<typename Archive>
     void serialize(Archive& ar, OnBlock& packet)
     {
-        ar(packet.handle, packet.meta, packet.color, packet.type);
+        ar(packet.handle, packet.type, packet.meta, packet.asset);
     }
 
     template<typename Archive>

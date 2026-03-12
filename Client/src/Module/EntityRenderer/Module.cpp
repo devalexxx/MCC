@@ -16,9 +16,10 @@ namespace Mcc
 
     EntityRendererModule::EntityRendererModule(flecs::world& world) :
         BaseModule(world),
-        vertexBuffer(GL_ARRAY_BUFFER),
-        indexBuffer(GL_ELEMENT_ARRAY_BUFFER),
-        indexCount(0)
+        program(std::make_shared<OpenGLProgram>()),
+        texture(std::make_shared<OpenGLTexture2D>()),
+        programEntity(flecs::entity::null()),
+        textureEntity(flecs::entity::null())
     {}
 
     void EntityRendererModule::RegisterComponent(flecs::world& /* world */) {}
@@ -30,14 +31,13 @@ namespace Mcc
         world.system("SetupEntityMesh")
             .kind<Phase::OnLoad>()
             .run(SetupEntityMeshSystem);
-
-        world.system<const CTransform>("RenderUserEntity")
-            .kind<Phase::OnDraw>()
-            .with<TNetworkEntity>()
-            .run(RenderUserEntitySystem)
-            .add<GameScene>();
     }
 
-    void EntityRendererModule::RegisterObserver(flecs::world& /* world */) {}
+    void EntityRendererModule::RegisterObserver(flecs::world& world)
+    {
+        world.observer<TEntity>()
+            .event(flecs::OnAdd)
+            .run(SetEntityMeshObserver);
+    }
 
 }

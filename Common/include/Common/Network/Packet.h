@@ -83,7 +83,7 @@ namespace Mcc
 
     struct OnChunk
     {
-        NetworkHandle handle {};
+        NetworkHandle handle   {};
         CChunkPos     position {};
         RLEChunkData  data;
     };
@@ -93,10 +93,10 @@ namespace Mcc
 
     struct OnBlock
     {
-        NetworkHandle handle;
-        CBlockMeta     meta;
-        glm::vec3     color;
-        CBlockType     type;
+        NetworkHandle handle {};
+        CBlockType    type   {};
+        CBlockMeta    meta;
+        CBlockAsset   asset;
     };
 
     struct OnBlockBatch : std::vector<OnBlock>

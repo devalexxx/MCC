@@ -8,6 +8,7 @@
 #include "Client/Graphics/Mesh.h"
 #include "Client/Graphics/OpenGL/OpenGLProgram.h"
 #include "Client/Graphics/OpenGL/OpenGLShader.h"
+#include "Client/Module/Renderer/Component.h"
 #include "Client/Module/Renderer/Module.h"
 #include "Client/Module/TerrainRenderer/Component.h"
 #include "Client/Module/TerrainRenderer/Module.h"
@@ -20,12 +21,14 @@
 #include "Common/Utils/Benchmark.h"
 #include "Common/Utils/ChunkHelper.h"
 #include "Common/WorldContext.h"
+#include "Common/Utils/SafeAccess.h"
 
 #include <Hexis/Core/EnumArray.h>
-#include <glm/ext/matrix_transform.hpp>
+#include <Hexis/Core/VariantUtils.h>
 
 #include <numeric>
 #include <utility>
+#include <set>
 
 namespace Mcc
 {
@@ -59,6 +62,44 @@ namespace Mcc
                 { BlockFace::Top, {{
                     { -1.f, 1.f, 1.f }, { 1.f, 1.f, -1.f }, { -1.f, 1.f, -1.f },
                     { -1.f, 1.f, 1.f }, { 1.f, 1.f,  1.f }, {  1.f, 1.f, -1.f }
+                }}}
+            }};
+
+            return sQuadVertices;
+        }
+
+        const Hx::EnumArray<BlockFace, std::array<std::pair<glm::vec3, glm::vec2>, 6>>& GetQuadVerticesAndUvs()
+        {
+            static Hx::EnumArray<BlockFace, std::array<std::pair<glm::vec3, glm::vec2>, 6>> sQuadVertices = {{
+                { BlockFace::Front, {{
+                    {{ -1.f,  1.f, 1.f }, { 0.f, 1.f }}, {{  1.f, -1.f, 1.f }, { 1.f, 0.f }},
+                    {{  1.f,  1.f, 1.f }, { 1.f, 1.f }}, {{ -1.f,  1.f, 1.f }, { 0.f, 1.f }},
+                    {{ -1.f, -1.f, 1.f }, { 0.f, 0.f }}, {{  1.f, -1.f, 1.f }, { 1.f, 0.f }}
+                }}},
+                { BlockFace::Back, {{
+                    {{  1.f,  1.f, -1.f }, { 1.f, 1.f }}, {{ -1.f, -1.f, -1.f }, { 0.f, 1.f }},
+                    {{ -1.f,  1.f, -1.f }, { 0.f, 1.f }}, {{  1.f,  1.f, -1.f }, { 1.f, 1.f }},
+                    {{  1.f, -1.f, -1.f }, { 1.f, 0.f }}, {{ -1.f, -1.f, -1.f }, { 0.f, 0.f }}
+                }}},
+                { BlockFace::Left, {{
+                    {{ -1.f, -1.f,  1.f }, { 0.f, 1.f }}, {{ -1.f,  1.f, -1.f }, { 1.f, 0.f }},
+                    {{ -1.f, -1.f, -1.f }, { 0.f, 0.f }}, {{ -1.f, -1.f,  1.f }, { 0.f, 1.f }},
+                    {{ -1.f,  1.f,  1.f }, { 1.f, 1.f }}, {{ -1.f,  1.f, -1.f }, { 1.f, 0.f }}
+                }}},
+                { BlockFace::Right, {{
+                    {{ 1.f,  1.f,  1.f }, { 1.f, 1.f }}, {{ 1.f, -1.f, -1.f }, { 0.f, 0.f }},
+                    {{ 1.f,  1.f, -1.f }, { 1.f, 0.f }}, {{ 1.f,  1.f,  1.f }, { 1.f, 1.f }},
+                    {{ 1.f, -1.f,  1.f }, { 0.f, 1.f }}, {{ 1.f, -1.f, -1.f }, { 0.f, 0.f }}
+                }}},
+                { BlockFace::Bottom, {{
+                    {{  1.f, -1.f,  1.f }, { 1.f, 1.f }}, {{ -1.f, -1.f, -1.f }, { 0.f, 0.f }},
+                    {{  1.f, -1.f, -1.f }, { 1.f, 0.f }}, {{  1.f, -1.f,  1.f }, { 1.f, 1.f, }},
+                    {{ -1.f, -1.f,  1.f }, { 0.f, 1.f }}, {{ -1.f, -1.f, -1.f }, { 0.f, 0.f }}
+                }}},
+                { BlockFace::Top, {{
+                    {{ -1.f, 1.f,  1.f }, { 0.f, 1.f }}, {{  1.f, 1.f, -1.f }, { 1.f, 0.f }},
+                    {{ -1.f, 1.f, -1.f }, { 0.f, 0.f }}, {{ -1.f, 1.f,  1.f }, { 0.f, 1.f }},
+                    {{  1.f, 1.f,  1.f }, { 1.f, 1.f }}, {{  1.f, 1.f, -1.f }, { 1.f, 0.f }}
                 }}}
             }};
 
@@ -125,7 +166,11 @@ namespace Mcc
             return false;
         }
 
-        Mesh BuildChunkMeshImpl(const flecs::world& world, glm::ivec3 position, const std::shared_ptr<Chunk>& chunk)
+        Mesh BuildChunkMeshImpl(
+            const flecs::world& world, glm::ivec3 position, std::shared_ptr<Chunk> chunk,
+            decltype(TerrainRendererModule::textureIndex)  textureIndex,
+            decltype(TerrainRendererModule::textureToLoad) textureToLoad
+        )
         {
             if (!world.has<ActiveScene, GameScene>())
                 return {};
@@ -182,15 +227,33 @@ namespace Mcc
                         if (!mask[Index(x, y, z)])
                             continue;
 
-                        const auto& qv = GetQuadVertices();
-                        const auto& qn = GetQuadNormals();
+                        const auto& asset = world.entity(chunk->Get({ x, y, z })).get<CBlockAsset>();
+                        const auto& qv    = GetQuadVerticesAndUvs();
+                        const auto& qn    = GetQuadNormals();
                         for (auto [face, n]: GetBlockNeighbours())
                         {
                             if (mask[Index(x + n.x, y + n.y, z + n.z)])
                                 continue;
 
-                            const auto  color = world.entity(chunk->Get({ x, y, z })).get<CBlockColor>();
-                            for (const auto& vertex: qv[face])
+                            auto texture = std::visit(
+                                Hx::Overloaded {
+                                    [](const std::string& string) -> std::string {
+                                        return string;
+                                    },
+                                    [&](const Hx::EnumArray<BlockFace, std::string>& enumArray) -> std::string {
+                                        return enumArray[face];
+                                    }
+                                },
+                                asset.texture
+                            );
+                            auto [tIt, tInserted] = (*textureIndex)->try_emplace(texture, (*textureIndex)->size());
+                            auto tIndex = tIt->second;
+                            if (tInserted)
+                            {
+                                (*textureToLoad)->emplace(texture);
+                            }
+
+                            for (const auto& [vertex, uv]: qv[face])
                             {
                                 const auto offset = glm::vec3(x, y, z) + ((vertex + 1.f) / 2.f);
                                 const auto scaled = offset / chunkSize;
@@ -198,7 +261,7 @@ namespace Mcc
 
                                 // Add tris to the mesh
                                 const PackedVertex pv = {
-                                    .vertex=final, .color=color, .uv={}, .normal=qn[face]
+                                    .vertex=final, .color={ 0.f, 0.f, 0.f }, .uv=glm::vec3(uv, tIndex), .normal=qn[face]
                                 };
                                 auto [it, inserted] = indexMap.try_emplace(pv, mesh.vertex.size());
                                 if (inserted)
@@ -287,11 +350,15 @@ namespace Mcc
 
     void BuildChunkMeshSystem(const flecs::entity entity, const CChunkPtr& ptr, const CChunkPos& pos)
     {
-        const auto  world = entity.world();
-        const auto* ctx   = ClientWorldContext::Get(world);
+        const auto  world  = entity.world();
+        const auto& module = world.get<TerrainRendererModule>();
+        const auto* ctx    = ClientWorldContext::Get(world);
 
         auto task = ctx->scheduler
-            .Insert(MCC_BENCH_TIME(MeshBuilding, _::BuildChunkMeshImpl), world, pos, ptr)
+            .Insert(
+                MCC_BENCH_TIME(MeshBuilding, _::BuildChunkMeshImpl),
+                world, pos, ptr, module.textureIndex, module.textureToLoad
+            )
             .AsUnique()
             .SetGroup("game_group")
             .Enqueue();
@@ -311,7 +378,7 @@ namespace Mcc
 
         if (task.GetState() == Hx::TaskState::Done)
         {
-            if ([[maybe_unused]] auto mesh = entity.try_get<CChunkMesh>())
+            if ([[maybe_unused]] auto mesh = entity.try_get<COpenGLMesh>())
             {
                 // TODO
             }
@@ -325,22 +392,30 @@ namespace Mcc
                 OpenGLBuffer      vBuffer { GL_ARRAY_BUFFER };
                 OpenGLBuffer      iBuffer { GL_ELEMENT_ARRAY_BUFFER };
 
-                module.program.Bind();
+                module.program->Bind();
                 vArray.Create();
                 vArray.Bind();
 
                 vBuffer.Create();
                 vBuffer.SetData(std::span(vertex), GL_STATIC_DRAW);
-                module.program.SetVertexAttribPointer("inVertex", 3, GL_FLOAT, sizeof(PackedVertex), 0);
-                module.program.SetVertexAttribPointer("inColor", 3, GL_FLOAT, sizeof(PackedVertex), 3 * sizeof(float));
-                module.program.SetVertexAttribPointer("inNormal", 3, GL_FLOAT, sizeof(PackedVertex), 8 * sizeof(float));
+                module.program->SetVertexAttribPointer("inVertex", 3, GL_FLOAT, sizeof(PackedVertex), 0);
+                module.program->SetVertexAttribPointer("inColor", 3, GL_FLOAT, sizeof(PackedVertex), 3 * sizeof(float));
+                module.program->SetVertexAttribPointer("inTexCoord", 3, GL_FLOAT, sizeof(PackedVertex), 6 * sizeof(float));
+                module.program->SetVertexAttribPointer("inNormal", 3, GL_FLOAT, sizeof(PackedVertex), 9 * sizeof(float));
 
                 iBuffer.Create();
                 iBuffer.SetData(std::span(index), GL_STATIC_DRAW);
 
-                entity.set<CChunkMesh>({
-                    .vertexArray=std::move(vArray), .vertexBuffer=std::move(vBuffer), .indexBuffer=std::move(iBuffer), .indexCount=index.size()
+                entity.set<COpenGLMesh>({
+                    .vertexArray =std::move(vArray),
+                    .vertexBuffer=std::move(vBuffer),
+                    .indexBuffer =std::move(iBuffer),
+                    .indexCount  =index.size()
                 });
+                entity.add<ROpenGLMesh>   (entity);
+                entity.add<ROpenGLProgram>(module.programEntity);
+                entity.add<ROpenGLTexture>(module.textureArrayEntity);
+
                 entity.remove<CChunkMeshGenTask>();
             }
         }
@@ -353,6 +428,7 @@ namespace Mcc
 
 			in vec3 inVertex;
 			in vec3 inColor;
+            in vec3 inTexCoord;
             in vec3 inNormal;
 
 			uniform mat4 view;
@@ -361,25 +437,31 @@ namespace Mcc
 
 			out vec3 passColor;
             out vec3 passPos;
+            out vec3 passTexCoord;
             out vec3 passNormal;
 
 			void main() {
-				gl_Position = proj * view * model * vec4(inVertex, 1.0);
-				passColor  = inColor;
-                passPos    = vec3(model * vec4(inVertex, 1.0));
-                passNormal = inNormal;
+				gl_Position  = proj * view * model * vec4(inVertex, 1.0);
+				passColor    = inColor;
+                passPos      = vec3(model * vec4(inVertex, 1.0));
+                passNormal   = inNormal;
+                passTexCoord = inTexCoord;
 			}
 		)""");
 
         OpenGLShader fragmentShader(GL_FRAGMENT_SHADER, R"""(
 			#version 330
+            #extension GL_ARB_texture_query_lod : enable
 
 			in vec3 passColor;
             in vec3 passPos;
+            in vec3 passTexCoord;
             in vec3 passNormal;
 
             uniform mat3 invModel;
-            uniform vec3 viewPos;
+            uniform vec3 vPos;
+
+            uniform sampler2DArray tex;
 
 			out vec4 fragment;
 
@@ -402,75 +484,80 @@ namespace Mcc
                 vec3 diffuse = diff * lightColor;
 
                 // Specular lighting
-                vec3 viewDir = normalize(viewPos - passPos);
+                vec3 viewDir = normalize(vPos - passPos);
                 vec3 reflectDir = reflect(-lightDir, norm);
                 float spec = pow(max(dot(viewDir, reflectDir), 0.0), 32);
                 vec3 specular = specularStrength * spec * lightColor;
 
-				fragment = vec4((ambient + diffuse + specular) * passColor, 1.0);
+                float mipmapLevel = 0;
+            #ifdef GL_ARB_texture_query_lod
+                mipmapLevel = textureQueryLOD(tex, passTexCoord.xy).x;
+            #endif
+                vec4 pixel = textureLod(tex, passTexCoord, mipmapLevel);
+				fragment = vec4(ambient + diffuse + specular, 1.f) * pixel;
 			}
 		)""");
 
-        auto& module = it.world().get_mut<TerrainRendererModule>();
+        const auto word   = it.world();
+        auto&      module = word.get_mut<TerrainRendererModule>();
 
         vertexShader  .Create();
         fragmentShader.Create();
 
-        module.program.Create();
-        module.program.Attach(vertexShader);
-        module.program.Attach(fragmentShader);
+        module.program->Create();
+        module.program->Attach(vertexShader);
+        module.program->Attach(fragmentShader);
 
-        module.program.Link();
+        module.program->Link();
 
-        module.program.Detach(vertexShader);
-        module.program.Detach(fragmentShader);
+        module.program->Detach(vertexShader);
+        module.program->Detach(fragmentShader);
 
         vertexShader  .Delete();
         fragmentShader.Delete();
 
+        module.programEntity = word.entity().set<COpenGLProgram>(module.program);
+
+        module.textureArray->Create();
+        module.textureArray->SetParameter(GL_TEXTURE_WRAP_S, GL_REPEAT);
+        module.textureArray->SetParameter(GL_TEXTURE_WRAP_T, GL_REPEAT);
+        module.textureArray->SetParameter(GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+        module.textureArray->SetParameter(GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_NEAREST);
+
+        module.textureArrayEntity = word.entity().set<COpenGLTexture>(module.textureArray);
+
         IgnoreIter(it);
     }
 
-    void RenderChunkMeshSystem(flecs::iter& it)
+    void LoadTextureSystem(flecs::iter& it)
     {
-        auto& module = it.world().get_mut<TerrainRendererModule>();
+        IgnoreIter(it);
 
-        const auto modelLocation    = module.program.GetUniformLocation("model");
-        const auto invModelLocation = module.program.GetUniformLocation("invModel");
+        const auto  world  = it.world();
+        const auto& module = world.get_mut<TerrainRendererModule>();
 
-        module.program.Bind();
+        if ((*module.textureToLoad)->empty())
+            return;
 
-        const auto&& [p, view, proj] = RendererModule::GetView(it.world());
-        module.program.SetUniformMatrix(module.program.GetUniformLocation("view"), view);
-        module.program.SetUniformMatrix(module.program.GetUniformLocation("proj"), proj);
+        std::vector<Image>       images;
+        std::vector<std::string> paths;
 
-        module.program.SetUniformVector(module.program.GetUniformLocation("viewPos"), p);
-
-        while (it.next())
         {
-            auto pos  = it.field<const CChunkPos>(0);
-            auto mesh = it.field<const CChunkMesh>(1);
+            auto tttProxy = *(*module.textureToLoad);
+            images.reserve(tttProxy->size());
+            paths .reserve(tttProxy->size());
 
-            for (const auto i: it)
-            {
-                glm::mat4 model = glm::scale(
-                    glm::translate(
-                        glm::mat4(1.f), glm::vec3(pos[i] * glm::ivec3(2 * Chunk::Size, 0, 2 * Chunk::Size))
-                    ),
-                    glm::vec3(Chunk::Size, Chunk::Height, Chunk::Size)
-                );
-
-                module.program.SetUniformMatrix(invModelLocation, glm::transpose(glm::inverse(glm::mat3(model))));
-                module.program.SetUniformMatrix(modelLocation, model);
-
-                mesh[i].vertexArray.Bind();
-                mesh[i].indexBuffer.Bind();
-                // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-                // glDisable(GL_CULL_FACE);
-                glCheck(glDrawElements(GL_TRIANGLES, mesh[i].indexCount, GL_UNSIGNED_INT, nullptr));
-                // glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-            }
+            std::copy(tttProxy->begin(), tttProxy->end(), std::back_inserter(paths));
+            tttProxy->clear();
         }
+
+        for (auto& path: paths)
+        {
+            images.push_back(STBLoadImage(path.c_str()));
+        }
+
+        module.textureArray->AddData(images);
+        module.textureArray->GenerateMipmap();
     }
 
 }

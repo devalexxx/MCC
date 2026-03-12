@@ -5,6 +5,7 @@
 #include "Client/Module/Renderer/Module.h"
 
 #include "Client/Module/Camera/Component.h"
+#include "Client/Module/Renderer/Component.h"
 #include "Client/Module/Renderer/System.h"
 #include "Client/WorldContext.h"
 
@@ -19,7 +20,27 @@ namespace Mcc
     RendererModule::RendererModule(flecs::world& world) : BaseModule(world)
     {}
 
-    void RendererModule::RegisterComponent(flecs::world& /* world */) {}
+    void RendererModule::RegisterComponent(flecs::world& world)
+    {
+        world.component<ROpenGLMesh>()
+            .add(flecs::Exclusive)
+            .add(flecs::Relationship);
+
+        world.component<ROpenGLProgram>()
+            .add(flecs::Exclusive)
+            .add(flecs::Relationship);
+
+        world.component<ROpenGLTexture>()
+            .add(flecs::Exclusive)
+            .add(flecs::Relationship);
+
+        world.component<COpenGLMesh>();
+        AutoRegister<COpenGLProgram>::Register(world, "COpenGLProgram");
+        AutoRegister<COpenGLTexture>::Register(world, "COpenGLTexture");
+
+        world.component<CRenderQueue>("CRenderQueue")
+            .add(flecs::Singleton);
+    }
 
     void RendererModule::RegisterPrefab(flecs::world& /* world */) {}
 
@@ -36,6 +57,19 @@ namespace Mcc
         world.system("ClearFrame")
             .kind<Phase::OnClear>()
             .run(ClearFrameSystem);
+
+        // TODO: add PreDraw phase
+        world.system("UpdateRenderQueue")
+            .kind<Phase::OnClear>()
+            .with<CTransform>()
+            .with<ROpenGLProgram>(flecs::Wildcard)
+            .with<ROpenGLTexture>(flecs::Wildcard)
+            .with<ROpenGLMesh>   (flecs::Wildcard)
+            .run(UpdateRenderQueueSystem);
+
+        world.system<const CRenderQueue>("DrawFrame")
+            .kind<Phase::OnDraw>()
+            .each(DrawFrameSystem);
 
         world.system("RenderFrame")
             .kind<Phase::OnRender>()

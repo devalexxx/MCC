@@ -7,6 +7,8 @@
 
 #include <flecs.h>
 
+#include "Client/Module/Renderer/Component.h"
+
 namespace Mcc
 {
 
@@ -14,6 +16,9 @@ namespace Mcc
     void PollWindowEventSystem(flecs::iter& it);
     void ClearFrameSystem     (flecs::iter& it);
     void RenderFrameSystem    (flecs::iter& it);
+
+    void UpdateRenderQueueSystem(flecs::iter& it);
+    void DrawFrameSystem        (const flecs::iter& it, size_t row, const CRenderQueue& queue);
 
 }
 

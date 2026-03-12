@@ -7,7 +7,10 @@
 
 #include "Client/Graphics/OpenGL/OpenGLBuffer.h"
 #include "Client/Graphics/OpenGL/OpenGLProgram.h"
+#include "Client/Graphics/OpenGL/OpenGLTexture.h"
 #include "Client/Graphics/OpenGL/OpenGLVertexArray.h"
+
+#include "Common/Utils/FlecsUtils.h"
 
 namespace Mcc
 {
@@ -20,11 +23,21 @@ namespace Mcc
         size_t            indexCount   { 0 };
     };
 
-    struct COpenGLMaterial
-    {
-        std::shared_ptr<OpenGLProgram> program;
-        std::shared_ptr<OpenGLObject>  textureObject;
-    };
+    namespace _ { struct RendererModuleTag {}; }
+    using COpenGLProgram = ComponentWrapper<std::shared_ptr<OpenGLProgram>, _::RendererModuleTag>;
+    using COpenGLTexture = ComponentWrapper<std::shared_ptr<OpenGLTexture>, _::RendererModuleTag>;
+    using CRenderQueue   = ComponentWrapper<
+        std::unordered_map<flecs::entity_t,
+            std::unordered_map<flecs::entity_t,
+                std::unordered_map<flecs::entity_t, std::unordered_set<flecs::entity_t>>
+            >
+        >,
+        _::RendererModuleTag
+    >;
+
+    struct ROpenGLMesh    {};
+    struct ROpenGLProgram {};
+    struct ROpenGLTexture {};
 
 }
 

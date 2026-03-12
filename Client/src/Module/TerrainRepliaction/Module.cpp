@@ -13,6 +13,8 @@
 #include "Common/Utils/Benchmark.h"
 #include "Common/Utils/Logging.h"
 
+#include <glm/gtx/quaternion.hpp>
+
 namespace Mcc
 {
 
@@ -31,7 +33,17 @@ namespace Mcc
 
     void TerrainReplicationModule::RegisterSystem(flecs::world& /* world */) {}
 
-    void TerrainReplicationModule::RegisterObserver(flecs::world& /* world */) {}
+    void TerrainReplicationModule::RegisterObserver(flecs::world& world)
+    {
+        world.observer<CChunkPos>()
+            .event(flecs::OnSet)
+            .each([](const flecs::entity e, const CChunkPos& pos) {
+                auto& transform = e.ensure<CTransform>();
+                transform.position = glm::vec3(pos * glm::ivec3(2 * Chunk::Size, 0, 2 * Chunk::Size));
+                transform.rotation = glm::quat_identity<float, glm::defaultp>();
+                transform.scale    = glm::vec3(Chunk::Size, Chunk::Height, Chunk::Size);
+            });
+    }
 
     void TerrainReplicationModule::OnBlockHandler(const OnBlock& packet, const flecs::world& world)
     {
@@ -46,7 +58,7 @@ namespace Mcc
             .is_a<PBlock>()
             .set<CNetProps>({ packet.handle })
             .set<CBlockMeta>(packet.meta)
-            .set<CBlockColor>(packet.color)
+            .set<CBlockAsset>(packet.asset)
             .set<CBlockType>(packet.type)
             .child_of<SceneRoot>();
     }

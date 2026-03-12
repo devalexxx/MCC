@@ -28,6 +28,9 @@ namespace Mcc
             .set<CBlockType>(CBlockType::Solid)
             .set<CBlockColor>({ .5f, .5f, .5f })
             .set<CBlockMeta>({ "mcc:block:stone" })
+            .set<CBlockAsset>({
+                .texture=std::string("Assets/Textures/Stone/cubeStone_1.png")
+            })
             .child_of<SceneRoot>();
 
         world.entity("mcc:block:dirt")
@@ -35,6 +38,26 @@ namespace Mcc
             .set<CBlockType>(CBlockType::Solid)
             .set<CBlockColor>({ .0f, .7f, .3f })
             .set<CBlockMeta>({ "mcc:block:dirt" })
+            .set<CBlockAsset>({
+                .texture = std::string("Assets/Textures/Dirt/cubeDirt_1.png")
+            })
+            .child_of<SceneRoot>();
+
+        world.entity("mcc:block:grass")
+            .is_a<PBlock>()
+            .set<CBlockType>(CBlockType::Solid)
+            .set<CBlockColor>({ .0f, .7f, .3f })
+            .set<CBlockMeta>({ "mcc:block:dirt" })
+            .set<CBlockAsset>({
+                .texture = Hx::EnumArray<BlockFace, std::string>{
+                    { BlockFace::Top   , "Assets/Textures/Grass/cubeGreen_1-Top.png" },
+                    { BlockFace::Bottom, "Assets/Textures/Dirt/cubeDirt_1.png"       },
+                    { BlockFace::Front , "Assets/Textures/Grass/cubeGreen_1.png"     },
+                    { BlockFace::Back  , "Assets/Textures/Grass/cubeGreen_1.png"     },
+                    { BlockFace::Left  , "Assets/Textures/Grass/cubeGreen_1.png"     },
+                    { BlockFace::Right , "Assets/Textures/Grass/cubeGreen_1.png"     },
+                }
+            })
             .child_of<SceneRoot>();
 
         world.get_mut<TerrainGenerationModule>().InitializeGenerator(world);

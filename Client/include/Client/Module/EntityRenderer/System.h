@@ -9,9 +9,12 @@
 
 namespace Mcc
 {
+    struct TEntity;
 
     void SetupEntityMeshSystem (flecs::iter& it);
     void RenderUserEntitySystem(flecs::iter& it);
+
+    void SetEntityMeshObserver(flecs::iter& it);
 
 }
 

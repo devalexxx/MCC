@@ -31,6 +31,8 @@ namespace Mcc
 
         world.component<CBlockType>();
 
+        world.component<CBlockAsset>();
+
         world.component<CChunkPtr>("CChunkPtr");
         world.component<CChunkPos>("CChunkPos")
             .is_a<CChunkPos::Type>();
@@ -43,7 +45,8 @@ namespace Mcc
             .add<TBlock>()
             .add<CBlockMeta>()
             .add<CBlockColor>()
-            .add<CBlockType>();
+            .add<CBlockType>()
+            .add<CBlockAsset>();
 
         world.prefab<PChunk>()
             .is_a<PNetObject>()
