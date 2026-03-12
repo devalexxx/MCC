@@ -40,6 +40,7 @@ namespace Mcc
         = default;
 
         CallProxy<T> operator->();
+        CallProxy<T> operator*();
 
       private:
         T                            mData;

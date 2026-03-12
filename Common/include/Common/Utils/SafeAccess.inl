@@ -42,4 +42,11 @@ namespace Mcc
         return CallProxy<T>(&mData, mMutex);
     }
 
+    template<typename T>
+    CallProxy<T> SafeAccess<T>::operator*()
+    {
+        mMutex.lock();
+        return CallProxy<T>(&mData, mMutex);
+    }
+
 }
