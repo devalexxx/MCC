@@ -19,14 +19,17 @@ namespace Mcc
         auto* ctx = WorldContext<>::Get(it.world());
         while (it.next())
         {
-            auto props = it.field<const CNetProps>(0);
-
             for (const auto i: it)
             {
+                auto props = it.field_at<const CNetProps>(0, i);
                 auto entity = it.entity(i);
-                if (IsValid(props[i].handle))
+                // if (IsValid(props[i].handle))
+                // {
+                //     ctx->networkMapping.Set(props[i].handle, entity.id());
+                // }
+                if (IsValid(props.handle))
                 {
-                    ctx->networkMapping.Set(props[i].handle, entity.id());
+                    ctx->networkMapping.Set(props.handle, entity.id());
                 }
             }
         }
