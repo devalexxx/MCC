@@ -6,6 +6,7 @@
 #define MCC_CLIENT_MODULE_RENDERER_MODULE_H
 
 #include "Common/Module/Base/Module.h"
+#include "Common/Module/Core/Module.h"
 
 #include <glm/fwd.hpp>
 
@@ -16,7 +17,7 @@
 namespace Mcc
 {
 
-    struct RendererModule final : BaseModule<RendererModule>
+    struct RendererModule final : BaseModule<RendererModule, CoreModule>
     {
         RendererModule(flecs::world& world);
 

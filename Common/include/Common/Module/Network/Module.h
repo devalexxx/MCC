@@ -7,13 +7,14 @@
 
 #include "Common/Export.h"
 #include "Common/Module/Base/Module.h"
+#include "Common/Module/Core/Module.h"
 
 #include <flecs.h>
 
 namespace Mcc
 {
 
-    struct MCC_LIB_API NetworkModule final : BaseModule<NetworkModule>
+    struct MCC_LIB_API NetworkModule final : BaseModule<NetworkModule, CoreModule>
     {
         explicit NetworkModule(flecs::world& world);
 

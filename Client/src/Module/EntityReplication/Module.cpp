@@ -8,6 +8,7 @@
 #include "Client/Module/EntityReplication/System.h"
 #include "Client/WorldContext.h"
 
+#include "Common/Module/Core/Component.h"
 #include "Common/Module/Entity/Component.h"
 #include "Common/Module/Entity/Module.h"
 #include "Common/Module/Network/Component.h"

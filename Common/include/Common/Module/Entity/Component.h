@@ -6,6 +6,7 @@
 #define MCC_COMMON_MODULE_ENTITY_COMPONENT_H
 
 #include "Common/Export.h"
+#include "Common/Module/Core/Component.h"
 #include "Common/Utils/FlecsUtils.h"
 
 #include <glm/glm.hpp>
@@ -17,18 +18,6 @@
 
 namespace glm
 {
-
-    template<class Archive>
-    void serialize(Archive& ar, vec3& vec);
-
-    template<class Archive>
-    void serialize(Archive& ar, uvec3& vec);
-
-    template<class Archive>
-    void serialize(Archive& ar, ivec3& vec);
-
-    template<class Archive>
-    void serialize(Archive& ar, quat& quat);
 
     static constexpr vec3 forward { 0, 0, -1 };
     static constexpr vec3 back { 0, 0, 1 };
@@ -49,15 +38,6 @@ namespace Mcc
     struct PEntity     {};
     struct PNetEntity  {};
     struct PUserEntity {};
-
-    struct MCC_LIB_API CTransform
-    {
-        glm::vec3 position;
-        glm::quat rotation;
-        glm::vec3 scale;
-
-        static CTransform Identity();
-    };
 
     struct MCC_LIB_API UserInput
     {
@@ -91,8 +71,6 @@ namespace Mcc
     using CEntityDataMap  = ComponentWrapper<std::unordered_map<std::string, std::string>, _::EntityModuleTag>;
     using CUserInputQueue = ComponentWrapper<std::deque<UserInput>                       , _::EntityModuleTag>;
 
-    template<class Archive>
-    void serialize(Archive& ar, CTransform& transform);
     template<typename Archive>
     void serialize(Archive& ar, UserInput& input);
 

@@ -4,6 +4,8 @@
 
 #include "Common/Module/Core/Module.h"
 
+#include "Common/Module/Core/Component.h"
+
 #include <glm/glm.hpp>
 #include <glm/gtx/quaternion.hpp>
 
@@ -39,6 +41,11 @@ namespace Mcc
             .member<float>("y")
             .member<float>("z")
             .member<float>("w");
+
+        world.component<CTransform>()
+            .member<glm::vec3>("position")
+            .member<glm::quat>("rotation")
+            .member<glm::vec3>("scale");
     }
 
     void CoreModule::RegisterPrefab(flecs::world& /* world */) {}

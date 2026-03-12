@@ -23,11 +23,6 @@ namespace Mcc
         world.component<PNetEntity>();
         world.component<PUserEntity>();
 
-        world.component<CTransform>()
-            .member<glm::vec3>("position")
-            .member<glm::quat>("rotation")
-            .member<glm::vec3>("scale");
-
         AutoRegister<CEntityDataMap>::Register(world, "CEntityDataMap");
 
         world.component<UserInput::Meta>()

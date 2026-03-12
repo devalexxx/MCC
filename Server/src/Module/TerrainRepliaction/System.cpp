@@ -12,6 +12,7 @@
 #include "Server/Module/UserSession/Module.h"
 #include "Server/WorldContext.h"
 
+#include "Common/Module/Core/Component.h"
 #include "Common/Utils/ChunkHelper.h"
 
 #include <ranges>
