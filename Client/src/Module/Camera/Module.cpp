@@ -53,7 +53,7 @@ namespace Mcc
     void CameraModule::RegisterSystem(flecs::world& world)
     {
         world.system<CTransform, const CCameraFollowSettings>("CameraFollowSystem")
-            .kind<Phase::OnUpdate>()
+            .kind<Phase::PostUpdate>()
             .with<TCameraFollow>()
             .with<RCameraFollow>(flecs::Wildcard)
             .each(CameraFollowSystem);

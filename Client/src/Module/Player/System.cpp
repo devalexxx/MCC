@@ -20,8 +20,8 @@ namespace Mcc
 
         if (!Helper::IsNull(current))
         {
-            constexpr float speed = 5.f;
-            const float     delta = it.delta_time();
+            const float speed = ctx->serverInfo.userSpeed;
+            const float delta = it.delta_time();
 
             current.meta.id = UserInput::Meta::GetNextID();
             current.meta.dt = delta;
