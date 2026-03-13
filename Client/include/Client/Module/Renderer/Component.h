@@ -15,6 +15,11 @@
 namespace Mcc
 {
 
+    struct CRendererSettings
+    {
+        bool wireframe;
+    };
+
     struct COpenGLMesh
     {
         OpenGLVertexArray vertexArray;

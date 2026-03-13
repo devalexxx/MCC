@@ -22,6 +22,9 @@ namespace Mcc
         glEnable(GL_CULL_FACE);
 
         it.world().set<CRenderQueue>({});
+        it.world().set<CRendererSettings>({
+            .wireframe = false
+        });
 
         IgnoreIter(it);
     }
@@ -72,8 +75,22 @@ namespace Mcc
         }
     }
 
-    void DrawFrameSystem(const flecs::iter& it, size_t /* row */, const CRenderQueue& queue)
+    void DrawFrameSystem(const flecs::iter& it, size_t /* row */, const CRenderQueue& queue, const CRendererSettings& settings)
     {
+        static auto defaultRenderFunc = [](const size_t size) {
+            glCheck(glDrawElements(GL_TRIANGLES, size, GL_UNSIGNED_INT, nullptr));
+        };
+        static auto wireframeRenderFunc = [](const size_t size) {
+            glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+            glDisable(GL_CULL_FACE);
+            glCheck(glDrawElements(GL_TRIANGLES, size, GL_UNSIGNED_INT, nullptr));
+            glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+        };
+
+        std::function renderFunc = defaultRenderFunc;
+        if (settings.wireframe)
+            renderFunc = wireframeRenderFunc;
+
         const auto world = it.world();
         for (auto& [pEntity, tMap] : queue)
         {
@@ -107,7 +124,7 @@ namespace Mcc
                         program->SetUniformMatrix(modelLocation   , model);
                         program->SetUniformMatrix(invModelLocation, glm::transpose(glm::inverse(glm::mat3(model))));
 
-                        glCheck(glDrawElements(GL_TRIANGLES, mesh.indexCount, GL_UNSIGNED_INT, nullptr));
+                        renderFunc(mesh.indexCount);
                     }
                 }
             }

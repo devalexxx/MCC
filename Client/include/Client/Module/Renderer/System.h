@@ -18,7 +18,7 @@ namespace Mcc
     void RenderFrameSystem    (flecs::iter& it);
 
     void UpdateRenderQueueSystem(flecs::iter& it);
-    void DrawFrameSystem        (const flecs::iter& it, size_t row, const CRenderQueue& queue);
+    void DrawFrameSystem        (const flecs::iter& it, size_t row, const CRenderQueue& queue, const CRendererSettings& settings);
 
 }
 

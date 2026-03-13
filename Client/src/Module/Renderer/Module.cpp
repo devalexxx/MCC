@@ -22,6 +22,9 @@ namespace Mcc
 
     void RendererModule::RegisterComponent(flecs::world& world)
     {
+        world.component<CRendererSettings>()
+            .add(flecs::Singleton);
+
         world.component<ROpenGLMesh>()
             .add(flecs::Exclusive)
             .add(flecs::Relationship);
@@ -67,7 +70,7 @@ namespace Mcc
             .with<ROpenGLMesh>   (flecs::Wildcard)
             .run(UpdateRenderQueueSystem);
 
-        world.system<const CRenderQueue>("DrawFrame")
+        world.system<const CRenderQueue, const CRendererSettings>("DrawFrame")
             .kind<Phase::OnDraw>()
             .each(DrawFrameSystem);
 

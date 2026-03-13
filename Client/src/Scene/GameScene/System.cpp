@@ -4,6 +4,7 @@
 
 #include "Client/Scene/GameScene/System.h"
 
+#include "Client/Module/Renderer/Component.h"
 #include "Client/Module/ServerSession/Component.h"
 #include "Client/Module/ServerSession/Module.h"
 #include "Client/Module/TerrainRenderer/Component.h"
@@ -178,6 +179,15 @@ namespace Mcc
         ImGui::PlotLines(
             "FPS", plotter, &ctx->fpsHistory, ctx->fpsHistorySize, 0, overlay, 0.0f, max * 1.4f, ImVec2(200, 50)
         );
+
+        if (ImGui::CollapsingHeader("RenderSetting"))
+        {
+            auto& [wireframe] = it.world().get_mut<CRendererSettings>();
+            if (ImGui::Checkbox("Wireframe", &wireframe))
+            {
+                // wireframe = !wireframe;
+            }
+        }
 
         if (const auto peer = ClientWorldContext::Get(it.world())->networkManager.GetPeer())
         {
