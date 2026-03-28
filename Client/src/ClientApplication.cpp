@@ -5,21 +5,12 @@
 #include "Client/ClientApplication.h"
 
 #include "Client/Module/Camera/Module.h"
-#include "Client/Module/EntityRenderer/Module.h"
-#include "Client/Module/EntityReplication/Module.h"
-#include "Client/Module/ImGui/Module.h"
 #include "Client/Module/Player/Module.h"
-#include "Client/Module/Renderer/Module.h"
 #include "Client/Module/ServerSession/Module.h"
 #include "Client/Module/TerrainRenderer/Module.h"
-#include "Client/Module/TerrainReplication/Module.h"
 #include "Client/Scene/Scene.h"
 #include "Client/WorldContext.h"
 
-#include "Common/Module/Entity/Module.h"
-#include "Common/Module/Network/Component.h"
-#include "Common/Module/Network/Module.h"
-#include "Common/Module/Terrain/Module.h"
 #include "Common/Network/Event.h"
 #include "Common/Utils/Logging.h"
 
@@ -38,8 +29,20 @@ namespace Mcc
               .preloadDistance = PRELOAD_DISTANCE_DEFAULT }
         ),
         mNetworkManager(mCmdLineStore),
-        mWindow("MachinaCubicaCatalyst")
+        mWindow("MachinaCubicaCatalyst"),
+        mAssetRegistry(
+            {
+                { "shader" , "Shaders"  },
+                { "texture", "Textures" }
+            },
+            std::filesystem::current_path() / "Assets"
+        )
     {
+        if (const auto param = mCmdLineStore.GetParameter("asset-path"); param)
+        {
+            mAssetRegistry.SetBasePath(*param);
+        }
+
         mNetworkManager.Subscribe<MalformedPacketEvent>([]([[maybe_unused]] const auto& packet) {
             MCC_LOG_WARN("Malformed packet caught", packet.packet == nullptr);
         });
@@ -57,7 +60,13 @@ namespace Mcc
         MCC_LOG_DEBUG("Setup modules...");
         mWorld.set_ctx(
             new ClientWorldContext {
-                { .networkManager = mNetworkManager, .networkMapping = {}, .scheduler = mScheduler, .chunkMap = {} },
+                {
+                    .networkManager = mNetworkManager,
+                    .networkMapping = {},
+                    .scheduler      = mScheduler,
+                    .assetRegistry  = mAssetRegistry,
+                    .chunkMap       = {}
+                },
                 {},
                 {},
                 mSettings,

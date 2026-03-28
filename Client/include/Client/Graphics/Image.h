@@ -5,6 +5,8 @@
 #ifndef MCC_CLIENT_GRAPHICS_IMAGE_H
 #define MCC_CLIENT_GRAPHICS_IMAGE_H
 
+#include "Common/AssetRegistry.h"
+
 #include <functional>
 #include <span>
 
@@ -18,7 +20,7 @@ namespace Mcc
         Count
     };
 
-    class Image
+    class Image : public Asset
     {
       public:
         using DataType = std::unique_ptr<uint8_t, std::function<void(uint8_t*)>>;
@@ -44,6 +46,12 @@ namespace Mcc
     };
 
     Image STBLoadImage(const char* path, int desiredChannels = 0);
+
+    template<>
+    struct AssetLoader<Image>
+    {
+        std::shared_ptr<Image> operator()(AssetRegistry& reg, std::string_view path, bool cache) const;
+    };
 
 }
 

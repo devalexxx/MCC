@@ -423,98 +423,21 @@ namespace Mcc
 
     void SetupChunkProgramSystem(flecs::iter& it)
     {
-        OpenGLShader vertexShader(GL_VERTEX_SHADER, R"""(
-			#version 330
+        const auto  word   = it.world();
+        const auto* ctx    = ClientWorldContext::Get(word);
+        auto&       module = word.get_mut<TerrainRendererModule>();
 
-			in vec3 inVertex;
-			in vec3 inColor;
-            in vec3 inTexCoord;
-            in vec3 inNormal;
-
-			uniform mat4 view;
-			uniform mat4 proj;
-			uniform mat4 model;
-
-			out vec3 passColor;
-            out vec3 passPos;
-            out vec3 passTexCoord;
-            out vec3 passNormal;
-
-			void main() {
-				gl_Position  = proj * view * model * vec4(inVertex, 1.0);
-				passColor    = inColor;
-                passPos      = vec3(model * vec4(inVertex, 1.0));
-                passNormal   = inNormal;
-                passTexCoord = inTexCoord;
-			}
-		)""");
-
-        OpenGLShader fragmentShader(GL_FRAGMENT_SHADER, R"""(
-			#version 330
-            #extension GL_ARB_texture_query_lod : enable
-
-			in vec3 passColor;
-            in vec3 passPos;
-            in vec3 passTexCoord;
-            in vec3 passNormal;
-
-            uniform mat3 invModel;
-            uniform vec3 vPos;
-
-            uniform sampler2DArray tex;
-
-			out vec4 fragment;
-
-            vec3 lightPos   = vec3(0, 100, 0);
-            vec3 lightColor = vec3(1, 1, 1);
-
-            float ambientStrength  = 0.1;
-            float specularStrength = 0.5;
-
-			void main() {
-                vec3 normal = invModel * passNormal;
-                vec3 norm = normalize(normal);
-                vec3 lightDir = normalize(lightPos - passPos);
-
-                // Ambient lighting
-                vec3 ambient = ambientStrength * lightColor;
-
-                // Diffuse lighting
-                float diff = max(dot(norm, lightDir), 0.0);
-                vec3 diffuse = diff * lightColor;
-
-                // Specular lighting
-                vec3 viewDir = normalize(vPos - passPos);
-                vec3 reflectDir = reflect(-lightDir, norm);
-                float spec = pow(max(dot(viewDir, reflectDir), 0.0), 32);
-                vec3 specular = specularStrength * spec * lightColor;
-
-                float mipmapLevel = 0;
-            #ifdef GL_ARB_texture_query_lod
-                mipmapLevel = textureQueryLOD(tex, passTexCoord.xy).x;
-            #endif
-                vec4 pixel = textureLod(tex, passTexCoord, mipmapLevel);
-				fragment = vec4(ambient + diffuse + specular, 1.f) * pixel;
-			}
-		)""");
-
-        const auto word   = it.world();
-        auto&      module = word.get_mut<TerrainRendererModule>();
-
-        vertexShader  .Create();
-        fragmentShader.Create();
+        const auto vertexShader   = ctx->assetRegistry.Get<OpenGLShader>("shader://chunk.vert", false);
+        const auto fragmentShader = ctx->assetRegistry.Get<OpenGLShader>("shader://chunk.frag", false);
 
         module.program->Create();
-        module.program->Attach(vertexShader);
-        module.program->Attach(fragmentShader);
+        module.program->Attach(*vertexShader.get());
+        module.program->Attach(*fragmentShader.get());
 
         module.program->Link();
 
-        module.program->Detach(vertexShader);
-        module.program->Detach(fragmentShader);
-
-        vertexShader  .Delete();
-        fragmentShader.Delete();
+        module.program->Detach(*vertexShader.get());
+        module.program->Detach(*fragmentShader.get());
 
         module.programEntity = word.entity().set<COpenGLProgram>(module.program);
 
@@ -534,13 +457,14 @@ namespace Mcc
         IgnoreIter(it);
 
         const auto  world  = it.world();
+        const auto* ctx    = ClientWorldContext::Get(world);
         const auto& module = world.get_mut<TerrainRendererModule>();
 
         if ((*module.textureToLoad)->empty())
             return;
 
-        std::vector<Image>       images;
-        std::vector<std::string> paths;
+        std::vector<std::shared_ptr<Image>> images;
+        std::vector<std::string>            paths;
 
         {
             auto tttProxy = *(*module.textureToLoad);
@@ -553,10 +477,22 @@ namespace Mcc
 
         for (auto& path: paths)
         {
-            images.push_back(STBLoadImage(path.c_str()));
+            auto asset = ctx->assetRegistry.Get<Image>(path, false);
+            if (!asset)
+            {
+                // TODO: temp
+                images.push_back(std::make_shared<Image>(64, 64, 4, PixelFormat::RGBA, 0));
+                continue;
+            }
+
+            images.push_back(asset);
         }
 
-        module.textureArray->AddData(images);
+        // TODO: temp (perf issue buffer is get from cg every Add)
+        for (auto image: images)
+        {
+            module.textureArray->AddData(*image.get());
+        }
         module.textureArray->GenerateMipmap();
     }
 

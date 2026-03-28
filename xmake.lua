@@ -152,11 +152,6 @@ target("MCCClient")
     -- Use to don't care about glfw and glad include order
     add_defines("GLFW_INCLUDE_NONE")
 
-    -- TODO: replace by runtime asset path
-    on_load(function (target)
-        os.cp("$(projectdir)/Assets/*", "$(builddir)/$(plat)/$(arch)/$(mode)/Assets/")
-    end)
-
     add_includedirs("Client/include/",  { public = true })
     add_headerfiles("Client/include/(**/*.h)", "Client/include/(**/*.inl)")
 

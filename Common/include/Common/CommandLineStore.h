@@ -12,23 +12,22 @@
 #include <unordered_map>
 #include <unordered_set>
 
+#include "Utils/StringUtils.h"
+
 namespace Mcc
 {
 
     class MCC_LIB_API CommandLineStore
     {
       public:
-        using OptParameter = std::optional<std::string_view>;
-
-      public:
         CommandLineStore(int argc, char** argv);
 
-        [[nodiscard]] OptParameter GetParameter(const std::string& parameter) const;
-        [[nodiscard]] bool         HasFlag(const std::string& flag) const;
+        std::optional<std::string> GetParameter(std::string_view name) const;
+        bool                       HasFlag     (std::string_view name) const;
 
       private:
-        std::unordered_map<std::string, std::string> mParameters;
-        std::unordered_set<std::string>              mFlags;
+        std::unordered_map<std::string, std::string, StringHash, std::equal_to<>> mParameters;
+        std::unordered_set<std::string, StringHash, std::equal_to<>>              mFlags;
     };
 
 }

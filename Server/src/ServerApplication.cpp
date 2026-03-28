@@ -27,11 +27,10 @@ namespace Mcc
               .renderDistance = RENDER_DISTANCE_DEFAULT,
               .userSpeed      = USER_SPEED_DEFAULT }
         ),
-        mNetworkManager(mCmdLineStore)
+        mNetworkManager(mCmdLineStore),
+        mAssetRegistry({}, std::filesystem::current_path() / "Assets")
     {
-        if (CommandLineStore::OptParameter param; (param = mCmdLineStore.GetParameter("tick-rate").or_else([&] {
-                                                      return mCmdLineStore.GetParameter("tr");
-                                                  })).has_value())
+        if (const auto param = mCmdLineStore.GetParameter("tick-rate"); param)
         {
             unsigned long tickRate;
             std::from_chars(param->data(), param->data() + param->size(), tickRate);
@@ -46,12 +45,10 @@ namespace Mcc
             mSettings.tickRate = tickRate;
         }
 
-        if (CommandLineStore::OptParameter param; (param = mCmdLineStore.GetParameter("render-distance").or_else([&] {
-                                                      return mCmdLineStore.GetParameter("rd");
-                                                  })).has_value())
+        if (const auto param = mCmdLineStore.GetParameter("render-distance"); param)
         {
             unsigned long renderDistance;
-            std::from_chars(param->cbegin(), param->cend(), renderDistance);
+            std::from_chars(param->data(), param->data() + param->size(), renderDistance);
             if (renderDistance < RENDER_DISTANCE_MIN || renderDistance > RENDER_DISTANCE_MAX)
             {
                 MCC_LOG_WARN(
@@ -61,6 +58,11 @@ namespace Mcc
                 renderDistance = TICK_RATE_DEFAULT;
             }
             mSettings.renderDistance = renderDistance;
+        }
+
+        if (const auto param = mCmdLineStore.GetParameter("asset-path"); param)
+        {
+            mAssetRegistry.SetBasePath(*param);
         }
     }
 
@@ -75,7 +77,13 @@ namespace Mcc
         MCC_LOG_DEBUG("Setup world...");
         mWorld.set_ctx(
             new ServerWorldContext {
-                { .networkManager = mNetworkManager, .networkMapping = {}, .scheduler = mScheduler, .chunkMap = {} },
+                {
+                    .networkManager = mNetworkManager,
+                    .networkMapping = {},
+                    .scheduler      = mScheduler,
+                    .assetRegistry  = mAssetRegistry,
+                    .chunkMap       = {}
+                },
                 mSettings,
         },
             [](void* ptr) { delete static_cast<ServerWorldContext*>(ptr); }

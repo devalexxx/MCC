@@ -42,9 +42,9 @@ namespace Mcc
         }
     }
 
-    auto CommandLineStore::GetParameter(const std::string& parameter) const -> OptParameter
+    std::optional<std::string> CommandLineStore::GetParameter(const std::string_view name) const
     {
-        if (const auto it = mParameters.find(parameter); it != mParameters.cend())
+        if (const auto it = mParameters.find(name); it != mParameters.cend())
         {
             return it->second;
         }
@@ -52,9 +52,9 @@ namespace Mcc
         return std::nullopt;
     }
 
-    bool CommandLineStore::HasFlag(const std::string& flag) const
+    bool CommandLineStore::HasFlag(const std::string_view name) const
     {
-        return mFlags.contains(flag);
+        return mFlags.contains(name);
     }
 
-}// Mcc
+}

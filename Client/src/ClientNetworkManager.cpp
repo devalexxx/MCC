@@ -16,13 +16,10 @@ namespace Mcc
         NetworkManager(DEFAULT_HOST, DEFAULT_PORT),
         mPeer(nullptr)
     {
-        CommandLineStore::OptParameter param;
-        if ((param = cmdLineStore.GetParameter("host").or_else([&] { return cmdLineStore.GetParameter("h"); })
-            ).has_value())
+        if (const auto param = cmdLineStore.GetParameter("host"); param)
             enet_address_set_host(&mAddr, param->data());
 
-        if ((param = cmdLineStore.GetParameter("port").or_else([&] { return cmdLineStore.GetParameter("p"); })
-            ).has_value())
+        if (const auto param = cmdLineStore.GetParameter("port"); param)
             std::from_chars(param->data(), param->data() + param->size(), mAddr.port);
     }
 

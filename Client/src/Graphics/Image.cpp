@@ -83,4 +83,21 @@ namespace Mcc
         return { x, y, n, formatMapping[n - 1], { data, stbi_image_free } };
     }
 
+    std::shared_ptr<Image> AssetLoader<Image>::operator()(
+        AssetRegistry& reg, const std::string_view path, const bool cache
+    ) const
+    {
+        const auto _path = reg.Resolve(path);
+        if (!_path)
+        {
+            MCC_LOG_ERROR("[AssetGetter] Failed to resolve asset path {}", path);
+            return nullptr;
+        }
+
+        auto image = std::make_shared<Image>(STBLoadImage(_path->c_str()));
+        return cache
+            ? std::dynamic_pointer_cast<Image>(reg.Add(std::string(path), image))
+            : image;
+    }
+
 }

@@ -10,6 +10,7 @@
 #include "Client/Graphics/Window/Window.h"
 
 #include "Common/Application.h"
+#include "Common/AssetRegistry.h"
 
 #include <Hexis/Core/TaskScheduler.h>
 
@@ -30,10 +31,11 @@ namespace Mcc
         int Run() override;
 
       private:
-        ClientSettings       mSettings;
-        ClientNetworkManager mNetworkManager;
-        Window               mWindow;
-        Hx::TaskScheduler    mScheduler;
+        ClientSettings            mSettings;
+        ClientNetworkManager      mNetworkManager;
+        Window                    mWindow;
+        Hx::TaskScheduler         mScheduler;
+        AssetRegistry             mAssetRegistry;
     };
 
 }

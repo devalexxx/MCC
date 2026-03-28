@@ -8,8 +8,8 @@
 #include "Client/Graphics/OpenGL/OpenGLShader.h"
 #include "Client/Module/EntityRenderer/Module.h"
 #include "Client/Module/Renderer/Component.h"
+#include "Client/WorldContext.h"
 
-#include "Common/Module/Entity/Component.h"
 #include "Common/Utils/FlecsUtils.h"
 
 namespace Mcc
@@ -17,65 +17,21 @@ namespace Mcc
 
     void SetupEntityMeshSystem(flecs::iter& it)
     {
-        OpenGLShader vertexShader(GL_VERTEX_SHADER, R"""(
-			#version 330
+        const auto  world  = it.world();
+        const auto* ctx    = ClientWorldContext::Get(world);
+        auto&       module = it.world().get_mut<EntityRendererModule>();
 
-			in vec3 inVertex;
-            in vec3 inTexCoord;
-
-			uniform mat4 view;
-			uniform mat4 proj;
-			uniform mat4 model;
-
-			out vec3 passColor;
-            out vec3 passTexCoord;
-
-			void main() {
-				gl_Position  = proj * view * model * vec4(inVertex, 1.0);
-				passColor    = vec3(1.0, 0.0, 0.0);
-                passTexCoord = inTexCoord;
-			}
-		)""");
-        OpenGLShader fragmentShader(GL_FRAGMENT_SHADER, R"""(
-			#version 330
-            #extension GL_ARB_texture_query_lod : enable
-
-			in vec3 passColor;
-            in vec3 passTexCoord;
-
-            uniform mat3      invModel;
-            uniform vec3      vPos;
-            uniform sampler2D tex;
-
-			out vec4 fragment;
-
-			void main() {
-                float mipmapLevel = 0;
-            #ifdef GL_ARB_texture_query_lod
-                mipmapLevel = textureQueryLOD(tex, passTexCoord.xy).x;
-            #endif
-                vec4 pixel = textureLod(tex, passTexCoord.xy, mipmapLevel);
-				fragment   = vec4(passColor, 1.0) * pixel;
-			}
-		)""");
-
-        const auto world  = it.world();
-        auto&      module = it.world().get_mut<EntityRendererModule>();
-
-        vertexShader  .Create();
-        fragmentShader.Create();
+        const auto vertexShader   = ctx->assetRegistry.Get<OpenGLShader>("shader://entity.vert", false);
+        const auto fragmentShader = ctx->assetRegistry.Get<OpenGLShader>("shader://entity.frag", false);
 
         module.program->Create();
-        module.program->Attach(vertexShader);
-        module.program->Attach(fragmentShader);
+        module.program->Attach(*vertexShader.get());
+        module.program->Attach(*fragmentShader.get());
 
         module.program->Link();
 
-        module.program->Detach(vertexShader);
-        module.program->Detach(fragmentShader);
-
-        vertexShader  .Delete();
-        fragmentShader.Delete();
+        module.program->Detach(*vertexShader.get());
+        module.program->Detach(*fragmentShader.get());
 
         module.programEntity = world.entity().set<COpenGLProgram>(module.program);
 

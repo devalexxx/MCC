@@ -29,7 +29,7 @@ namespace Mcc
             .set<CBlockColor>({ .5f, .5f, .5f })
             .set<CBlockMeta>({ "mcc:block:stone" })
             .set<CBlockAsset>({
-                .texture=std::string("Assets/Textures/Stone/cubeStone_1.png")
+                .texture=std::string("texture://Stone/cubeStone_1.png")
             })
             .child_of<SceneRoot>();
 
@@ -39,7 +39,7 @@ namespace Mcc
             .set<CBlockColor>({ .0f, .7f, .3f })
             .set<CBlockMeta>({ "mcc:block:dirt" })
             .set<CBlockAsset>({
-                .texture = std::string("Assets/Textures/Dirt/cubeDirt_1.png")
+                .texture = std::string("texture://Dirt/cubeDirt_1.png")
             })
             .child_of<SceneRoot>();
 
@@ -50,12 +50,12 @@ namespace Mcc
             .set<CBlockMeta>({ "mcc:block:dirt" })
             .set<CBlockAsset>({
                 .texture = Hx::EnumArray<BlockFace, std::string>{
-                    { BlockFace::Top   , "Assets/Textures/Grass/cubeGreen_1-Top.png" },
-                    { BlockFace::Bottom, "Assets/Textures/Dirt/cubeDirt_1.png"       },
-                    { BlockFace::Front , "Assets/Textures/Grass/cubeGreen_1.png"     },
-                    { BlockFace::Back  , "Assets/Textures/Grass/cubeGreen_1.png"     },
-                    { BlockFace::Left  , "Assets/Textures/Grass/cubeGreen_1.png"     },
-                    { BlockFace::Right , "Assets/Textures/Grass/cubeGreen_1.png"     },
+                    { BlockFace::Top   , "texture://Grass/cubeGreen_1-Top.png" },
+                    { BlockFace::Bottom, "texture://Dirt/cubeDirt_1.png"       },
+                    { BlockFace::Front , "texture://Grass/cubeGreen_1.png"     },
+                    { BlockFace::Back  , "texture://Grass/cubeGreen_1.png"     },
+                    { BlockFace::Left  , "texture://Grass/cubeGreen_1.png"     },
+                    { BlockFace::Right , "texture://Grass/cubeGreen_1.png"     },
                 }
             })
             .child_of<SceneRoot>();

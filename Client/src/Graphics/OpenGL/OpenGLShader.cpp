@@ -11,6 +11,7 @@
 
 #include <fmt/core.h>
 
+#include <fstream>
 #include <vector>
 
 namespace Mcc
@@ -90,6 +91,41 @@ namespace Mcc
             glCheck(glGetShaderInfoLog(mObjectID, length, &length, message.data()));
             MCC_LOG_ERROR("Failed to compile shader {}:\n\t{}", mObjectID, std::string_view(message.begin(), message.end()));
         }
+    }
+
+    std::shared_ptr<OpenGLShader> AssetLoader<OpenGLShader>::operator()(
+        AssetRegistry& reg, std::string_view path, const bool cache
+    ) const
+    {
+        const auto _path = reg.Resolve(path);
+        if (!_path)
+        {
+            MCC_LOG_ERROR("[AssetGetter] Failed to resolve asset path {}", path);
+            return nullptr;
+        }
+
+        std::ifstream file(_path->c_str());
+        std::string   code((std::istreambuf_iterator(file)), std::istreambuf_iterator<char>());
+
+        std::shared_ptr<OpenGLShader> shader = nullptr;
+        if (path.ends_with("vert"))
+        {
+            shader = std::make_shared<OpenGLShader>(GL_VERTEX_SHADER, code.c_str());
+        }
+        else if (path.ends_with("frag"))
+        {
+            shader = std::make_shared<OpenGLShader>(GL_FRAGMENT_SHADER, code.c_str());
+        }
+        else
+        {
+            MCC_LOG_ERROR("[AssetGetter] Unsupported shader type {}", path);
+            return nullptr;
+        }
+
+        shader->Create();
+        return cache
+            ? std::dynamic_pointer_cast<OpenGLShader>(reg.Add(std::string(path), shader))
+            : shader;
     }
 
 }

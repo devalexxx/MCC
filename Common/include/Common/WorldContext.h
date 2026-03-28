@@ -8,6 +8,7 @@
 #include "Common/Network/NetworkHandle.h"
 #include "Common/Network/NetworkManager.h"
 #include "Common/Network/Packet.h"
+#include "Common/AssetRegistry.h"
 
 #include "Hexis/Core/TaskScheduler.h"
 
@@ -53,6 +54,7 @@ namespace Mcc
         NManager&          networkManager;
         NetworkMapping     networkMapping;
         Hx::TaskScheduler& scheduler;
+        AssetRegistry&     assetRegistry;
 
         std::unordered_map<glm::ivec3, flecs::entity_t, IVec3Hasher> chunkMap;
     };

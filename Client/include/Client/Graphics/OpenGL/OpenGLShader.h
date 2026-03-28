@@ -5,6 +5,8 @@
 #ifndef MCC_CLIENT_GRAPHICS_OPENGL_OPENGL_SHADER_H
 #define MCC_CLIENT_GRAPHICS_OPENGL_OPENGL_SHADER_H
 
+#include "Common/AssetRegistry.h"
+
 #include <glad/glad.h>
 
 #include "OpenGLObject.h"
@@ -12,7 +14,7 @@
 namespace Mcc
 {
 
-    class OpenGLShader final : public OpenGLObject
+    class OpenGLShader final : public OpenGLObject, public Asset
     {
       public:
         OpenGLShader(GLenum kind, const char* code);
@@ -36,6 +38,12 @@ namespace Mcc
         const char* mCode;
 
         friend class OpenGLProgram;
+    };
+
+    template<>
+    struct AssetLoader<OpenGLShader>
+    {
+        std::shared_ptr<OpenGLShader> operator()(AssetRegistry& reg, std::string_view path, bool cache) const;
     };
 
 }

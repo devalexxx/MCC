@@ -9,6 +9,7 @@
 #include "Server/ServerSettings.h"
 
 #include "Common/Application.h"
+#include "Common/AssetRegistry.h"
 
 #include "Hexis/Core/TaskScheduler.h"
 
@@ -37,6 +38,7 @@ namespace Mcc
         ServerSettings       mSettings;
         ServerNetworkManager mNetworkManager;
         Hx::TaskScheduler    mScheduler;
+        AssetRegistry        mAssetRegistry;
     };
 
 }

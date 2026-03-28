@@ -37,12 +37,10 @@ namespace Mcc
     {
 #if defined(MCC_DEBUG) or defined(MCC_RELEASE_DEBUG)
         mWorld.import <flecs::stats>();
-        if (const auto param =
-                mCmdLineStore.GetParameter("fport").or_else([&] { return mCmdLineStore.GetParameter("fp"); });
-            param.has_value())
+        if (const auto param = mCmdLineStore.GetParameter("fport"); param)
         {
             flecs::Rest config;
-            std::from_chars(param->cbegin(), param->cend(), config.port);
+            std::from_chars(param->data(), param->data() + param->size(), config.port);
             mWorld.set<flecs::Rest>(config);
         }
         else

@@ -7,6 +7,7 @@
 
 #include "Client/Graphics/OpenGL/OpenGLProgram.h"
 #include "Client/Graphics/OpenGL/OpenGLTexture2DArray.h"
+#include "Client/Module/Renderer/Module.h"
 
 #include "Common/Module/Terrain/Module.h"
 #include "Common/Utils/SafeAccess.h"
