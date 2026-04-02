@@ -15,41 +15,37 @@
 namespace Mcc
 {
 
-    Chunk::Chunk() : mData({}, { Size * Size * Height, 2 })
-    {}
+    Chunk::Chunk() : Chunk(0) {}
 
-    Chunk::Chunk(flecs::entity_t filler) : mData({}, { Size * Size * Height, 2 })
+    Chunk::Chunk(flecs::entity_t filler) : mData({ filler }, { Size * Size * Height, 2 })
     {
-        mData.palette.emplace_back(filler);
         for (size_t i = 0; i < mData.mapping.GetSize(); ++i) { mData.mapping.Set(i, 0); }
     }
 
     Chunk::Chunk(ChunkData<flecs::entity_t> data) : mData(std::move(data))
     {}
 
+    bool Chunk::IsValid() const
+    {
+        if (mData.palette.size() <= 0)
+            return false;
+
+        return true;
+    }
+
     flecs::entity_t Chunk::Get(const glm::ivec3 position) const
     {
-        static auto null = flecs::entity::null().id();
-
-        if (mData.palette.empty())
-            return null;
-
-        if (position.x < 0 || position.y < 0 || position.z < 0 || position.x >= Size || position.y >= Height ||
-            position.z >= Size)
-            return null;
-
-        const size_t index = IndexFromPosition(position);
-        return index < mData.mapping.GetSize() ? mData.palette[mData.mapping.Get(index)] : null;
+        return mData.palette[GetPaletteIndex(position)];
     }
 
     Hx::EnumArray<BlockFace, flecs::entity_t> Chunk::GetNeighbors(const glm::ivec3 position) const
     {
-        static glm::ivec3 left(-1, 0, 0);
-        static glm::ivec3 right(1, 0, 0);
-        static glm::ivec3 front(0, 0, 1);
-        static glm::ivec3 back(0, 0, -1);
-        static glm::ivec3 top(0, 1, 0);
-        static glm::ivec3 bottom(0, -1, 0);
+        static glm::ivec3 left  (-1,  0,  0);
+        static glm::ivec3 right ( 1,  0,  0);
+        static glm::ivec3 front ( 0,  0,  1);
+        static glm::ivec3 back  ( 0,  0, -1);
+        static glm::ivec3 top   ( 0,  1,  0);
+        static glm::ivec3 bottom( 0, -1,  0);
 
         return {
             { BlockFace::Left,   Get(position + left)   },
@@ -63,7 +59,7 @@ namespace Mcc
 
     void Chunk::Set(const glm::uvec3 position, const flecs::entity_t entity)
     {
-        const size_t index = IndexFromPosition(position);
+        const size_t index  = IndexFromPosition(position);
 
         if (index >= mData.mapping.GetSize())
             return;
@@ -77,6 +73,19 @@ namespace Mcc
         {
             mData.mapping.Set(index, std::distance(mData.palette.begin(), it));
         }
+    }
+
+    size_t Chunk::GetPaletteIndex(size_t index) const
+    {
+        MCC_ASSERT(IsValid(), "Invalid chunk");
+        MCC_ASSERT(index < mData.mapping.GetSize(), "{} out of bound", index);
+        return mData.mapping.Get(index);
+    }
+
+    size_t Chunk::GetPaletteIndex(const glm::uvec3 position) const
+    {
+        MCC_ASSERT(IsValid(), "Invalid chunk");
+        return GetPaletteIndex(IndexFromPosition(position));
     }
 
     const Chunk::Palette& Chunk::GetPalette() const

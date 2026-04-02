@@ -9,6 +9,7 @@
 #include "Common/Utils/BitArray.h"
 
 #include <Hexis/Core/EnumArray.h>
+
 #include <glm/glm.hpp>
 
 #include <flecs.h>
@@ -61,15 +62,20 @@ namespace Mcc
         Chunk(flecs::entity_t filler);
         Chunk(ChunkData<flecs::entity_t> data);
 
-        [[nodiscard]] flecs::entity_t                           Get(glm::ivec3 position) const;
-        [[nodiscard]] Hx::EnumArray<BlockFace, flecs::entity_t> GetNeighbors(glm::ivec3 position) const;
+        bool IsValid() const;
 
-        void Set(glm::uvec3 position, flecs::entity_t entity);
+        flecs::entity_t Get(glm::ivec3 position) const;
+        void            Set(glm::uvec3 position, flecs::entity_t entity);
 
-        [[nodiscard]] const Palette&  GetPalette() const;
-        [[nodiscard]] const BitArray& GetMapping() const;
+        size_t GetPaletteIndex(size_t index) const;
+        size_t GetPaletteIndex(glm::uvec3 position) const;
 
-        [[nodiscard]] std::optional<RLEChunkData> ToNetwork(const flecs::world& world) const;
+        Hx::EnumArray<BlockFace, flecs::entity_t> GetNeighbors(glm::ivec3 position) const;
+
+        const Palette & GetPalette() const;
+        const BitArray& GetMapping() const;
+
+        std::optional<RLEChunkData> ToNetwork(const flecs::world& world) const;
 
       private:
         ChunkData<flecs::entity_t> mData;

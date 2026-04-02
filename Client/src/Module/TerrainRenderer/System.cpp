@@ -20,15 +20,15 @@
 #include "Common/SceneImporter.h"
 #include "Common/Utils/Benchmark.h"
 #include "Common/Utils/ChunkHelper.h"
-#include "Common/WorldContext.h"
 #include "Common/Utils/SafeAccess.h"
+#include "Common/WorldContext.h"
 
 #include <Hexis/Core/EnumArray.h>
 #include <Hexis/Core/VariantUtils.h>
 
 #include <numeric>
-#include <utility>
 #include <set>
+#include <utility>
 
 namespace Mcc
 {
@@ -157,66 +157,51 @@ namespace Mcc
             return x + 1 + ((y + 1) * (Chunk::Size + 2)) + ((z + 1) * (Chunk::Size + 2) * (Chunk::Height + 2));
         }
 
-        bool Solid(const flecs::world& world, const flecs::entity_t entity)
+        struct ChunkMeshBuildDesc
         {
-            if (world.is_valid(entity))
-            {
-                return world.entity(entity).get<CBlockType>() == CBlockType::Solid;
-            }
-            return false;
-        }
+            glm::ivec3 position;
 
-        Mesh BuildChunkMeshImpl(
-            const flecs::world& world, glm::ivec3 position, std::shared_ptr<Chunk> chunk,
-            decltype(TerrainRendererModule::textureIndex)  textureIndex,
-            decltype(TerrainRendererModule::textureToLoad) textureToLoad
-        )
+            std::shared_ptr<Chunk>                             chunk;
+            std::vector<Hx::EnumArray<BlockFace, std::string>> assetPath;
+
+            std::array<std::shared_ptr<Chunk>, 4>     neighbors; // left, right, front, back
+            std::unordered_map<flecs::entity_t, bool> solid;
+        };
+
+        struct ChunkTextureArrayDesc
+        {
+            decltype(TerrainRendererModule::textureIndex)  textureIndex;
+            decltype(TerrainRendererModule::textureToLoad) textureToLoad;
+        };
+
+        Mesh BuildChunkMeshImpl(const flecs::world& world, ChunkMeshBuildDesc cDesc, ChunkTextureArrayDesc tDesc)
         {
             if (!world.has<ActiveScene, GameScene>())
                 return {};
 
-            const auto* ctx = ClientWorldContext::Get(world);
-
-            std::array array { GetEmptyChunk(), GetEmptyChunk(), GetEmptyChunk(), GetEmptyChunk() };
-            for (auto [i, side]: GetChunkNeighbours())
-            {
-                if (const auto it = ctx->chunkMap.find(position + side); it != ctx->chunkMap.end())
-                {
-                    array[i] = world.entity(it->second).get<CChunkPtr>();
-                }
-            }
-            auto&& [left, right, front, back] = array;
-
-            Mesh                                                         mesh;
-            std::unordered_map<PackedVertex, size_t, PackedVertexHasher> indexMap;
-
-            std::vector mask((Chunk::Size + 2) * (Chunk::Size + 2) * (Chunk::Height + 2), true);
-
-            // Compute border
-            for (int xz = 0; std::cmp_less(xz, Chunk::Size); ++xz)
-            {
-                for (int y = 0; std::cmp_less(y, Chunk::Height); ++y)
-                {
-                    mask[Index(-1, y, xz)]          = Solid(world, left ->Get({ Chunk::Size - 1, y, xz }));
-                    mask[Index(Chunk::Size, y, xz)] = Solid(world, right->Get({ 0, y, xz }));
-
-                    mask[Index(xz, y, -1)]          = Solid(world, front->Get({ xz, y, Chunk::Size - 1 }));
-                    mask[Index(xz, y, Chunk::Size)] = Solid(world, back ->Get({ xz, y, 0 }));
-                }
-            }
+            auto&& [left, right, front, back] = cDesc.neighbors;
 
             // Compute chunk mask
+            std::vector mask((Chunk::Size + 2) * (Chunk::Size + 2) * (Chunk::Height + 2), true);
             for (size_t x = 0; x < Chunk::Size; ++x)
             {
-                for (size_t z = 0; z < Chunk::Size; ++z)
+                for (size_t y = 0; y < Chunk::Height; ++y)
                 {
-                    for (size_t y = 0; y < Chunk::Height; ++y)
+                    mask[Index(-1, y, x)]          = cDesc.solid[left ->Get({ Chunk::Size - 1, y, x })];
+                    mask[Index(Chunk::Size, y, x)] = cDesc.solid[right->Get({ 0, y, x })];
+
+                    mask[Index(x, y, -1)]          = cDesc.solid[front->Get({ x, y, Chunk::Size - 1 })];
+                    mask[Index(x, y, Chunk::Size)] = cDesc.solid[back ->Get({ x, y, 0 })];
+
+                    for (size_t z = 0; z < Chunk::Size; ++z)
                     {
-                        mask[Index(x, y, z)] = Solid(world, chunk->Get({ x, y, z }));
+                        mask[Index(x, y, z)] = cDesc.solid[cDesc.chunk->Get({ x, y, z })];
                     }
                 }
             }
 
+            Mesh                                                         mesh;
+            std::unordered_map<PackedVertex, size_t, PackedVertexHasher> indexMap;
             constexpr auto chunkSize = glm::vec3(Chunk::Size, Chunk::Height, Chunk::Size);
             for (int x = 0; std::cmp_less(x, Chunk::Size); ++x)
             {
@@ -227,7 +212,7 @@ namespace Mcc
                         if (!mask[Index(x, y, z)])
                             continue;
 
-                        const auto& asset = world.entity(chunk->Get({ x, y, z })).get<CBlockAsset>();
+                        const auto pIndex = cDesc.chunk->GetPaletteIndex({ x, y, z });
                         const auto& qv    = GetQuadVerticesAndUvs();
                         const auto& qn    = GetQuadNormals();
                         for (auto [face, n]: GetBlockNeighbours())
@@ -235,23 +220,13 @@ namespace Mcc
                             if (mask[Index(x + n.x, y + n.y, z + n.z)])
                                 continue;
 
-                            auto texture = std::visit(
-                                Hx::Overloaded {
-                                    [](const std::string& string) -> std::string {
-                                        return string;
-                                    },
-                                    [&](const Hx::EnumArray<BlockFace, std::string>& enumArray) -> std::string {
-                                        return enumArray[face];
-                                    }
-                                },
-                                asset.texture
-                            );
-                            auto [tIt, tInserted] = (*textureIndex)->try_emplace(texture, (*textureIndex)->size());
-                            auto tIndex = tIt->second;
+                            auto texturePath = cDesc.assetPath[pIndex][face];
+                            auto [tIt, tInserted] = (*tDesc.textureIndex)->try_emplace(texturePath,(*tDesc.textureIndex)->size());
                             if (tInserted)
                             {
-                                (*textureToLoad)->emplace(texture);
+                                (*tDesc.textureToLoad)->emplace(texturePath);
                             }
+                            auto textureIndex = tIt->second;
 
                             for (const auto& [vertex, uv]: qv[face])
                             {
@@ -261,7 +236,7 @@ namespace Mcc
 
                                 // Add tris to the mesh
                                 const PackedVertex pv = {
-                                    .vertex=final, .color={ 0.f, 0.f, 0.f }, .uv=glm::vec3(uv, tIndex), .normal=qn[face]
+                                    .vertex=final, .color={ 0.f, 0.f, 0.f }, .uv=glm::vec3(uv, textureIndex), .normal=qn[face]
                                 };
                                 auto [it, inserted] = indexMap.try_emplace(pv, mesh.vertex.size());
                                 if (inserted)
@@ -354,11 +329,66 @@ namespace Mcc
         const auto& module = world.get<TerrainRendererModule>();
         const auto* ctx    = ClientWorldContext::Get(world);
 
+        _::ChunkMeshBuildDesc cDesc;
+        cDesc.position = pos;
+        cDesc.chunk    = ptr;
+
+        for (auto [i, side]: _::GetChunkNeighbours())
+        {
+            if (const auto it = ctx->chunkMap.find(pos + side); it != ctx->chunkMap.end())
+            {
+                cDesc.neighbors[i] = world.entity(it->second).get<CChunkPtr>();
+
+                for (const auto e: cDesc.neighbors[i]->GetPalette())
+                {
+                    cDesc.solid.try_emplace(e, world.entity(e).get<CBlockType>() == CBlockType::Solid);
+                }
+            }
+            else
+            {
+                cDesc.neighbors[i] = _::GetEmptyChunk();
+                cDesc.solid.try_emplace(0, false);
+            }
+        }
+
+        for (const auto e: ptr->GetPalette())
+        {
+            cDesc.solid.try_emplace(e, world.entity(e).get<CBlockType>() == CBlockType::Solid);
+        }
+
+        std::ranges::transform(ptr->GetPalette(), std::back_inserter(cDesc.assetPath), [&world](flecs::entity_t e) -> Hx::EnumArray<BlockFace, std::string>
+        {
+            if (const auto asset = world.entity(e).try_get<CBlockAsset>(); asset)
+            {
+                return std::visit(
+                    Hx::Overloaded {
+                        [](const std::string& string) -> Hx::EnumArray<BlockFace, std::string> {
+                            return Hx::EnumArray<BlockFace, std::string> {
+                                { BlockFace::Left,   string },
+                                { BlockFace::Right,  string },
+                                { BlockFace::Front,  string },
+                                { BlockFace::Back,   string },
+                                { BlockFace::Top,    string },
+                                { BlockFace::Bottom, string }
+                            };
+                        },
+                        [](const Hx::EnumArray<BlockFace, std::string>& eArray) -> Hx::EnumArray<BlockFace, std::string> {
+                            return eArray;
+                        },
+                    },
+                    asset->texture
+                );
+            }
+
+            return {};
+        });
+
+        _::ChunkTextureArrayDesc tDesc;
+        tDesc.textureIndex  = module.textureIndex;
+        tDesc.textureToLoad = module.textureToLoad;
+
         auto task = ctx->scheduler
-            .Insert(
-                MCC_BENCH_TIME(MeshBuilding, _::BuildChunkMeshImpl),
-                world, pos, ptr, module.textureIndex, module.textureToLoad
-            )
+            .Insert(MCC_BENCH_TIME(MeshBuilding, _::BuildChunkMeshImpl), world, std::move(cDesc), std::move(tDesc))
             .AsUnique()
             .SetGroup("game_group")
             .Enqueue();
