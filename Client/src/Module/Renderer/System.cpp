@@ -117,9 +117,9 @@ namespace Mcc
                     mesh.indexBuffer.Bind();
                     for (auto& trEntity : tVec)
                     {
-                        const auto& [position, rotation, scale] = world.entity(trEntity).get<CTransform>();
+                        const auto& [position, rotation, scale] = world.entity(trEntity).get<CRenderTransform>();
                         const auto model =  glm::translate(
-                            glm::mat4(1.), position) * glm::toMat4(rotation) * glm::scale(glm::mat4(1.), scale
+                            glm::mat4(1.), glm::vec3(position)) * glm::toMat4(rotation) * glm::scale(glm::mat4(1.), scale
                         );
                         program->SetUniformMatrix(modelLocation   , model);
                         program->SetUniformMatrix(invModelLocation, glm::transpose(glm::inverse(glm::mat3(model))));

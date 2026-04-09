@@ -8,13 +8,15 @@
 #include <cereal/types/unordered_map.hpp>
 #include <cereal/types/vector.hpp>
 
+#include "Common/Utils/GLMUtils.h"
+
 namespace Mcc
 {
 
     template<typename Archive>
     void serialize(Archive& ar, EntityState& packet)
     {
-        ar(packet.handle, packet.transform, packet.extra);
+        ar(packet.handle, packet.transform, packet.data);
     }
 
     template<typename Archive>

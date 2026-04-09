@@ -41,7 +41,7 @@ namespace Mcc
             .event<OnPlayerMoveEvent>()
             .each(OnPlayerMoveObserver);
 
-        world.observer<const CTransform>("OnPlayerCreated")
+        world.observer<const CEntityTransform>("OnPlayerCreated")
             .event<OnPlayerCreatedEvent>()
             .each(OnPlayerCreatedObserver);
     }

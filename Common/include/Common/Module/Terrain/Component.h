@@ -7,6 +7,7 @@
 
 #include "Common/Utils/FlecsUtils.h"
 #include "Common/World/Chunk.h"
+#include "Common/World/Position.h"
 
 #include <memory>
 #include <string>
@@ -43,7 +44,7 @@ namespace Mcc
 
     namespace _ { struct TerrainModuleTag {}; };
     using CBlockColor = ComponentWrapper<glm::vec3             , _::TerrainModuleTag>;
-    using CChunkPos   = ComponentWrapper<glm::ivec3            , _::TerrainModuleTag>;
+    using CChunkPos   = ComponentWrapper<ChunkPosV             , _::TerrainModuleTag>;
     using CChunkPtr   = ComponentWrapper<std::shared_ptr<Chunk>, _::TerrainModuleTag>;
 
     template<typename Archive>

@@ -14,9 +14,7 @@
 namespace Mcc::Helper
 {
 
-    MCC_LIB_API std::pair<int, int> GetPlayerChunkPosition(const glm::vec3& position);
-
-    MCC_LIB_API bool IsInCircle(const glm::vec2& c, const glm::vec2& p, long radius);
+    MCC_LIB_API bool IsInCircle (const glm::vec2& c, const glm::vec2& p, long radius);
     MCC_LIB_API void ForInCircle(long x, long y, int radius, std::function<void(long x, long y)>&& fn);
 
 }

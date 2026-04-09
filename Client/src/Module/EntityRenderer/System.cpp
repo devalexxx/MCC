@@ -64,6 +64,11 @@ namespace Mcc
         IgnoreIter(it);
     }
 
+    void UpdateRenderTransformSystem(const flecs::entity entity, const CEntityTransform& transform)
+    {
+        entity.ensure<CRenderTransform>() = transform;
+    }
+
     void SetEntityMeshObserver(flecs::iter& it)
     {
         const auto module = it.world().get_mut<EntityRendererModule>();

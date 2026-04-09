@@ -69,7 +69,7 @@ namespace Mcc
         // Should be set in the task
         GenerationState::Progress::Enter(entity);
 
-        ctx->chunkMap[position] = entity.id();
+        ctx->chunkMapping[position] = entity.id();
 
         return entity;
     }

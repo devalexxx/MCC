@@ -31,6 +31,10 @@ namespace Mcc
         world.system("SetupEntityMesh")
             .kind<Phase::OnLoad>()
             .run(SetupEntityMeshSystem);
+
+        world.system<const CEntityTransform>("UpdateRenderTransform")
+            .kind<Phase::PostUpdate>()
+            .each(UpdateRenderTransformSystem);
     }
 
     void EntityRendererModule::RegisterObserver(flecs::world& world)

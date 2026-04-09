@@ -5,6 +5,22 @@
 namespace Mcc
 {
 
+    template<typename T, typename... Args>
+    template<typename Other>
+    auto ComponentWrapper<T, Args...>::operator=(const Other& other) noexcept -> ComponentWrapper&
+    {
+        T::operator=(other);
+        return *this;
+    }
+
+    template<typename T, typename... Args>
+    template<typename Other>
+    auto ComponentWrapper<T, Args...>::operator=(Other&& other) noexcept -> ComponentWrapper&
+    {
+        T::operator=(other);
+        return *this;
+    }
+
     template<typename T, typename C>
     flecs::opaque<C, T> VectorReflection(flecs::world& world)
     {

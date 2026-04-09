@@ -30,12 +30,12 @@ namespace Mcc
 
     void EntityReplicationModule::RegisterSystem(flecs::world& world)
     {
-        world.system<const CTransform, const CEntityDataMap, const CNetProps>("BroadcastEntitiesCreated")
+        world.system<const CEntityTransform, const CEntityDataMap, const CNetProps>("BroadcastEntitiesCreated")
             .kind<Phase::PostUpdate>()
             .with<TEntityCreated>()
             .run(BroadcastEntitiesCreated);
 
-        world.system<const CTransform, const CEntityDataMap, const CNetProps>("BroadcastEntitiesUpdated")
+        world.system<const CEntityTransform, const CEntityDataMap, const CNetProps>("BroadcastEntitiesUpdated")
             .kind<Phase::PostUpdate>()
             .with<TEntityDirty>()
             .run(BroadcastEntitiesUpdated);

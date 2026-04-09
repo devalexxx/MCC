@@ -23,6 +23,14 @@ namespace Mcc
         using T::T;
         ComponentWrapper(const T& data) : T(data) {}
         ComponentWrapper(T&& data)      : T(data) {}
+
+        T&       Underlying()       { return *this; }
+        const T& Underlying() const { return *this; }
+
+        template<typename Other>
+        ComponentWrapper& operator=(const Other& other) noexcept;
+        template<typename Other>
+        ComponentWrapper& operator=(Other&& other) noexcept;
     };
 
     template<typename T, typename...>
@@ -57,7 +65,6 @@ namespace Mcc
 
     template<typename K, typename V, typename T = std::pair<const K, V>, typename C = std::unordered_map<K, V>>
     flecs::opaque<C, T> UMapReflection(flecs::world& world);
-
 
     template<typename>
     struct AutoRegister

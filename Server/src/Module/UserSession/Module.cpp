@@ -77,7 +77,11 @@ namespace Mcc
                 .is_a<PUserEntity>()
                 .set<CUserSession>(session)
                 .set<CNetProps>({ session->pInfo.handle })
-                .set<CTransform>({ .position={ 0, 100, 0 }, .rotation={}, .scale={ 1, 1, 1 } })
+                .set<CEntityTransform>({{
+                    .position={{ 0, 0 }, { 0, .75f, 0 }},
+                    .rotation={},
+                    .scale   ={ 1, 1, 1 }
+                }})
                 .add<TEntityCreated>()
                 .child_of<SceneRoot>();
         }

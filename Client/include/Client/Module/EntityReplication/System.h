@@ -12,7 +12,7 @@
 namespace Mcc
 {
 
-    void EntityInterpolationSystem(CTransform& transform, CSnapshotQueue& queue);
+    void EntityInterpolationSystem(CEntityTransform& transform, CSnapshotQueue& queue);
 
 }
 

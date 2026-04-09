@@ -89,7 +89,7 @@ namespace Mcc
     void ClearGameInfoSystem(flecs::iter& it)
     {
         const auto ctx      = ClientWorldContext::Get(it.world());
-        ctx->chunkMap       = {};
+        ctx->chunkMapping       = {};
         ctx->networkMapping = {};
 
         IgnoreIter(it);
@@ -206,6 +206,20 @@ namespace Mcc
             ImGui::Text("queued : %d", queued);
             ImGui::Text("display: %d", it.world().count<TShouldRenderChunk>());
         }
+
+        if (ImGui::CollapsingHeader("Player"))
+        {
+            if (const auto player = PlayerModule::GetPlayer(it.world()); player.is_valid())
+            {
+                const auto& transform         = player.get_mut<CEntityTransform>();
+                auto  position                = glm::vec3(WorldPosF(transform.position));
+                auto  [chunkPos, posInChunk]  = transform.position;
+                ImGui::InputFloat3("Position", &position[0]);
+                ImGui::InputInt2  ("ChunkPosition", &static_cast<glm::ivec2>(chunkPos)[0]);
+                ImGui::InputFloat3("PositionInChunk", &static_cast<glm::vec3>(posInChunk)[0]);
+            }
+        }
+
         ImGui::End();
 
         IgnoreIter(it);

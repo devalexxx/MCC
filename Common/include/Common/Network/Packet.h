@@ -10,6 +10,7 @@
 #include "Common/Network/NetworkHandle.h"
 #include "Common/Network/Packet/Session.h"
 #include "Common/Network/PacketStream.h"
+#include "Common/World/Position.h"
 
 #include <Hexis/Core/TypeList.h>
 
@@ -53,9 +54,8 @@ namespace Mcc
     {
         NetworkHandle handle;
 
-        CTransform transform;
-
-        std::unordered_map<std::string, std::string> extra;
+        CEntityTransform transform;
+        CEntityDataMap   data;
     };
 
     template<typename Archive>
@@ -84,7 +84,7 @@ namespace Mcc
     struct OnChunk
     {
         NetworkHandle handle   {};
-        CChunkPos     position {};
+        ChunkPosV     position {};
         RLEChunkData  data;
     };
 

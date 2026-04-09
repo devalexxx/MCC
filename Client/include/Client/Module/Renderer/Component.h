@@ -11,6 +11,7 @@
 #include "Client/Graphics/OpenGL/OpenGLVertexArray.h"
 
 #include "Common/Utils/FlecsUtils.h"
+#include "Common/World/Transform.h"
 
 namespace Mcc
 {
@@ -29,9 +30,10 @@ namespace Mcc
     };
 
     namespace _ { struct RendererModuleTag {}; }
-    using COpenGLProgram = ComponentWrapper<std::shared_ptr<OpenGLProgram>, _::RendererModuleTag>;
-    using COpenGLTexture = ComponentWrapper<std::shared_ptr<OpenGLTexture>, _::RendererModuleTag>;
-    using CRenderQueue   = ComponentWrapper<
+    using CRenderTransform = ComponentWrapper<Transform<FloatCoord>         , _::RendererModuleTag>;
+    using COpenGLProgram   = ComponentWrapper<std::shared_ptr<OpenGLProgram>, _::RendererModuleTag>;
+    using COpenGLTexture   = ComponentWrapper<std::shared_ptr<OpenGLTexture>, _::RendererModuleTag>;
+    using CRenderQueue     = ComponentWrapper<
         std::unordered_map<flecs::entity_t,
             std::unordered_map<flecs::entity_t,
                 std::unordered_map<flecs::entity_t, std::unordered_set<flecs::entity_t>>

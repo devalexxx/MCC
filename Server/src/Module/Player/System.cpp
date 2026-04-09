@@ -10,7 +10,6 @@
 #include "Server/WorldContext.h"
 
 #include "Common/Module/Entity/Component.h"
-#include "Common/Utils/ChunkHelper.h"
 
 #include <ranges>
 
@@ -26,7 +25,8 @@ namespace Mcc
             return;
         }
 
-        entity.get([&](CTransform& transform, CEntityDataMap& data) {
+        entity.get([&](CEntityTransform& transform, CEntityDataMap& data)
+        {
             const auto position = transform.position;
             for (; !queue.empty(); queue.pop_front())
             {
@@ -54,7 +54,7 @@ namespace Mcc
     {
         entity.world()
             .event<OnPlayerCreatedEvent>()
-            .id<CTransform>()
+            .id<CEntityTransform>()
             .entity(entity)
             .emit();
     }

@@ -9,13 +9,14 @@
 
 #include "Common/Module/Entity/Component.h"
 #include "Common/Module/Terrain/Component.h"
+#include "Common/World/Position.h"
 
 #include <flecs.h>
 
 namespace Mcc
 {
 
-    void OnPlayerMoveObserver  (const flecs::iter& it, size_t, const CTransform& transform);
+    void OnPlayerMoveObserver  (const flecs::iter& it, size_t, const CEntityTransform& transform);
     void OnChunkCreatedObserver(flecs::entity entity, const CChunkPos& p);
     void OnChunkChangedObserver(flecs::entity entity, const CChunkPtr&);
 

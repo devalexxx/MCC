@@ -4,6 +4,7 @@
 
 #include "Client/Module/TerrainReplication/Module.h"
 
+#include "Client/Module/Renderer/Component.h"
 #include "Client/WorldContext.h"
 
 #include "Common/Module/Network/Component.h"
@@ -12,6 +13,8 @@
 #include "Common/Utils/Assert.h"
 #include "Common/Utils/Benchmark.h"
 #include "Common/Utils/Logging.h"
+#include "Common/World/Translation.h"
+#include "Common/World/Geometry.h"
 
 #include <glm/gtx/quaternion.hpp>
 
@@ -33,17 +36,7 @@ namespace Mcc
 
     void TerrainReplicationModule::RegisterSystem(flecs::world& /* world */) {}
 
-    void TerrainReplicationModule::RegisterObserver(flecs::world& world)
-    {
-        world.observer<CChunkPos>()
-            .event(flecs::OnSet)
-            .each([](const flecs::entity e, const CChunkPos& pos) {
-                auto& transform = e.ensure<CTransform>();
-                transform.position = glm::vec3(pos * glm::ivec3(2 * Chunk::Size, 0, 2 * Chunk::Size));
-                transform.rotation = glm::quat_identity<float, glm::defaultp>();
-                transform.scale    = glm::vec3(Chunk::Size, Chunk::Height, Chunk::Size);
-            });
-    }
+    void TerrainReplicationModule::RegisterObserver(flecs::world& /* world */) {}
 
     void TerrainReplicationModule::OnBlockHandler(const OnBlock& packet, const flecs::world& world)
     {
@@ -81,7 +74,7 @@ namespace Mcc
                .set<CChunkPtr>(std::make_shared<Chunk>(std::move(*from)))
                .child_of<SceneRoot>();
 
-            ctx->chunkMap.emplace(packet.position, e.id());
+            ctx->chunkMapping.emplace(packet.position, e.id());
         }
     }
 

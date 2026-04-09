@@ -6,6 +6,7 @@
 
 #include "Common/Module/Network/Component.h"
 #include "Common/Module/Terrain/Component.h"
+#include "Common/World/Position.h"
 
 namespace Mcc
 {
@@ -34,8 +35,7 @@ namespace Mcc
         world.component<CBlockAsset>();
 
         world.component<CChunkPtr>("CChunkPtr");
-        world.component<CChunkPos>("CChunkPos")
-            .is_a<CChunkPos::Type>();
+        world.component<CChunkPos>();
     }
 
     void TerrainModule::RegisterPrefab(flecs::world& world)

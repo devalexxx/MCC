@@ -4,16 +4,15 @@
 
 #include "Client/Module/EntityReplication/System.h"
 
-#include "Client/WorldContext.h"
-
-#include "Common/Module/Network/Component.h"
+#include "Common/Utils/MathUtils.h"
+#include "Common/World/Geometry.h"
 #include "Common/SceneImporter.h"
 #include "Common/WorldContext.h"
 
 namespace Mcc
 {
 
-    void EntityInterpolationSystem(CTransform& transform, CSnapshotQueue& queue)
+    void EntityInterpolationSystem(CEntityTransform& transform, CSnapshotQueue& queue)
     {
         constexpr auto delay      = std::chrono::milliseconds(50);
         const auto     delayedNow = TimeClock::now() - delay;
@@ -28,10 +27,7 @@ namespace Mcc
 
         if (queue.size() == 1)
         {
-            const auto& [tr, time] = queue.front();
-            transform.position     = tr.position;
-            transform.rotation     = tr.rotation;
-            transform.scale        = tr.scale;
+            transform = queue.front().transform;
             return;
         }
 
@@ -43,10 +39,10 @@ namespace Mcc
                 const auto& [bTr, bTime] = queue[i + 1];
 
                 const auto elapsed = std::chrono::duration<float>(delayedNow - aTime).count();
-                const auto length  = std::chrono::duration<float>(bTime - aTime).count();
+                const auto length  = std::chrono::duration<float>(bTime      - aTime).count();
 
-                transform.position = glm::mix  (aTr.position, bTr.position, elapsed / length);
-                transform.rotation = glm::slerp(aTr.rotation, bTr.rotation, elapsed / length);
+                transform.position = Lerp (aTr.position, bTr.position, elapsed / length);
+                transform.rotation = SLerp(aTr.rotation, bTr.rotation, elapsed / length);
                 transform.scale    = aTr.scale;
                 break;
             }

@@ -9,8 +9,8 @@
 #include "Client/Module/Renderer/System.h"
 #include "Client/WorldContext.h"
 
-#include "Common/Module/Core/Component.h"
-#include "Common/Module/Entity/Component.h"
+#include "Common/World/Geometry.h"
+#include "Common/World/Transform.h"
 #include "Common/Phase.h"
 #include "Common/Utils/Logging.h"
 
@@ -38,6 +38,42 @@ namespace Mcc
             .add(flecs::Relationship);
 
         world.component<COpenGLMesh>();
+
+        world.component<WorldPosF>("WorldPosF")
+            .opaque(
+                world.component()
+                    .member<float>("x")
+                    .member<float>("y")
+                    .member<float>("z")
+            )
+            .serialize([](const flecs::serializer* s, const WorldPosF* data)
+            {
+                const auto v = glm::vec3(*data);
+                s->member("x");
+                s->value(v.x);
+                s->member("y");
+                s->value(v.y);
+                s->member("z");
+                s->value(v.z);
+                return 0;
+            })
+            .ensure_member([](WorldPosF*, const char* member) -> void*
+            {
+                static glm::vec3 fake1;
+
+                const auto str = std::string_view(member);
+                if (str == "x") return &fake1.x;
+                if (str == "y") return &fake1.y;
+                if (str == "z") return &fake1.z;
+
+                return nullptr;
+            });
+
+        world.component<CRenderTransform>("CRenderTransform")
+            .member("position", &CRenderTransform::position)
+            .member("rotation", &CRenderTransform::rotation)
+            .member("scale"   , &CRenderTransform::scale);
+
         AutoRegister<COpenGLProgram>::Register(world, "COpenGLProgram");
         AutoRegister<COpenGLTexture>::Register(world, "COpenGLTexture");
 
@@ -64,7 +100,7 @@ namespace Mcc
         // TODO: add PreDraw phase
         world.system("UpdateRenderQueue")
             .kind<Phase::OnClear>()
-            .with<CTransform>()
+            .with<CRenderTransform>()
             .with<ROpenGLProgram>(flecs::Wildcard)
             .with<ROpenGLTexture>(flecs::Wildcard)
             .with<ROpenGLMesh>   (flecs::Wildcard)
@@ -85,9 +121,9 @@ namespace Mcc
     {
         const auto* ctx = ClientWorldContext::Get(world);
 
-        CTransform      cTransform {};
-        CCameraSettings cSettings {};
-        world.query_builder<const CTransform, const CCameraSettings>()
+        CRenderTransform cTransform {};
+        CCameraSettings  cSettings {};
+        world.query_builder<const CEntityTransform, const CCameraSettings>()
             .with<TActiveCamera>()
             .build()
             .run([&](flecs::iter& it) {
@@ -96,8 +132,8 @@ namespace Mcc
                 {
                     if (!isSet)
                     {
-                        auto t = it.field<const CTransform>(0);
-                        auto s = it.field<const CCameraSettings>(1);
+                        auto t = it.field<const CEntityTransform>(0);
+                        auto s = it.field<const CCameraSettings> (1);
 
                         if (it.count() > 1)
                             MCC_LOG_WARN("More than one camera active");
@@ -116,9 +152,11 @@ namespace Mcc
                 }
             });
 
-        const glm::vec3 up   = glm::normalize(glm::cross(cTransform.rotation * glm::right, cTransform.rotation * glm::forward));
-        const glm::mat4 view = glm::lookAt(cTransform.position, cTransform.position + cTransform.rotation * glm::forward, up);
-        const glm::mat4 proj = glm::perspective(cSettings.fov, ctx->window.GetAspectRatio(), cSettings.zNear, cSettings.zFar);
+        const glm::vec3 eye    = cTransform.position;
+        const glm::vec3 center = cTransform.position + TranslationF(cTransform.rotation * glm::forward);
+        const glm::vec3 up     = glm::normalize(glm::cross(cTransform.rotation * glm::right, cTransform.rotation * glm::forward));
+        const glm::mat4 view   = glm::lookAt(eye, center, up);
+        const glm::mat4 proj   = glm::perspective(cSettings.fov, ctx->window.GetAspectRatio(), cSettings.zNear, cSettings.zFar);
 
         return { cTransform.position, view, proj };
     }

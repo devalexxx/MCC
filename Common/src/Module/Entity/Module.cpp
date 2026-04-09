@@ -8,6 +8,8 @@
 #include "Common/Module/Network/Component.h"
 #include "Common/Utils/FlecsUtils.h"
 
+#include <glm/gtx/quaternion.hpp>
+
 namespace Mcc
 {
 
@@ -22,6 +24,46 @@ namespace Mcc
         world.component<PEntity>();
         world.component<PNetEntity>();
         world.component<PUserEntity>();
+
+        world.component<WorldPosE>()
+            .opaque(flecs::String)
+            .serialize([](const flecs::serializer* s, const WorldPosE* data) {
+                auto [ parent, local ] = *data;
+                const std::string str = fmt::format("{} {}", parent, local);
+                return s->value(flecs::String, str.c_str());
+            });
+
+        world.component<WorldPosE>("WorldPosE")
+            .opaque(
+                world.component()
+                    .member<glm::ivec2>("parent")
+                    .member<glm::fvec3>("local")
+            )
+            .serialize([](const flecs::serializer* s, const WorldPosE* data)
+            {
+                auto [ parent, local ] = *data;
+                s->member("parent");
+                s->value(glm::ivec2(parent));
+                s->member("local");
+                s->value(glm::vec3(local));
+                return 0;
+            })
+            .ensure_member([](WorldPosE*, const char* member) -> void*
+            {
+                static glm::ivec2 fake1;
+                static glm::fvec3 fake2;
+
+                const auto str = std::string_view(member);
+                if (str == "parent") return &fake1;
+                if (str == "local")  return &fake2;
+
+                return nullptr;
+            });
+
+        world.component<CEntityTransform>("CEntityTransform")
+            .member("position", &CEntityTransform::position)
+            .member("rotation", &CEntityTransform::rotation)
+            .member("scale"   , &CEntityTransform::scale);
 
         AutoRegister<CEntityDataMap>::Register(world, "CEntityDataMap");
 
@@ -53,7 +95,7 @@ namespace Mcc
     {
         world.prefab<PEntity>()
             .add<TEntity>()
-            .set<CTransform>(CTransform::Identity());
+            .set<CEntityTransform>({});
 
         world.prefab<PNetEntity>()
             .is_a<PNetObject>()

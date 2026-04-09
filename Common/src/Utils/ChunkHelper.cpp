@@ -9,11 +9,6 @@
 namespace Mcc::Helper
 {
 
-    std::pair<int, int> GetPlayerChunkPosition(const glm::vec3& position)
-    {
-        return { static_cast<int>(position.x) / (Chunk::Size * 2), static_cast<int>(position.z) / (Chunk::Size * 2) };
-    }
-
     bool IsInCircle(const glm::vec2& c, const glm::vec2& p, const long radius)
     {
         const auto fR = static_cast<float>(radius);

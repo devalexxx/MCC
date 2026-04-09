@@ -8,7 +8,6 @@
 #include "Client/Module/EntityReplication/System.h"
 #include "Client/WorldContext.h"
 
-#include "Common/Module/Core/Component.h"
 #include "Common/Module/Entity/Component.h"
 #include "Common/Module/Entity/Module.h"
 #include "Common/Module/Network/Component.h"
@@ -39,8 +38,8 @@ namespace Mcc
             });
 
         world.component<Snapshot>()
-            .member<CTransform>("transform")
-            .member<TimePoint>("time");
+            .member<CEntityTransform>("transform")
+            .member<TimePoint>       ("time");
 
         AutoRegister<CSnapshotQueue>::Register(world, "CSnapshotQueue");
     }
@@ -49,7 +48,7 @@ namespace Mcc
 
     void EntityReplicationModule::RegisterSystem(flecs::world& world)
     {
-        world.system<CTransform, CSnapshotQueue>("EntityInterpolation")
+        world.system<CEntityTransform, CSnapshotQueue>("EntityInterpolation")
             .kind<Phase::OnUpdate>()
             .without<TInterpolationExcluded>()
             .each(EntityInterpolationSystem);

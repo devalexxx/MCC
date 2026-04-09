@@ -19,8 +19,8 @@ namespace Mcc
 
     struct Snapshot
     {
-        CTransform transform {};
-        TimePoint time;
+        CEntityTransform transform {};
+        TimePoint        time;
     };
 
     namespace _ { struct EntityReplicationModuleTag {}; };

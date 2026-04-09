@@ -82,7 +82,7 @@ namespace Mcc
                     .networkMapping = {},
                     .scheduler      = mScheduler,
                     .assetRegistry  = mAssetRegistry,
-                    .chunkMap       = {}
+                    .chunkMapping       = {}
                 },
                 mSettings,
         },

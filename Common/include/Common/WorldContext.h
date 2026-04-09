@@ -5,14 +5,17 @@
 #ifndef MCC_COMMON_WORLD_CONTEXT_H
 #define MCC_COMMON_WORLD_CONTEXT_H
 
+#include "Common/AssetRegistry.h"
 #include "Common/Network/NetworkHandle.h"
 #include "Common/Network/NetworkManager.h"
 #include "Common/Network/Packet.h"
-#include "Common/AssetRegistry.h"
+#include "Common/World/Position.h"
+#include "Common/World/Hash.h"
 
 #include "Hexis/Core/TaskScheduler.h"
 
 #include <unordered_map>
+
 
 namespace Mcc
 {
@@ -34,32 +37,20 @@ namespace Mcc
         [[nodiscard]] std::optional<RHandle> GetRHandle(LHandle handle) const;
     };
 
-    // clang-format off
-    struct MCC_LIB_API IVec3Hasher
-    {
-        size_t operator()(const glm::ivec3& v) const
-        {
-            return std::hash<int>()(v.x) ^ std::hash<int>()(v.y) << 1 ^ std::hash<int>()(v.z) << 2;
-        }
-    };
+    using ChunkMapping = std::unordered_map<ChunkPosV, flecs::entity_t>;
 
-    template<typename T>
-    concept IsNetworkManager = std::is_base_of_v<NetworkManager, T> || std::is_same_v<NetworkManager, T>;
-
-    template<IsNetworkManager NManager = NetworkManager>
+    template<typename NetworkManager = NetworkManager>
     struct WorldContext
     {
         static WorldContext* Get(const flecs::world& world);
 
-        NManager&          networkManager;
-        NetworkMapping     networkMapping;
-        Hx::TaskScheduler& scheduler;
+        NetworkManager&    networkManager;
         AssetRegistry&     assetRegistry;
+        Hx::TaskScheduler& scheduler;
 
-        std::unordered_map<glm::ivec3, flecs::entity_t, IVec3Hasher> chunkMap;
+        NetworkMapping networkMapping;
+        ChunkMapping   chunkMapping;
     };
-
-// clang-format on
 }
 
 #include "Common/WorldContext.inl"

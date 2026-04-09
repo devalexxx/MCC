@@ -6,8 +6,8 @@
 #define MCC_COMMON_MODULE_ENTITY_COMPONENT_H
 
 #include "Common/Export.h"
-#include "Common/Module/Core/Component.h"
 #include "Common/Utils/FlecsUtils.h"
+#include "Common/World/Transform.h"
 
 #include <glm/glm.hpp>
 #include <glm/gtc/quaternion.hpp>
@@ -66,10 +66,10 @@ namespace Mcc
         } axis;
     };
 
-
     namespace _ { struct EntityModuleTag {}; };
-    using CEntityDataMap  = ComponentWrapper<std::unordered_map<std::string, std::string>, _::EntityModuleTag>;
-    using CUserInputQueue = ComponentWrapper<std::deque<UserInput>                       , _::EntityModuleTag>;
+    using CEntityTransform = ComponentWrapper<Transform<EnttyCoord>                       , _::EntityModuleTag>;
+    using CEntityDataMap   = ComponentWrapper<std::unordered_map<std::string, std::string>, _::EntityModuleTag>;
+    using CUserInputQueue  = ComponentWrapper<std::deque<UserInput>                       , _::EntityModuleTag>;
 
     template<typename Archive>
     void serialize(Archive& ar, UserInput& input);
@@ -77,11 +77,11 @@ namespace Mcc
     namespace Helper
     {
 
-        MCC_LIB_API bool IsNull(const UserInput& input);
-        MCC_LIB_API void ApplyMovement(const UserInput& input, CTransform& transform, float speed, float dt);
-        MCC_LIB_API void ApplyXAxis(const UserInput& input, CTransform& transform);
-        MCC_LIB_API void ApplyYAxis(const UserInput& input, CTransform& transform);
-        MCC_LIB_API void ApplyBothAxis(const UserInput& input, CTransform& transform);
+        MCC_LIB_API bool IsNull       (const UserInput& input);
+        MCC_LIB_API void ApplyMovement(const UserInput& input, CEntityTransform& transform, float speed, float dt);
+        MCC_LIB_API void ApplyXAxis   (const UserInput& input, CEntityTransform& transform);
+        MCC_LIB_API void ApplyYAxis   (const UserInput& input, CEntityTransform& transform);
+        MCC_LIB_API void ApplyBothAxis(const UserInput& input, CEntityTransform& transform);
 
     }
 

@@ -5,8 +5,8 @@
 namespace Mcc
 {
 
-    template<IsNetworkManager NManager>
-    WorldContext<NManager>* WorldContext<NManager>::Get(const flecs::world& world)
+    template<typename NetworkManager>
+    WorldContext<NetworkManager>* WorldContext<NetworkManager>::Get(const flecs::world& world)
     {
         return static_cast<WorldContext*>(world.get_ctx());
     }

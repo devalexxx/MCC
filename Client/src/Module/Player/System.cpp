@@ -28,14 +28,20 @@ namespace Mcc
             ctx->networkManager.Send<OnPlayerInput>({ current }, ENET_PACKET_FLAG_RELIABLE, 0);
 
             const auto entity = it.entity(row);
-            entity.get([&](CTransform& transform) {
+            entity.get([&](CEntityTransform& transform)
+            {
                 Helper::ApplyXAxis(current, transform);
                 Helper::ApplyMovement(current, transform, delta, speed);
             });
 
-            it.world().query_builder<CTransform>().with<RCameraFollow>(entity).build().each(
-                [&](CTransform& transform) { Helper::ApplyBothAxis(current, transform); }
-            );
+            it.world()
+                .query_builder<CEntityTransform>()
+                .with<RCameraFollow>(entity)
+                .build()
+                .each([&](CEntityTransform& transform)
+                {
+                    Helper::ApplyBothAxis(current, transform);
+                });
 
             queue.push_back(current);
             current.axis = {};

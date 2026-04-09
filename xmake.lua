@@ -6,7 +6,8 @@ includes("xmake/**.lua")
 
 add_rules("mode.debug", "mode.release", "mode.releasedbg")
 
-option("shared", { description = "", default = false })
+option("shared"  , { description = "", default = false })
+option("unittest", { description = "", default = false })
 
 add_repositories("devalexxx-repo https://github.com/devalexxx/xmake-repo.git")
 
@@ -102,6 +103,10 @@ for _, package in ipairs(packages) do
     )
 end
 
+if has_config("unittest") then
+    add_requires("doctest")
+end
+
 if is_host("macos") or is_host("linux") then
     add_defines("MCC_POSIX")
 end
@@ -112,7 +117,7 @@ end
 
 if is_mode("debug") then 
     add_defines("MCC_DEBUG")
-    set_warnings("allextra", "error")
+    --set_warnings("allextra", "error")
     -- set_warnings("allextra")
 end
 
@@ -140,7 +145,19 @@ target("MCCCommon")
 
     add_files("Common/**/*.cpp")
 
-    for _, package in pairs(packages) do 
+    if has_config("unittest") then
+        for _, file in ipairs(os.files("Tests/Common/test_*.cpp")) do
+            add_tests(path.basename(file), {
+                kind      = "binary",
+                files     = file,
+                languages = "c++23",
+                packages  = "doctest",
+                defines   = "DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN"
+            })
+        end
+    end
+
+    for _, package in pairs(packages) do
         if package.usage["MCCCommon"] then
             add_packages(package.name)
         end

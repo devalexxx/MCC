@@ -22,9 +22,9 @@ namespace Mcc
 
         while (it.next())
         {
-            auto t = it.field<const CTransform>(0);
-            auto e = it.field<const CEntityDataMap>(1);
-            auto n = it.field<const CNetProps>(2);
+            auto t = it.field<const CEntityTransform>(0);
+            auto e = it.field<const CEntityDataMap>  (1);
+            auto n = it.field<const CNetProps>       (2);
 
             OnEntitiesCreated packet;
             for (const auto i: it)
@@ -38,7 +38,7 @@ namespace Mcc
                     continue;
                 }
 
-                packet.states.push_back({ .handle=handle, .transform=t[i], .extra=e[i] });
+                packet.states.push_back({ .handle=handle, .transform=t[i], .data=e[i] });
                 entity.remove<TEntityCreated>();
                 MCC_LOG_INFO("[BroadcastEntitiesCreated] Entity({}) has been created and replicated", handle);
             }
@@ -52,9 +52,9 @@ namespace Mcc
 
         while (it.next())
         {
-            auto t = it.field<const CTransform>(0);
-            auto e = it.field<const CEntityDataMap>(1);
-            auto n = it.field<const CNetProps>(2);
+            auto t = it.field<const CEntityTransform>(0);
+            auto e = it.field<const CEntityDataMap>  (1);
+            auto n = it.field<const CNetProps>       (2);
 
             OnEntitiesUpdated packet;
             for (const auto i: it)
@@ -69,7 +69,7 @@ namespace Mcc
                     continue;
                 }
 
-                packet.states.push_back({ .handle=handle, .transform=t[i], .extra=e[i] });
+                packet.states.push_back({ .handle=handle, .transform=t[i], .data=e[i] });
                 entity.remove<TEntityDirty>();
             }
             ctx->networkManager.Broadcast(std::move(packet), ENET_PACKET_FLAG_RELIABLE, 0);

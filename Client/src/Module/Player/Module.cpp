@@ -137,7 +137,7 @@ namespace Mcc
             );
             state != event.states.cend())
         {
-            if (const auto lipIt = state->extra.find("last-input-processed"); lipIt != state->extra.cend())
+            if (const auto lipIt = state->data.find("last-input-processed"); lipIt != state->data.cend())
             {
                 const auto id     = std::stoul(lipIt->second);
                 const auto handle = ctx->networkMapping.GetLHandle(state->handle);
@@ -173,7 +173,7 @@ namespace Mcc
                 auto tr = state->transform;
                 for (auto& input: iQueue)
                 {
-                    Helper::ApplyXAxis(input, tr);
+                    Helper::ApplyXAxis   (input, tr);
                     Helper::ApplyMovement(input, tr, ctx->serverInfo.userSpeed, input.meta.dt);
                 }
                 entity.set(tr);

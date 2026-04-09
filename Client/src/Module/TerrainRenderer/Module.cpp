@@ -63,7 +63,7 @@ namespace Mcc
     {
         const auto* ctx = ClientWorldContext::Get(world);
 
-        world.observer<const CTransform>("OnPlayerMove")
+        world.observer<const CEntityTransform>("OnPlayerMove")
             .event(flecs::OnSet)
             .term_at(0)
             .src(world.entity(*ctx->networkMapping.GetLHandle(ctx->playerInfo.handle)))

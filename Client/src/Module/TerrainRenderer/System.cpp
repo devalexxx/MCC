@@ -21,10 +21,13 @@
 #include "Common/Utils/Benchmark.h"
 #include "Common/Utils/ChunkHelper.h"
 #include "Common/Utils/SafeAccess.h"
+#include "Common/World/Translation.h"
+#include "Common/World/Geometry.h"
 #include "Common/WorldContext.h"
 
 #include <Hexis/Core/EnumArray.h>
 #include <Hexis/Core/VariantUtils.h>
+#include <glm/gtx/quaternion.hpp>
 
 #include <numeric>
 #include <set>
@@ -134,13 +137,13 @@ namespace Mcc
             return sNeighbours;
         }
 
-        const std::vector<std::pair<size_t, glm::ivec3>>& GetChunkNeighbours()
+        const std::vector<std::pair<size_t, glm::ivec2>>& GetChunkNeighbours()
         {
-            static std::vector<std::pair<size_t, glm::ivec3>> sNeighbours = {{
-                { 0, glm::ivec3(glm::left)    },
-                { 1, glm::ivec3(glm::right)   },
-                { 2, glm::ivec3(glm::forward) },
-                { 3, glm::ivec3(glm::back)    }
+            static std::vector<std::pair<size_t, glm::ivec2>> sNeighbours = {{
+                { 0, glm::ivec2(-1, 0) },
+                { 1, glm::ivec2( 1, 0) },
+                { 2, glm::ivec2(0, -1) },
+                { 3, glm::ivec2(0,  1) }
             }};
 
             return sNeighbours;
@@ -159,7 +162,7 @@ namespace Mcc
 
         struct ChunkMeshBuildDesc
         {
-            glm::ivec3 position;
+            glm::ivec2 position;
 
             std::shared_ptr<Chunk>                             chunk;
             std::vector<Hx::EnumArray<BlockFace, std::string>> assetPath;
@@ -255,7 +258,7 @@ namespace Mcc
 
     }
 
-    void OnPlayerMoveObserver(const flecs::iter& it, size_t, const CTransform& transform)
+    void OnPlayerMoveObserver(const flecs::iter& it, size_t, const CEntityTransform& transform)
     {
         static int cx = std::numeric_limits<int>::max();
         static int cz = std::numeric_limits<int>::max();
@@ -266,19 +269,18 @@ namespace Mcc
         const int rRange = static_cast<int>(ctx->settings.renderDistance);
         const int bRange = static_cast<int>(ctx->settings.preloadDistance);
 
-        auto [x, z] = Helper::GetPlayerChunkPosition(transform.position);
-
+        const auto [x, z] = get<0>(transform.position);
         if (std::abs(cx - x) > 0 || std::abs(cz - z) > 0)
         {
             Helper::ForInCircle(cx, cz, rRange + 1, [&](long i, long j) {
-                if (const auto cit = ctx->chunkMap.find({ i, 0, j }); cit != ctx->chunkMap.end())
+                if (const auto cit = ctx->chunkMapping.find({ i, j }); cit != ctx->chunkMapping.end())
                 {
                     world.entity(cit->second).remove<TShouldRenderChunk>();
                 }
             });
 
             Helper::ForInCircle(x, z, bRange, [&](long i, long j) {
-                if (const auto cit = ctx->chunkMap.find({ i, 0, j }); cit != ctx->chunkMap.end())
+                if (const auto cit = ctx->chunkMapping.find({ i, j }); cit != ctx->chunkMapping.end())
                 {
                     world.entity(cit->second).add<TCouldRenderChunk>();
                     if (Helper::IsInCircle({ x, z }, { i, j }, rRange))
@@ -296,12 +298,21 @@ namespace Mcc
         const auto  world = entity.world();
         const auto* ctx   = ClientWorldContext::Get(world);
 
+        // Setup render transform
+        constexpr auto halfChunk = glm::vec3(Chunk::Size, Chunk::Height, Chunk::Size) * .5f;
+        auto& [position, rotation, scale] = entity.ensure<CRenderTransform>();
+        // TODO: set world pos relative to player transform
+        position = static_cast<WorldPosF>(p) + TranslationF(halfChunk);
+        rotation = glm::quat_identity<float, glm::defaultp>();
+        scale    = halfChunk;
+
+        // Setup render info
         if (auto id = ctx->networkMapping.GetLHandle(ctx->playerInfo.handle); id.has_value())
         {
-            world.entity(*id).get([&](const CTransform& transform) {
-                auto [pX, pZ]     = Helper::GetPlayerChunkPosition(transform.position);
-                const auto cX     = p.x;
-                const auto cZ     = p.z;
+            world.entity(*id).get([&](const CEntityTransform& transform)
+            {
+                auto [pX, pZ] = get<0>(transform.position);
+                auto [cX, cZ] = p.Underlying();
                 const auto rRange = static_cast<int>(ctx->settings.renderDistance);
                 const auto bRange = static_cast<int>(ctx->settings.preloadDistance);
 
@@ -335,7 +346,7 @@ namespace Mcc
 
         for (auto [i, side]: _::GetChunkNeighbours())
         {
-            if (const auto it = ctx->chunkMap.find(pos + side); it != ctx->chunkMap.end())
+            if (const auto it = ctx->chunkMapping.find(pos + TranslationV(side.x, 0, side.y)); it != ctx->chunkMapping.end())
             {
                 cDesc.neighbors[i] = world.entity(it->second).get<CChunkPtr>();
 

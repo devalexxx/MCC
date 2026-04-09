@@ -5,14 +5,14 @@
 #ifndef MCC_SERVER_MODULE_TERRAIN_SYSTEM_H
 #define MCC_SERVER_MODULE_TERRAIN_SYSTEM_H
 
+#include "Common/Module/Entity/Component.h"
+
 #include <flecs.h>
 
 namespace Mcc
 {
 
-    struct CTransform;
-
-    void OnPlayerCreatedObserver(flecs::entity entity, const CTransform& transform);
+    void OnPlayerCreatedObserver(flecs::entity entity, const CEntityTransform& transform);
     void OnPlayerMoveObserver   (flecs::iter& it, size_t row);
 
 }

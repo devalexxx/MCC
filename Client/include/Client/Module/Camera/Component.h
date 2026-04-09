@@ -5,7 +5,7 @@
 #ifndef MCC_CLIENT_MODULE_CAMERA_COMPONENT_H
 #define MCC_CLIENT_MODULE_CAMERA_COMPONENT_H
 
-#include <glm/glm.hpp>
+#include "Common/World/Translation.h"
 
 namespace Mcc
 {
@@ -28,7 +28,7 @@ namespace Mcc
 
     struct CCameraFollowSettings
     {
-        glm::vec3 offset;
+        TranslationF offset;
     };
 
 }
