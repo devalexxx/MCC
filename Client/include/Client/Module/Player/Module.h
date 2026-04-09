@@ -29,6 +29,8 @@ namespace Mcc
         void SetInputHandler  (flecs::world& world);
         void ClearInputHandler(const flecs::world& world);
 
+        static flecs::entity GetPlayer(const flecs::world& world);
+
       private:
         static void OnEntitiesCreatedHandler(const OnEntitiesCreated& event, const flecs::world& world);
         static void OnEntitiesUpdatedHandler(const OnEntitiesUpdated& event, const flecs::world& world);

@@ -82,6 +82,19 @@ namespace Mcc
         mCursorPosEventHandlerID = 0;
     }
 
+    flecs::entity PlayerModule::GetPlayer(const flecs::world& world)
+    {
+        const auto* ctx = ClientWorldContext::Get(world);
+        const auto  handle = ctx->networkMapping.GetLHandle(ctx->playerInfo.handle);
+        if (!handle.has_value())
+        {
+            MCC_LOG_WARN("[GetPlayerPosition] Player entity({}) isn't associated to a local entity", ctx->playerInfo.handle);
+            return flecs::entity::null();
+        }
+
+        return world.entity(*handle);
+    }
+
     void PlayerModule::OnEntitiesCreatedHandler(const OnEntitiesCreated& event, const flecs::world& world)
     {
         const auto* ctx = ClientWorldContext::Get(world);
