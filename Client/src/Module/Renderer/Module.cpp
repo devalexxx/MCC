@@ -29,7 +29,8 @@ namespace Mcc
 
         world.component<ROpenGLMesh>()
             .add(flecs::Exclusive)
-            .add(flecs::Relationship);
+            .add(flecs::Relationship)
+            .add(flecs::DontFragment);
 
         world.component<ROpenGLProgram>()
             .add(flecs::Exclusive)
