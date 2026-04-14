@@ -58,9 +58,9 @@ namespace Mcc
         queue.clear();
         while (it.next())
         {
-            const auto pEntity = it.pair(1).second();
-            const auto tEntity = it.pair(2).second();
-            const auto mEntity = it.pair(3).second();
+            const auto pEntity = it.pair(0).second();
+            const auto tEntity = it.pair(1).second();
+            const auto mEntity = it.pair(2).second();
 
             for (const auto i: it)
             {

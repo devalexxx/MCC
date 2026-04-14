@@ -276,6 +276,7 @@ namespace Mcc
                 if (const auto cit = ctx->chunkMapping.find({ i, j }); cit != ctx->chunkMapping.end())
                 {
                     world.entity(cit->second).remove<TShouldRenderChunk>();
+                    world.entity(cit->second).remove<TRenderable>();
                 }
             });
 
@@ -284,7 +285,10 @@ namespace Mcc
                 {
                     world.entity(cit->second).add<TCouldRenderChunk>();
                     if (Helper::IsInCircle({ x, z }, { i, j }, rRange))
+                    {
                         world.entity(cit->second).add<TShouldRenderChunk>();
+                        world.entity(cit->second).add<TRenderable>();
+                    }
                 }
             });
 
@@ -320,6 +324,7 @@ namespace Mcc
                 {
                     entity.add<TCouldRenderChunk>();
                     entity.add<TShouldRenderChunk>();
+                    entity.add<TRenderable>();
                 }
                 else if (Helper::IsInCircle({ pX, pZ }, { cX, cZ }, bRange))
                 {

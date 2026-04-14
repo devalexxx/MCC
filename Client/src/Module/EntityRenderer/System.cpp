@@ -81,6 +81,7 @@ namespace Mcc
                 entity.add<ROpenGLProgram>(module.programEntity);
                 entity.add<ROpenGLTexture>(module.textureEntity);
                 entity.add<ROpenGLMesh>   (module.capsuleEntity);
+                entity.add<TRenderable> ();
             }
         }
     }

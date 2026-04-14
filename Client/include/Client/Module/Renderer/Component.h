@@ -16,6 +16,8 @@
 namespace Mcc
 {
 
+    struct TRenderable {};
+
     struct CRendererSettings
     {
         bool wireframe;

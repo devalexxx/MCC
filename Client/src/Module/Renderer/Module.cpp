@@ -22,6 +22,8 @@ namespace Mcc
 
     void RendererModule::RegisterComponent(flecs::world& world)
     {
+        world.component<TRenderable>();
+
         world.component<CRendererSettings>()
             .add(flecs::Singleton);
 
@@ -100,10 +102,11 @@ namespace Mcc
         // TODO: add PreDraw phase
         world.system("UpdateRenderQueue")
             .kind<Phase::OnClear>()
-            .with<CRenderTransform>()
             .with<ROpenGLProgram>(flecs::Wildcard)
             .with<ROpenGLTexture>(flecs::Wildcard)
             .with<ROpenGLMesh>   (flecs::Wildcard)
+            .with<CRenderTransform>()
+            .with<TRenderable>()
             .run(UpdateRenderQueueSystem);
 
         world.system<const CRenderQueue, const CRendererSettings>("DrawFrame")
