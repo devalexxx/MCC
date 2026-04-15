@@ -24,7 +24,7 @@ static_assert(MCC_LOG_LEVEL >= MCC_DEBUG_LEVEL);
             static Mcc::_::TimeBenchmark<__Tag##__LINE__> __benchmark##__LINE__;                           \
             return [=](auto&&... args) -> decltype(auto) {                                                 \
                 const auto __start = _::BenchClock::now();                                                 \
-                if constexpr (std::is_void_v<std::invoke_result_t<decltype(CALLABLE), decltype(args)...>>) \
+                if constexpr (std::is_void_v<decltype(CALLABLE(std::declval<decltype(args)>()...))>)       \
                 {                                                                                          \
                     CALLABLE(std::forward<decltype(args)>(args)...);                                       \
                     const auto __end      = _::BenchClock::now();                                          \
