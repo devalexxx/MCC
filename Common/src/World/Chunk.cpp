@@ -17,12 +17,16 @@ namespace Mcc
 
     Chunk::Chunk() : Chunk(0) {}
 
-    Chunk::Chunk(flecs::entity_t filler) : mData({ filler }, { Size * Size * Height, 2 })
+    Chunk::Chunk(flecs::entity_t filler) :
+        mData   ({ filler }, { Size * Size * Height, 2 }),
+        mVersion(0)
     {
         for (size_t i = 0; i < mData.mapping.GetSize(); ++i) { mData.mapping.Set(i, 0); }
     }
 
-    Chunk::Chunk(ChunkData<flecs::entity_t> data) : mData(std::move(data))
+    Chunk::Chunk(ChunkData<flecs::entity_t> data) :
+        mData   (std::move(data)),
+        mVersion(0)
     {}
 
     bool Chunk::IsValid() const
@@ -73,6 +77,8 @@ namespace Mcc
         {
             mData.mapping.Set(index, std::distance(mData.palette.begin(), it));
         }
+
+        mVersion++;
     }
 
     size_t Chunk::GetPaletteIndex(size_t index) const
@@ -307,5 +313,15 @@ namespace Mcc
             return data;
         }
 
+    }
+
+    bool operator==(const Chunk& lhs, const size_t rhs)
+    {
+        return std::hash<Chunk>{}(lhs) == rhs;
+    }
+
+    bool operator!=(const Chunk& lhs, size_t rhs)
+    {
+        return !(lhs == rhs);
     }
 }

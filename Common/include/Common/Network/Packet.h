@@ -36,6 +36,10 @@ namespace Mcc
         OnClientInfoChanged,
 
         struct OnChunk,
+        struct OnChunkUpdated,
+
+        struct OnBlockBreak,
+        struct OnBlockPlace,
 
         struct OnPlayerInput,
         struct OnEntitiesCreated,
@@ -91,10 +95,46 @@ namespace Mcc
         std::vector<BlockData> blocks;
     };
 
+    struct OnChunkUpdated
+    {
+        struct Update
+        {
+            NetworkHandle            blockHandle;
+            LocalPosV                position;
+            std::optional<BlockData> blockOpt;
+        };
+
+        NetworkHandle       chunkHandle;
+        std::vector<Update> updates;
+    };
+
+    struct OnBlockBreak
+    {
+        NetworkHandle chunkHandle;
+        LocalPosV     position;
+    };
+
+    struct OnBlockPlace
+    {
+        NetworkHandle chunkHandle;
+        LocalPosV     position;
+        NetworkHandle blockHandle;
+    };
+
     template<typename Archive>
     void serialize(Archive& ar, BlockData& packet);
     template<typename Archive>
     void serialize(Archive& ar, OnChunk& packet);
+
+    template<typename Archive>
+    void serialize(Archive& ar, OnChunkUpdated::Update& packet);
+    template<typename Archive>
+    void serialize(Archive& ar, OnChunkUpdated& packet);
+
+    template<typename Archive>
+    void serialize(Archive& ar, OnBlockBreak& packet);
+    template<typename Archive>
+    void serialize(Archive& ar, OnBlockPlace& packet);
 
     template<typename Archive>
     void serialize(Archive& ar, OnPlayerInput& packet);

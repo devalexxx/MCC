@@ -6,6 +6,8 @@
 
 #include "Common/Module/Network/Component.h"
 #include "Common/Module/Terrain/Component.h"
+#include "Common/Module/Terrain/System.h"
+#include "Common/Phase.h"
 #include "Common/World/Position.h"
 
 namespace Mcc
@@ -18,6 +20,7 @@ namespace Mcc
         world.component<TBlock>();
         world.component<TBlockState>();
         world.component<TChunk>();
+        world.component<TDirty>();
 
         world.component<PBlock>();
         world.component<PChunk>();
@@ -54,7 +57,13 @@ namespace Mcc
             .add<CChunkPos>();
     }
 
-    void TerrainModule::RegisterSystem(flecs::world& /* world */) {}
+    void TerrainModule::RegisterSystem(flecs::world& world)
+    {
+        world.system("RemoveDirtyTag")
+            .kind<Phase::OnSetup>()
+            .with<TDirty>()
+            .each(RemoveDirtyTagSystem);
+    }
 
     void TerrainModule::RegisterObserver(flecs::world& /* world */) {}
 

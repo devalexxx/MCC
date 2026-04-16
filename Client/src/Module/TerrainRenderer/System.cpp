@@ -272,7 +272,8 @@ namespace Mcc
         const auto [x, z] = get<0>(transform.position);
         if (std::abs(cx - x) > 0 || std::abs(cz - z) > 0)
         {
-            Helper::ForInCircle(cx, cz, rRange + 1, [&](long i, long j) {
+            Helper::ForInCircle(cx, cz, rRange + 1, [&](long i, long j)
+            {
                 if (const auto cit = ctx->chunkMapping.find({ i, j }); cit != ctx->chunkMapping.end())
                 {
                     world.entity(cit->second).remove<TShouldRenderChunk>();
@@ -280,7 +281,8 @@ namespace Mcc
                 }
             });
 
-            Helper::ForInCircle(x, z, bRange, [&](long i, long j) {
+            Helper::ForInCircle(x, z, bRange, [&](long i, long j)
+            {
                 if (const auto cit = ctx->chunkMapping.find({ i, j }); cit != ctx->chunkMapping.end())
                 {
                     world.entity(cit->second).add<TCouldRenderChunk>();
@@ -311,30 +313,106 @@ namespace Mcc
         scale    = halfChunk;
 
         // Setup render info
-        if (auto id = ctx->networkMapping.GetLHandle(ctx->playerInfo.handle); id.has_value())
-        {
-            world.entity(*id).get([&](const CEntityTransform& transform)
-            {
-                auto [pX, pZ] = get<0>(transform.position);
-                auto [cX, cZ] = p.Underlying();
-                const auto rRange = static_cast<int>(ctx->settings.renderDistance);
-                const auto bRange = static_cast<int>(ctx->settings.preloadDistance);
+        const auto rRange = static_cast<int>(ctx->settings.renderDistance);
+        const auto bRange = static_cast<int>(ctx->settings.preloadDistance);
 
-                if (Helper::IsInCircle({ pX, pZ }, { cX, cZ }, rRange))
-                {
-                    entity.add<TCouldRenderChunk>();
-                    entity.add<TShouldRenderChunk>();
-                    entity.add<TRenderable>();
-                }
-                else if (Helper::IsInCircle({ pX, pZ }, { cX, cZ }, bRange))
-                {
-                    entity.add<TCouldRenderChunk>();
-                }
-            });
+        const auto player = PlayerModule::GetPlayer(world);
+        if (player == flecs::entity::null()) return;
+
+        auto& transform = player.get<CEntityTransform>();
+        auto [pX, pZ] = get<0>(transform.position);
+        auto [cX, cZ] = p.Underlying();
+
+        entity.add<TShouldBuildMesh>();
+        if (Helper::IsInCircle({ pX, pZ }, { cX, cZ }, rRange))
+        {
+            entity.add<TCouldRenderChunk>();
+            entity.add<TShouldRenderChunk>();
+            entity.add<TRenderable>();
+        }
+        else
+        if (Helper::IsInCircle({ pX, pZ }, { cX, cZ }, bRange))
+        {
+            entity.add<TCouldRenderChunk>();
         }
     }
 
-    void OnChunkChangedObserver(const flecs::entity entity, const CChunkPtr&)
+    void LoadTextureSystem(flecs::iter& it)
+    {
+        IgnoreIter(it);
+
+        const auto  world  = it.world();
+        const auto* ctx    = ClientWorldContext::Get(world);
+        const auto& module = world.get_mut<TerrainRendererModule>();
+
+        if ((*module.textureToLoad)->empty())
+            return;
+
+        std::vector<std::shared_ptr<Image>> images;
+        std::vector<std::string>            paths;
+
+        {
+            auto tttProxy = *(*module.textureToLoad);
+            images.reserve(tttProxy->size());
+            paths .reserve(tttProxy->size());
+
+            std::copy(tttProxy->begin(), tttProxy->end(), std::back_inserter(paths));
+            tttProxy->clear();
+        }
+
+        for (auto& path: paths)
+        {
+            auto asset = ctx->assetRegistry.Get<Image>(path, false);
+            if (!asset)
+            {
+                // TODO: temp
+                images.push_back(std::make_shared<Image>(64, 64, 4, PixelFormat::RGBA, 0));
+                continue;
+            }
+
+            images.push_back(asset);
+        }
+
+        // TODO: temp (perf issue buffer is get from cg every Add)
+        for (auto image: images)
+        {
+            module.textureArray->AddData(*image.get());
+        }
+        module.textureArray->GenerateMipmap();
+    }
+
+    void SetupChunkProgramSystem(flecs::iter& it)
+    {
+        const auto  word   = it.world();
+        const auto* ctx    = ClientWorldContext::Get(word);
+        auto&       module = word.get_mut<TerrainRendererModule>();
+
+        const auto vertexShader   = ctx->assetRegistry.Get<OpenGLShader>("shader://chunk.vert", false);
+        const auto fragmentShader = ctx->assetRegistry.Get<OpenGLShader>("shader://chunk.frag", false);
+
+        module.program->Create();
+        module.program->Attach(*vertexShader.get());
+        module.program->Attach(*fragmentShader.get());
+
+        module.program->Link();
+
+        module.program->Detach(*vertexShader.get());
+        module.program->Detach(*fragmentShader.get());
+
+        module.programEntity = word.entity().set<COpenGLProgram>(module.program);
+
+        module.textureArray->Create();
+        module.textureArray->SetParameter(GL_TEXTURE_WRAP_S, GL_REPEAT);
+        module.textureArray->SetParameter(GL_TEXTURE_WRAP_T, GL_REPEAT);
+        module.textureArray->SetParameter(GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+        module.textureArray->SetParameter(GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_NEAREST);
+
+        module.textureArrayEntity = word.entity().set<COpenGLTexture>(module.textureArray);
+
+        IgnoreIter(it);
+    }
+
+    void HandleDirtyChunkSystem(const flecs::entity entity)
     {
         entity.add<TShouldBuildMesh>();
     }
@@ -424,122 +502,44 @@ namespace Mcc
 
         if (task.GetState() == Hx::TaskState::Done)
         {
-            if ([[maybe_unused]] auto mesh = entity.try_get<COpenGLMesh>())
-            {
-                // TODO
-            }
-            else
-            {
-                const auto& module = entity.world().get_mut<TerrainRendererModule>();
-                const auto result  = task.GetResult();
-                MCC_ASSERT(result, "Mesh task data has already been retrieve");
-                auto [vertex, index] = result->get();
-                OpenGLVertexArray vArray {};
-                OpenGLBuffer      vBuffer { GL_ARRAY_BUFFER };
-                OpenGLBuffer      iBuffer { GL_ELEMENT_ARRAY_BUFFER };
+            const auto& module = entity.world().get_mut<TerrainRendererModule>();
+            module.program->Bind();
 
-                module.program->Bind();
-                vArray.Create();
-                vArray.Bind();
+            COpenGLMesh* mesh = entity.try_get_mut<COpenGLMesh>();
+            if (!mesh)
+            {
+                mesh = &entity.ensure<COpenGLMesh>();
 
-                vBuffer.Create();
-                vBuffer.SetData(std::span(vertex), GL_STATIC_DRAW);
-                module.program->SetVertexAttribPointer("inVertex", 3, GL_FLOAT, sizeof(PackedVertex), 0);
-                module.program->SetVertexAttribPointer("inColor", 3, GL_FLOAT, sizeof(PackedVertex), 3 * sizeof(float));
+                mesh->vertexArray .Create();
+
+                mesh->vertexBuffer.Create();
+                module.program->SetVertexAttribPointer("inVertex",   3, GL_FLOAT, sizeof(PackedVertex), 0);
+                module.program->SetVertexAttribPointer("inColor",    3, GL_FLOAT, sizeof(PackedVertex), 3 * sizeof(float));
                 module.program->SetVertexAttribPointer("inTexCoord", 3, GL_FLOAT, sizeof(PackedVertex), 6 * sizeof(float));
-                module.program->SetVertexAttribPointer("inNormal", 3, GL_FLOAT, sizeof(PackedVertex), 9 * sizeof(float));
+                module.program->SetVertexAttribPointer("inNormal",   3, GL_FLOAT, sizeof(PackedVertex), 9 * sizeof(float));
 
-                iBuffer.Create();
-                iBuffer.SetData(std::span(index), GL_STATIC_DRAW);
+                mesh->indexBuffer.Create();
 
-                entity.set<COpenGLMesh>({
-                    .vertexArray =std::move(vArray),
-                    .vertexBuffer=std::move(vBuffer),
-                    .indexBuffer =std::move(iBuffer),
-                    .indexCount  =index.size()
-                });
                 entity.add<ROpenGLMesh>   (entity);
                 entity.add<ROpenGLProgram>(module.programEntity);
                 entity.add<ROpenGLTexture>(module.textureArrayEntity);
-
-                entity.remove<CChunkMeshGenTask>();
-            }
-        }
-    }
-
-    void SetupChunkProgramSystem(flecs::iter& it)
-    {
-        const auto  word   = it.world();
-        const auto* ctx    = ClientWorldContext::Get(word);
-        auto&       module = word.get_mut<TerrainRendererModule>();
-
-        const auto vertexShader   = ctx->assetRegistry.Get<OpenGLShader>("shader://chunk.vert", false);
-        const auto fragmentShader = ctx->assetRegistry.Get<OpenGLShader>("shader://chunk.frag", false);
-
-        module.program->Create();
-        module.program->Attach(*vertexShader.get());
-        module.program->Attach(*fragmentShader.get());
-
-        module.program->Link();
-
-        module.program->Detach(*vertexShader.get());
-        module.program->Detach(*fragmentShader.get());
-
-        module.programEntity = word.entity().set<COpenGLProgram>(module.program);
-
-        module.textureArray->Create();
-        module.textureArray->SetParameter(GL_TEXTURE_WRAP_S, GL_REPEAT);
-        module.textureArray->SetParameter(GL_TEXTURE_WRAP_T, GL_REPEAT);
-        module.textureArray->SetParameter(GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-        module.textureArray->SetParameter(GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_NEAREST);
-
-        module.textureArrayEntity = word.entity().set<COpenGLTexture>(module.textureArray);
-
-        IgnoreIter(it);
-    }
-
-    void LoadTextureSystem(flecs::iter& it)
-    {
-        IgnoreIter(it);
-
-        const auto  world  = it.world();
-        const auto* ctx    = ClientWorldContext::Get(world);
-        const auto& module = world.get_mut<TerrainRendererModule>();
-
-        if ((*module.textureToLoad)->empty())
-            return;
-
-        std::vector<std::shared_ptr<Image>> images;
-        std::vector<std::string>            paths;
-
-        {
-            auto tttProxy = *(*module.textureToLoad);
-            images.reserve(tttProxy->size());
-            paths .reserve(tttProxy->size());
-
-            std::copy(tttProxy->begin(), tttProxy->end(), std::back_inserter(paths));
-            tttProxy->clear();
-        }
-
-        for (auto& path: paths)
-        {
-            auto asset = ctx->assetRegistry.Get<Image>(path, false);
-            if (!asset)
-            {
-                // TODO: temp
-                images.push_back(std::make_shared<Image>(64, 64, 4, PixelFormat::RGBA, 0));
-                continue;
             }
 
-            images.push_back(asset);
-        }
+            const auto result  = task.GetResult();
+            MCC_ASSERT(result, "Mesh task data has already been retrieve");
+            auto [vertex, index] = result->get();
 
-        // TODO: temp (perf issue buffer is get from cg every Add)
-        for (auto image: images)
-        {
-            module.textureArray->AddData(*image.get());
+            mesh->vertexArray.Bind();
+
+            mesh->vertexBuffer.Bind();
+            mesh->vertexBuffer.SetData(std::span(vertex), GL_STATIC_DRAW);
+
+            mesh->indexBuffer.Bind();
+            mesh->indexBuffer.SetData(std::span(index), GL_STATIC_DRAW);
+            mesh->indexCount = index.size();
+
+            entity.remove<CChunkMeshGenTask>();
         }
-        module.textureArray->GenerateMipmap();
     }
 
 }

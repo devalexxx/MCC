@@ -39,13 +39,25 @@ namespace Mcc
 
     void TerrainRendererModule::RegisterSystem(flecs::world& world)
     {
+        world.system("SetupChunkProgram")
+            .kind<Phase::OnLoad>()
+            .run(SetupChunkProgramSystem);
+
         world.system("LoadTexture")
             .kind<Phase::OnSetup>()
             .run(LoadTextureSystem);
 
+        world.system("HandleDirtyChunk")
+            .kind<Phase::OnUpdate>() // TODO: maybe on pre-update
+            .with<TChunk>()
+            .with<TDirty>()
+            .each(HandleDirtyChunkSystem)
+            .add<GameScene>();
+
         world.system<const CChunkPtr, const CChunkPos>("BuildChunkMesh")
             .kind<Phase::PostUpdate>()
             .with<TShouldBuildMesh>()
+            .with<TCouldRenderChunk>()
             .each(BuildChunkMeshSystem)
             .add<GameScene>();
 
@@ -53,10 +65,6 @@ namespace Mcc
             .kind<Phase::PostUpdate>()
             .each(SetupChunkRenderingMeshSystem)
             .add<GameScene>();
-
-        world.system("SetupChunkProgram")
-            .kind<Phase::OnLoad>()
-            .run(SetupChunkProgramSystem);
     }
 
     void TerrainRendererModule::RegisterObserver(flecs::world& world)
@@ -72,11 +80,6 @@ namespace Mcc
         world.observer<const CChunkPos>("OnChunkCreated")
             .event(flecs::OnSet)
             .each(OnChunkCreatedObserver);
-
-        world.observer<const CChunkPtr>("OnChunkChanged")
-            .event(flecs::OnSet)
-            .with<TCouldRenderChunk>()
-            .each(OnChunkChangedObserver);
     }
 
 

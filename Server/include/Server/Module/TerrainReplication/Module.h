@@ -30,7 +30,10 @@ namespace Mcc
 
         static void LaunchChunkReplicationTask(std::vector<UserSession*> sessions, const flecs::world& world, flecs::entity_t chunk);
 
+
       private:
+        static void OnBlockBreakHandler(const From<OnBlockBreak>& from, const flecs::world& world);
+        static void OnBlockPlaceHandler(const From<OnBlockPlace>& from, const flecs::world& world);
 
         struct NetworkInfo
         {

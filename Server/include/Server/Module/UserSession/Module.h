@@ -19,7 +19,12 @@ namespace Mcc
 {
     struct CNetProps;
 
-    using EntitySet = std::unordered_set<flecs::entity_t>;
+    struct ReplicationInfo
+    {
+        size_t hash;
+        bool   isPending;
+    };
+    using ReplicationInfoMap = std::unordered_map<flecs::entity_t, ReplicationInfo>;
 
     struct UserSession
     {
@@ -28,8 +33,8 @@ namespace Mcc
         PlayerInfo pInfo;
         ClientInfo cInfo;
 
-        ENetPeer*             peer;
-        SafeAccess<EntitySet> replicatedChunks;
+        ENetPeer*                      peer;
+        SafeAccess<ReplicationInfoMap> replicatedChunks;
     };
 
     struct UserSessionModule final : BaseModule<UserSessionModule, NetworkModule, EntityModule>

@@ -83,9 +83,15 @@ namespace Mcc
         void UnlockReadOnly () const;
         void UnlockReadWrite() const;
 
+        friend bool operator==(const Chunk& lhs, size_t rhs);
+        friend bool operator!=(const Chunk& lhs, size_t rhs);
+
       private:
+        friend struct std::hash<Chunk>;
+
         mutable std::shared_mutex  mMutex;
         ChunkData<flecs::entity_t> mData;
+        size_t                     mVersion;
 
         static size_t IndexFromPosition(glm::uvec3 position);
     };
@@ -106,6 +112,29 @@ namespace Mcc
 
 
     }
+
+}
+
+namespace std
+{
+
+    template<>
+    struct hash<Mcc::Chunk>
+    {
+        constexpr size_t operator()(const Mcc::Chunk& c) const noexcept
+        {
+            size_t hash = c.mVersion;
+            for (const auto a : c.mData.palette)
+            {
+                hash ^= a;
+            }
+
+            hash ^= c.mData.palette.size();
+            hash ^= c.mData.mapping.GetStride();
+
+            return hash;
+        }
+    };
 
 }
 

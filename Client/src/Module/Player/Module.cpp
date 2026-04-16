@@ -181,6 +181,55 @@ namespace Mcc
         }
     }
 
+    static void BreakBlock(const flecs::entity self, const ClientWorldContext* ctx)
+    {
+        auto& tr = self.get<CEntityTransform>();
+        auto [parent, local] = tr.position;
+
+        const auto world       = self.world();
+        const auto chunk       = ctx->chunkMapping.find(parent)->second;
+        const auto chunkHandle = *ctx->networkMapping.GetRHandle(chunk);
+        const auto chunkPtr    = world.entity(chunk).get<CChunkPtr>();
+
+        if (auto block = chunkPtr->Get(glm::uvec3(LocalPosV(local))); world.entity(block).get<CBlockType>() != CBlockType::Solid)
+        {
+            MCC_LOG_DEBUG("Cant break non solid block");
+            return;
+        }
+
+        OnBlockBreak packet;
+        packet.chunkHandle   = chunkHandle;
+        packet.position = local;
+        ctx->scheduler.Insert([=]{ ctx->networkManager.Send(packet, ENET_PACKET_FLAG_RELIABLE, 0); }).Enqueue();
+    }
+
+    static void PlaceBlock(const flecs::entity self, const ClientWorldContext* ctx)
+    {
+        auto& tr = self.get<CEntityTransform>();
+        auto [parent, local] = tr.position;
+
+        const auto world       = self.world();
+        const auto chunk       = ctx->chunkMapping.find(parent)->second;
+        const auto chunkHandle = *ctx->networkMapping.GetRHandle(chunk);
+        const auto chunkPtr    = world.entity(chunk).get<CChunkPtr>();
+
+        flecs::entity blockEntity;
+        for (const auto block: chunkPtr->GetPalette())
+        {
+            if (auto e = world.entity(block); e.get<CBlockType>() == CBlockType::Solid)
+            {
+                blockEntity = e;
+                break;
+            }
+        }
+
+        OnBlockPlace packet;
+        packet.chunkHandle = chunkHandle;
+        packet.position    = local;
+        packet.blockHandle = *ctx->networkMapping.GetRHandle(blockEntity);
+        ctx->scheduler.Insert([=]{ ctx->networkManager.Send(packet, ENET_PACKET_FLAG_RELIABLE, 0); }).Enqueue();
+    }
+
     void PlayerModule::OnKeyEventHandler(const KeyEvent& event, const flecs::world& world)
     {
         const auto* ctx    = ClientWorldContext::Get(world);
@@ -218,6 +267,16 @@ namespace Mcc
                 default:
                     break;
             }
+        }
+
+        if (event.action == GLFW_RELEASE && event.key == GLFW_KEY_Q)
+        {
+            BreakBlock(entity, ctx);
+        }
+
+        if (event.action == GLFW_RELEASE && event.key == GLFW_KEY_E)
+        {
+            PlaceBlock(entity, ctx);
         }
     }
 

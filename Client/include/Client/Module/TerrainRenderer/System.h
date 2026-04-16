@@ -16,15 +16,16 @@
 namespace Mcc
 {
 
+    void SetupChunkProgramSystem(flecs::iter& it);
+    void LoadTextureSystem      (flecs::iter& it);
+    void HandleDirtyChunkSystem (flecs::entity entity);
+
+    void BuildChunkMeshSystem         (flecs::entity entity, const CChunkPtr& ptr, const CChunkPos& pos);
+    void SetupChunkRenderingMeshSystem(flecs::entity entity, CChunkMeshGenTask& task);
+
+
     void OnPlayerMoveObserver  (const flecs::iter& it, size_t, const CEntityTransform& transform);
     void OnChunkCreatedObserver(flecs::entity entity, const CChunkPos& p);
-    void OnChunkChangedObserver(flecs::entity entity, const CChunkPtr&);
-
-    void SetupChunkRenderingMeshSystem(flecs::entity entity, CChunkMeshGenTask& task);
-    void SetupChunkProgramSystem      (flecs::iter& it);
-
-    void LoadTextureSystem   (flecs::iter& it);
-    void BuildChunkMeshSystem(flecs::entity entity, const CChunkPtr& ptr, const CChunkPos& pos);
 
 }
 

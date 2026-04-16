@@ -7,6 +7,7 @@
 #include <cereal/types/string.hpp>
 #include <cereal/types/unordered_map.hpp>
 #include <cereal/types/vector.hpp>
+#include <cereal/types/optional.hpp>
 
 #include "Common/Utils/GLMUtils.h"
 
@@ -29,6 +30,30 @@ namespace Mcc
     void serialize(Archive& ar, OnChunk& packet)
     {
         ar(packet.handle, packet.position, packet.data, packet.blocks);
+    }
+
+    template<typename Archive>
+    void serialize(Archive& ar, OnChunkUpdated::Update& packet)
+    {
+        ar(packet.blockHandle, packet.position, packet.blockOpt);
+    }
+
+    template<typename Archive>
+    void serialize(Archive& ar, OnChunkUpdated& packet)
+    {
+        ar(packet.chunkHandle, packet.updates);
+    }
+
+    template<typename Archive>
+    void serialize(Archive& ar, OnBlockBreak& packet)
+    {
+        ar(packet.chunkHandle, packet.position);
+    }
+
+    template<typename Archive>
+    void serialize(Archive& ar, OnBlockPlace& packet)
+    {
+        ar(packet.chunkHandle, packet.position, packet.blockHandle);
     }
 
     template<typename Archive>

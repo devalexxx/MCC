@@ -19,6 +19,7 @@ namespace Mcc
     struct TBlock      {};
     struct TBlockState {};
     struct TChunk      {};
+    struct TDirty      {};
 
     struct PBlock {};
     struct PChunk {};
