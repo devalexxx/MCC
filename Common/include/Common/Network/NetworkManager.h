@@ -32,6 +32,8 @@ namespace Mcc
 
         template<typename T>
         int Send(ENetPeer* peer, T data, enet_uint32 flag, enet_uint8 channel) const;
+        template<typename T>
+        int Send(std::vector<ENetPeer*> peers, T data, enet_uint32 flag, enet_uint8 channel) const;
 
         int CreateHost(const ENetAddress* addr, size_t peers, size_t channels, enet_uint32 in, enet_uint32 out);
 

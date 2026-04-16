@@ -67,9 +67,14 @@ namespace Mcc
         const size_t         baseLength = data.size();
         size_t               length     = compressBound(data.size());
         std::vector<uint8_t> buffer(length);
-        if (MCC_BENCH_TIME(Compression, compress)(
-                buffer.data(), reinterpret_cast<uLongf*>(&length), reinterpret_cast<uint8_t*>(data.data()), data.size()
-            ) != Z_OK)
+        if (
+            MCC_BENCH_TIME(Compression, compress)(
+                buffer.data(),
+                reinterpret_cast<uLongf*>(&length),
+                reinterpret_cast<uint8_t*>(data.data()),
+                data.size()
+            )
+        != Z_OK)
         {
             MCC_LOG_ERROR("Failed to compress data");
         }
