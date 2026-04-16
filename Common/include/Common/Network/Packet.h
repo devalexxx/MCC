@@ -14,8 +14,6 @@
 
 #include <Hexis/Core/TypeList.h>
 
-#include <string>
-#include <unordered_map>
 #include <vector>
 
 namespace Mcc
@@ -38,10 +36,6 @@ namespace Mcc
         OnClientInfoChanged,
 
         struct OnChunk,
-        struct OnChunkBatch,
-
-        struct OnBlock,
-        struct OnBlockBatch,
 
         struct OnPlayerInput,
         struct OnEntitiesCreated,
@@ -81,31 +75,26 @@ namespace Mcc
         std::vector<EntityState> states;
     };
 
-    struct OnChunk
+    struct BlockData
     {
-        NetworkHandle handle   {};
-        ChunkPosV     position {};
-        RLEChunkData  data;
-    };
-
-    struct OnChunkBatch : std::vector<OnChunk>
-    {};
-
-    struct OnBlock
-    {
-        NetworkHandle handle {};
-        CBlockType    type   {};
+        NetworkHandle handle;
+        CBlockType    type;
         CBlockMeta    meta;
         CBlockAsset   asset;
     };
 
-    struct OnBlockBatch : std::vector<OnBlock>
-    {};
+    struct OnChunk
+    {
+        NetworkHandle          handle;
+        ChunkPosV              position;
+        RLEChunkData           data;
+        std::vector<BlockData> blocks;
+    };
 
     template<typename Archive>
-    void serialize(Archive& ar, OnChunk& packet);
+    void serialize(Archive& ar, BlockData& packet);
     template<typename Archive>
-    void serialize(Archive& ar, OnBlock& packet);
+    void serialize(Archive& ar, OnChunk& packet);
 
     template<typename Archive>
     void serialize(Archive& ar, OnPlayerInput& packet);

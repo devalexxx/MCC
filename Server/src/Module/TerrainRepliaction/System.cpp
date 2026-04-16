@@ -5,7 +5,6 @@
 #include "Server/Module/TerrainReplication/System.h"
 
 #include "Server/Module/Player/Component.h"
-#include "Server/Module/TerrainGeneration/Component.h"
 #include "Server/Module/TerrainGeneration/Module.h"
 #include "Server/Module/TerrainReplication/Module.h"
 #include "Server/Module/UserSession/Component.h"
@@ -25,55 +24,31 @@ namespace Mcc
         auto&      session = entity.get_mut<CUserSession>();
         const auto ctx     = ServerWorldContext::Get(world);
 
-        std::vector<std::pair<flecs::entity, CChunkPos>> chunks;
-        Helper::ForInCircle(x, z, ctx->settings.renderDistance, [&](const long cx, const long cz) {
-            const glm::ivec2 position(cx, cz);
-            if (const auto it = ctx->chunkMapping.find(position); it != ctx->chunkMapping.end())
-            {
-                if (session->replicatedChunks->contains(it->second) ||
-                    session->replicatedChunksPending->contains(it->second))
-                {
-                    return;
-                }
-
-                auto chunk = world.entity(it->second);
-                if (GenerationState::Done::IsActive(chunk))
-                {
-                    chunks.emplace_back(chunk, chunk.get<CChunkPos>());
-                    session->replicatedChunksPending->insert(it->second);
-                    return;
-                }
-
-                if (chunk.has<CPendingReplication>())
-                {
-                    chunk.get_mut<CPendingReplication>().emplace(session.Get());
-                }
-                else
-                {
-                    chunk.set<CPendingReplication>({ session.Get() });
-                }
-                session->replicatedChunksPending->insert(it->second);
-
-                return;
-            }
-
-            const auto chunk = world.get<TerrainGenerationModule>().LaunchGenerationTask(world, { position.x, 0, position.y });
-            chunk.set<CPendingReplication>({ session.Get() });
-            session->replicatedChunksPending->insert(chunk);
-        });
-
-        std::ranges::sort(chunks, [&](auto& lhs, auto& rhs) {
-            const glm::ivec2 lp = lhs.second;
-            const glm::ivec2 rp = rhs.second;
-            const int dl = (lp.x - x) * (lp.x - x) + (lp.y - z) * (lp.y - z);
-            const int dr = (rp.x - x) * (rp.x - x) + (rp.y - z) * (rp.y - z);
-            return dl < dr;
-        });
-
-        for (const auto& id: chunks | std::views::keys)
+        Helper::ForInCircle(x, z, ctx->settings.renderDistance, [&](const long cx, const long cz)
         {
-            ctx->scheduler.Insert(TerrainReplicationModule::ReplicateChunk, session.Get(), world, id).Enqueue();
-        }
+            const glm::ivec2 position(cx, cz);
+
+            const auto          it    = ctx->chunkMapping.find(position);
+            const flecs::entity chunk = it != ctx->chunkMapping.cend()
+                ? world.entity(it->second)
+                : world.get<TerrainGenerationModule>().LaunchGenerationTask(world, { position.x, 0, position.y });
+
+            if (auto [_, inserted] = session->replicatedChunks->insert(chunk.id()); inserted)
+                chunk.ensure<CPendingReplication>().emplace(session.Get());
+        });
+    }
+
+    void DispatchPendingChunkReplicationSystem(const flecs::entity entity, CPendingReplication& pending)
+    {
+        if (!GenerationState::Done::IsActive(entity)) return;
+        if (pending.empty())                          return;
+
+        TerrainReplicationModule::LaunchChunkReplicationTask(
+            std::vector(pending.begin(), pending.end()),
+            entity.world(),
+            entity.id()
+        );
+        pending.clear();
     }
 
     void OnPlayerCreatedObserver(const flecs::entity entity, const CEntityTransform& transform)

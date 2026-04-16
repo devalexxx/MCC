@@ -103,6 +103,32 @@ namespace Mcc
         return Helper::ToNetwork(mData, world);
     }
 
+    std::optional<RLEChunkData>
+    Chunk::ToNetwork(const std::unordered_map<flecs::entity_t, NetworkHandle>& mapping) const
+    {
+        return Helper::ToNetwork(mData, mapping);
+    }
+
+    void Chunk::LockReadOnly() const
+    {
+        mMutex.lock_shared();
+    }
+
+    void Chunk::LockReadWrite() const
+    {
+        mMutex.lock();
+    }
+
+    void Chunk::UnlockReadOnly() const
+    {
+        mMutex.unlock_shared();
+    }
+
+    void Chunk::UnlockReadWrite() const
+    {
+        mMutex.unlock();
+    }
+
     size_t Chunk::IndexFromPosition(const glm::uvec3 position)
     {
         return position.x + (position.y * Size) + (position.z * Size * Height);
@@ -194,6 +220,88 @@ namespace Mcc
                     MCC_LOG_WARN("[RLEDecompression] No local id attached to the block({})", handle);
                     return std::nullopt;
                 }
+            }
+
+            return data;
+        }
+
+        std::optional<RLEChunkData> ToNetwork(
+            const ChunkData<flecs::entity_t>& data, const std::unordered_map<flecs::entity_t, NetworkHandle>& mapping
+        )
+        {
+            RLEChunkData compressed;
+
+            size_t currentIndex = 0;
+            size_t count        = 0;
+            for (size_t i = 0; i < data.mapping.GetSize(); ++i)
+            {
+                const auto index = data.mapping.Get(i);
+                if (index == currentIndex)
+                {
+                    ++count;
+                    if (i < data.mapping.GetSize() - 1)
+                        continue;
+                }
+
+                if (count > 0)
+                {
+                    const auto id = data.palette[currentIndex];
+                    const auto it = mapping.find(id);
+                    if (it == mapping.cend())
+                    {
+                        MCC_LOG_WARN("[RLECompression] No network id assigned to block(#{})", id);
+                        return std::nullopt;
+                    }
+
+                    compressed.data.emplace_back(it->second, count);
+                }
+
+                currentIndex = index;
+                count        = 1;
+            }
+
+            return compressed;
+        }
+
+        std::optional<ChunkData<flecs::entity_t>> FromNetwork(
+            const RLEChunkData& rle, const std::unordered_map<NetworkHandle, flecs::entity_t>& mapping
+        )
+        {
+            ChunkData<flecs::entity_t> data {
+                .palette={},
+                .mapping={ Chunk::Size * Chunk::Size * Chunk::Height, 2 }
+            };
+            size_t currentOffset = 0;
+            for (auto [handle, count]: rle.data)
+            {
+                const auto it = mapping.find(handle);
+                if (it == mapping.cend())
+                {
+                    MCC_LOG_WARN("[RLEDecompression] No local id attached to the block({})", handle);
+                    return std::nullopt;
+                }
+
+                // TODO: validate later
+                // if (!world.is_valid(*id))
+                // {
+                //     MCC_LOG_WARN("[RLEDecompression] The local id assigned to the block({}) is invalid", handle);
+                //     return std::nullopt;
+                // }
+
+                size_t index;
+                if (auto it2 = std::ranges::find(data.palette, it->second); it2 != data.palette.cend())
+                {
+                    index = std::distance(data.palette.begin(), it2);
+                }
+                else
+                {
+                    index = data.palette.size();
+                    data.palette.push_back(it->second);
+                }
+
+                for (size_t i = currentOffset; i < currentOffset + count; ++i) { data.mapping.Set(i, index); }
+
+                currentOffset += count;
             }
 
             return data;

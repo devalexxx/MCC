@@ -19,8 +19,8 @@ namespace Mcc
       public:
         explicit ChunkGenerator(siv::PerlinNoise::seed_type seed);
 
-        void                Setup(const flecs::world& world);
-        [[nodiscard]] Chunk Generate(glm::ivec3 position) const;
+        void                   Setup    (const flecs::world& world);
+        std::shared_ptr<Chunk> Generate(glm::ivec3 position) const;
 
       private:
         std::unordered_map<std::string, flecs::entity> mPalette;

@@ -16,6 +16,9 @@ namespace Mcc
     struct TBlockCreated   {};
     struct TBlockDestroyed {};
 
+    namespace _ { struct TerrainReplicationModuleTag {};  }
+    using CPendingReplication = ComponentWrapper<std::unordered_set<UserSession*>, _::TerrainReplicationModuleTag>;
+
 }
 
 #endif

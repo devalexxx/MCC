@@ -62,10 +62,10 @@ namespace Mcc
             new ClientWorldContext {
                 {
                     .networkManager = mNetworkManager,
-                    .networkMapping = {},
-                    .scheduler      = mScheduler,
                     .assetRegistry  = mAssetRegistry,
-                    .chunkMapping       = {}
+                    .scheduler      = mScheduler,
+                    .networkMapping = {},
+                    .chunkMapping   = {}
                 },
                 {},
                 {},

@@ -9,12 +9,12 @@
 #include "Common/Utils/BitArray.h"
 
 #include <Hexis/Core/EnumArray.h>
-
 #include <glm/glm.hpp>
 
 #include <flecs.h>
 
 #include <optional>
+#include <shared_mutex>
 #include <vector>
 
 namespace Mcc
@@ -76,8 +76,15 @@ namespace Mcc
         const BitArray& GetMapping() const;
 
         std::optional<RLEChunkData> ToNetwork(const flecs::world& world) const;
+        std::optional<RLEChunkData> ToNetwork(const std::unordered_map<flecs::entity_t, NetworkHandle>& mapping) const;
+
+        void LockReadOnly () const;
+        void LockReadWrite() const;
+        void UnlockReadOnly () const;
+        void UnlockReadWrite() const;
 
       private:
+        mutable std::shared_mutex  mMutex;
         ChunkData<flecs::entity_t> mData;
 
         static size_t IndexFromPosition(glm::uvec3 position);
@@ -88,6 +95,15 @@ namespace Mcc
 
         MCC_LIB_API std::optional<RLEChunkData>               ToNetwork  (const ChunkData<flecs::entity_t>& data, const flecs::world& world);
         MCC_LIB_API std::optional<ChunkData<flecs::entity_t>> FromNetwork(const RLEChunkData& rle, const flecs::world& world);
+
+
+        MCC_LIB_API std::optional<RLEChunkData> ToNetwork(
+            const ChunkData<flecs::entity_t>& data, const std::unordered_map<flecs::entity_t, NetworkHandle>& mapping
+        );
+        MCC_LIB_API std::optional<ChunkData<flecs::entity_t>> FromNetwork(
+            const RLEChunkData& rle, const std::unordered_map<NetworkHandle, flecs::entity_t>& mapping
+        );
+
 
     }
 

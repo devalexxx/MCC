@@ -25,10 +25,7 @@ namespace Mcc
         void RegisterObserver (flecs::world& world) override;
 
       private:
-        static void OnBlockHandler     (const OnBlock& packet, const flecs::world& world);
-        static void OnChunkHandler     (const OnChunk& packet, const flecs::world& world);
-        static void OnBlockBatchHandler(const OnBlockBatch& packet, const flecs::world& world);
-        static void OnChunkBatchHandler(const OnChunkBatch& packet, const flecs::world& world);
+        static void OnChunkHandler(const OnChunk& packet, const flecs::world& world);
     };
 
 }

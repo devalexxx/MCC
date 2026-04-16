@@ -23,8 +23,7 @@ namespace Mcc
     {
         GenerationState::Register(world);
 
-        AutoRegister<CChunkGenTask>      ::Register(world, "CChunkGenTask");
-        AutoRegister<CPendingReplication>::Register(world, "CPendingReplication");
+        AutoRegister<CChunkGenTask>::Register(world, "CChunkGenTask");
     }
 
     void TerrainGenerationModule::RegisterPrefab(flecs::world& /* world */) {}
@@ -41,12 +40,7 @@ namespace Mcc
             .each(HandleGenerationEndingSystem);
     }
 
-    void TerrainGenerationModule::RegisterObserver(flecs::world& world)
-    {
-        GenerationState::Done::OnEnter(world)
-            .with<CPendingReplication>()
-            .each(DispatchPendingReplication);
-    }
+    void TerrainGenerationModule::RegisterObserver(flecs::world& /* world */) {}
 
     void TerrainGenerationModule::InitializeGenerator(const flecs::world& world)
     {

@@ -5,7 +5,6 @@
 #include "Server/Module/TerrainGeneration/System.h"
 
 #include "Server/Module/TerrainGeneration/Module.h"
-#include "Server/Module/TerrainReplication/Module.h"
 #include "Server/WorldContext.h"
 
 #include "Common/SceneImporter.h"
@@ -78,24 +77,10 @@ namespace Mcc
         {
             const auto result = task.GetResult();
             MCC_ASSERT(result, "Chunk data has already been retrieve");
-            entity.emplace<CChunkPtr>(std::make_shared<Chunk>(result->get()));
+            entity.emplace<CChunkPtr>(result->get());
             entity.remove<CChunkGenTask>();
             GenerationState::Done::Enter(entity);
         }
-    }
-
-    void DispatchPendingReplication(const flecs::entity entity, const GenerationState)
-    {
-        entity.get([&](const CPendingReplication& pending) {
-            const auto world = entity.world();
-            const auto ctx   = ServerWorldContext::Get(world);
-            for (const auto session: pending)
-            {
-                ctx->scheduler.Insert(TerrainReplicationModule::ReplicateChunk, session, world, entity.id()).Enqueue();
-            }
-        });
-
-        entity.remove<CPendingReplication>();
     }
 
 }

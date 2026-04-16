@@ -20,15 +20,15 @@ namespace Mcc
     }
 
     template<typename Archive>
-    void serialize(Archive& ar, OnChunk& packet)
+    void serialize(Archive& ar, BlockData& packet)
     {
-        ar(packet.handle, packet.position, packet.data);
+        ar(packet.handle, packet.type, packet.meta, packet.asset);
     }
 
     template<typename Archive>
-    void serialize(Archive& ar, OnBlock& packet)
+    void serialize(Archive& ar, OnChunk& packet)
     {
-        ar(packet.handle, packet.type, packet.meta, packet.asset);
+        ar(packet.handle, packet.position, packet.data, packet.blocks);
     }
 
     template<typename Archive>

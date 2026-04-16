@@ -13,6 +13,7 @@
 #include "Common/Module/Network/Component.h"
 #include "Common/Module/Terrain/Component.h"
 #include "Common/Module/Terrain/Module.h"
+#include "Common/Phase.h"
 
 namespace Mcc
 {
@@ -28,11 +29,19 @@ namespace Mcc
         world.component<TChunkCreated>();
         world.component<TChunkDirty>();
         world.component<TChunkDestroyed>();
+
+        AutoRegister<CPendingReplication>::Register(world, "CPendingReplication");
     }
 
     void TerrainReplicationModule::RegisterPrefab(flecs::world& /* world */) {}
 
-    void TerrainReplicationModule::RegisterSystem(flecs::world& /* world */) {}
+    void TerrainReplicationModule::RegisterSystem(flecs::world& world)
+    {
+        world.system<CPendingReplication>("DispatchPendingChunkReplication")
+            .kind<Phase::OnRender>() // To change (add a new phase)
+            .with<TChunk>()
+            .each(DispatchPendingChunkReplicationSystem);
+    }
 
     void TerrainReplicationModule::RegisterObserver(flecs::world& world)
     {
@@ -46,50 +55,69 @@ namespace Mcc
             .each(OnPlayerCreatedObserver);
     }
 
-    void
-    TerrainReplicationModule::ReplicateChunk(UserSession* session, const flecs::world& world, flecs::entity_t chunk)
+    void TerrainReplicationModule::LaunchChunkReplicationTask(
+        std::vector<UserSession*> sessions, const flecs::world& world, flecs::entity_t chunk
+    )
     {
-        // TODO: could data race
         const auto  ctx   = ServerWorldContext::Get(world);
         const auto& stage = world;
 
-        OnChunk      chunkPacket;
-        OnBlockBatch blockPacket;
+        NetworkInfo info;
+        info.sessions = std::move(sessions);
+        info.net      = &ctx->networkManager;
 
-        const auto  chunkEntity = stage.entity(chunk);
+        const auto chunkEntity = stage.entity(chunk);
         const auto [handle] = chunkEntity.get<const CNetProps>();
         const auto position = chunkEntity.get<const CChunkPos>();
         const auto chunkPtr = chunkEntity.get<const CChunkPtr>();
 
-        chunkPacket.handle   = handle;
-        chunkPacket.position = position;
-        if (auto rle = chunkPtr->ToNetwork(stage); rle.has_value())
+        std::vector<BlockData>                             blocks;
+        std::unordered_map<flecs::entity_t, NetworkHandle> mapping;
+        for (const auto blockEntityT : chunkPtr->GetPalette())
         {
-            chunkPacket.data = std::move(rle.value());
+            const auto blockEntity = stage.entity(blockEntityT);
+            BlockData block;
+            block.handle = blockEntity.get<const CNetProps>().handle;
+            block.type   = blockEntity.get<const CBlockType>();
+            block.meta   = blockEntity.get<const CBlockMeta>();
+            block.asset  = blockEntity.get<const CBlockAsset>();
+            mapping.emplace(blockEntityT, block.handle);
+            blocks.push_back(std::move(block));
         }
 
-        for (auto block: chunkPtr->GetPalette())
+        ChunkReplicationDesc desc { .chunk = { chunkPtr } };
+        desc.mapping     = std::move(mapping);
+        desc.position    = position;
+        desc.handle      = handle;
+        desc.localHandle = chunk;
+        desc.blocks      = std::move(blocks);
+
+        ctx->scheduler.Insert(ChunkReplicationTask, std::move(info), std::move(desc)).Enqueue();
+    }
+
+    void TerrainReplicationModule::ChunkReplicationTask(NetworkInfo info, ChunkReplicationDesc desc)
+    {
+        OnChunk chunkPacket;
+
+        chunkPacket.handle   = desc.handle;
+        chunkPacket.position = desc.position;
+        chunkPacket.blocks   = std::move(desc.blocks);
+
+        auto rle = desc.chunk->ToNetwork(desc.mapping);
+        if (!rle)
         {
-            if (!session->replicatedBlocks->contains(block))
+            MCC_LOG_ERROR("Failed to convert chunk({}, #{}) to network format", desc.handle, desc.localHandle);
+            for (const auto session : info.sessions)
             {
-                auto    blockEntity = stage.entity(block);
-                OnBlock packet;
-                packet.handle = blockEntity.get<const CNetProps>().handle;
-                packet.type   = blockEntity.get<const CBlockType>();
-                packet.meta   = blockEntity.get<const CBlockMeta>();
-                packet.asset  = blockEntity.get<const CBlockAsset>();
-                blockPacket.push_back(std::move(packet));
-
-                session->replicatedBlocks->insert(block);
+                session->replicatedChunks->erase(desc.localHandle);
             }
+            return;
         }
-        session->replicatedChunksPending->erase(chunk);
-        session->replicatedChunks->insert(chunk);
+        chunkPacket.data = std::move(*rle);
 
-        if (!blockPacket.empty())
-            ctx->networkManager.Send(session->peer, std::move(blockPacket), ENET_PACKET_FLAG_RELIABLE, 0);
-
-        ctx->networkManager.Send(session->peer, std::move(chunkPacket), ENET_PACKET_FLAG_RELIABLE, 0);
+        std::vector<ENetPeer*> peers;
+        std::ranges::transform(info.sessions, std::back_inserter(peers), &UserSession::peer);
+        info.net->Send(std::move(peers), std::move(chunkPacket), ENET_PACKET_FLAG_RELIABLE, 0);
     }
 
 }

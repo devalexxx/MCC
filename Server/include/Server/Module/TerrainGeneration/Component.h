@@ -17,8 +17,7 @@ namespace Mcc
     REGISTER_STATE(StateTargetEntity, GenerationState, Planned, Progress, Done, Failed)
 
     namespace _ { struct TerrainGenerationModuleTag {}; };
-    using CChunkGenTask       = ComponentWrapper<Hx::UniqueTaskRef<Chunk>        , _::TerrainGenerationModuleTag>;
-    using CPendingReplication = ComponentWrapper<std::unordered_set<UserSession*>, _::TerrainGenerationModuleTag>;
+    using CChunkGenTask = ComponentWrapper<Hx::UniqueTaskRef<std::shared_ptr<Chunk>> , _::TerrainGenerationModuleTag>;
 
 }
 

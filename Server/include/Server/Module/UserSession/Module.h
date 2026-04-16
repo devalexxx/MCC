@@ -30,8 +30,6 @@ namespace Mcc
 
         ENetPeer*             peer;
         SafeAccess<EntitySet> replicatedChunks;
-        SafeAccess<EntitySet> replicatedChunksPending;
-        SafeAccess<EntitySet> replicatedBlocks;
     };
 
     struct UserSessionModule final : BaseModule<UserSessionModule, NetworkModule, EntityModule>

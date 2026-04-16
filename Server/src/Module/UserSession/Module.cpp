@@ -51,7 +51,7 @@ namespace Mcc
         event.peer->data = new UserSession
         {
             .pInfo={ handle }, .cInfo={}, .peer=event.peer,
-            .replicatedChunks={}, .replicatedChunksPending={}, .replicatedBlocks={}
+            .replicatedChunks={},
         };
 
         char hostname[100];
