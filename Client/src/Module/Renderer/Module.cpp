@@ -93,7 +93,7 @@ namespace Mcc
             .run(SetupRendererSystem);
 
         world.system("PollWindowEvent")
-            .kind<Phase::OnSetup>()
+            .kind<Phase::OnPoll>()
             .run(PollWindowEventSystem);
 
         world.system("ClearFrame")

@@ -34,13 +34,13 @@ namespace Mcc
 
                 if (!IsValid(handle))
                 {
-                    MCC_LOG_WARN("[BroadcastEntitiesCreated] Entity(#{})'s network id is invalid", entity.id());
+                    MCC_LOG_WARN("Entity(#{})'s network id is invalid", entity.id());
                     continue;
                 }
 
                 packet.states.push_back({ .handle=handle, .transform=t[i], .data=e[i] });
                 entity.remove<TEntityCreated>();
-                MCC_LOG_INFO("[BroadcastEntitiesCreated] Entity({}) has been created and replicated", handle);
+                MCC_LOG_INFO("Entity({}) has been replicated", handle);
             }
             ctx->networkManager.Broadcast(std::move(packet), ENET_PACKET_FLAG_RELIABLE, 0);
         }
@@ -64,7 +64,7 @@ namespace Mcc
 
                 if (!IsValid(handle))
                 {
-                    MCC_LOG_WARN("[BroadcastEntitiesUpdated] Entity(#{})'s network id is invalid", entity.id());
+                    MCC_LOG_WARN("Entity(#{})'s network id is invalid", entity.id());
                     entity.destruct();
                     continue;
                 }
@@ -92,14 +92,14 @@ namespace Mcc
 
                 if (!IsValid(handle))
                 {
-                    MCC_LOG_WARN("[BroadcastEntitiesDestroyed] Entity(#{})'s network id is invalid", entity.id());
+                    MCC_LOG_WARN("Entity(#{})'s network id is invalid", entity.id());
                     entity.destruct();
                     continue;
                 }
 
                 packet.handles.push_back(handle);
                 entity.destruct();
-                MCC_LOG_INFO("[BroadcastEntitiesDestroyed] Entity({}) has been destroyed and replicated", handle);
+                MCC_LOG_INFO("Entity({}) has been destroyed and replicated", handle);
             }
             ctx->networkManager.Broadcast(std::move(packet), ENET_PACKET_FLAG_RELIABLE, 0);
         }

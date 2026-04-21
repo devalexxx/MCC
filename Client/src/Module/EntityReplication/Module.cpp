@@ -62,21 +62,23 @@ namespace Mcc
 
         for (auto& state: event.states)
         {
-            if (const auto lid = ctx->networkMapping.GetLHandle(state.handle); lid.has_value())
+            if (const auto lid = ctx->networkMapping.GetLHandle(state.handle); lid)
             {
                 MCC_LOG_WARN(
-                    "[EntityCreatedHandler] The network id {} is already associated to a local entity(#{})",
+                    "The network id {} is already associated to a local entity(#{})",
                     state.handle, *lid
                 );
                 continue;
             }
 
-            world.entity()
+            auto entity = world.entity()
                 .is_a<PNetEntity>()
                 .set<CNetProps>({ state.handle })
                 .set(state.transform)
                 .set<CSnapshotQueue>({})
                 .child_of<SceneRoot>();
+
+            MCC_LOG_INFO("Entity({}, #{}) entity created", state.handle, entity.id());
         }
     }
 
@@ -124,6 +126,8 @@ namespace Mcc
 
                 world.entity(*id).destruct();
             }
+
+            MCC_LOG_INFO("Entity({}) entity destroyed", handle);
         }
     }
 

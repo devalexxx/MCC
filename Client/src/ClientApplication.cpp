@@ -82,7 +82,6 @@ namespace Mcc
         {
             mWorld.run_pipeline(builtinPipeline);
             mWorld.progress();
-            mNetworkManager.Poll();
         }
 
         MCC_LOG_INFO("Shutdown...");

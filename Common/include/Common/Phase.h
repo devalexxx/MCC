@@ -10,30 +10,21 @@ namespace Mcc
 
     struct Phase
     {
-        struct OnLoad
-        {};
+        struct OnLoad {};
 
-        struct OnSetup
-        {};
-        struct OnUpdate
-        {};
-        struct PostUpdate
-        {};
-        struct OnDrawGui
-        {};
-        struct PostDrawGui
-        {};
-        struct OnClear
-        {};
-        struct OnDraw
-        {};
-        struct PreRender
-        {};
-        struct OnRender
-        {};
+        struct OnSetup     {};
+        struct OnPoll      {};
+        struct PreUpdate   {};
+        struct OnUpdate    {};
+        struct PostUpdate  {};
+        struct OnDrawGui   {};
+        struct PostDrawGui {};
+        struct OnClear     {};
+        struct OnDraw      {};
+        struct PreRender   {};
+        struct OnRender    {};
 
-        struct OnQuit
-        {};
+        struct OnQuit {};
     };
 
 }

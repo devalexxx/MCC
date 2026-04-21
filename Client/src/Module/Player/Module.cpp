@@ -88,7 +88,7 @@ namespace Mcc
         const auto  handle = ctx->networkMapping.GetLHandle(ctx->playerInfo.handle);
         if (!handle.has_value())
         {
-            MCC_LOG_WARN("[GetPlayerPosition] Player entity({}) isn't associated to a local entity", ctx->playerInfo.handle);
+            MCC_LOG_WARN("Player entity({}) isn't associated to a local entity", ctx->playerInfo.handle);
             return flecs::entity::null();
         }
 
@@ -105,10 +105,10 @@ namespace Mcc
             state != event.states.cend())
         {
             const auto handle = ctx->networkMapping.GetLHandle(ctx->playerInfo.handle);
-            if (!handle.has_value())
+            if (!handle)
             {
                 MCC_LOG_ERROR(
-                    "[OnEntitiesCreatedHandler] No local entity associated to the player network id, make sure to import EntityReplicationModule before PlayerModule"
+                    "No local entity associated to the player network id, make sure to import EntityReplicationModule before PlayerModule"
                 );
                 return;
             }
@@ -125,6 +125,8 @@ namespace Mcc
                 .add<RCameraFollow>(entity)
                 .add<TActiveCamera>()
                 .child_of<SceneRoot>();
+
+            MCC_LOG_INFO("Player({}, #{}) entity created", ctx->playerInfo.handle, *handle);
         }
     }
 
@@ -143,7 +145,7 @@ namespace Mcc
                 const auto handle = ctx->networkMapping.GetLHandle(state->handle);
                 if (!handle.has_value())
                 {
-                    MCC_LOG_WARN("[OnEntitiesUpdatedHandler] Entity({}) isn't associated to a local entity", state->handle);
+                    MCC_LOG_WARN("Entity({}) isn't associated to a local entity", state->handle);
                     return;
                 }
 
@@ -236,7 +238,7 @@ namespace Mcc
         const auto  handle = ctx->networkMapping.GetLHandle(ctx->playerInfo.handle);
         if (!handle.has_value())
         {
-            MCC_LOG_WARN("[OnKeyEventHandler] Player entity({}) isn't associated to a local entity", ctx->playerInfo.handle);
+            MCC_LOG_WARN("Player entity({}) isn't associated to a local entity", ctx->playerInfo.handle);
             return;
         }
 
@@ -288,7 +290,7 @@ namespace Mcc
         const auto  handle = ctx->networkMapping.GetLHandle(ctx->playerInfo.handle);
         if (!handle.has_value())
         {
-            MCC_LOG_WARN("[OnCursorPosEventHandler] Player entity({}) isn't associated to a local entity", ctx->playerInfo.handle);
+            MCC_LOG_WARN("Player entity({}) isn't associated to a local entity", ctx->playerInfo.handle);
             return;
         }
 

@@ -73,7 +73,7 @@ namespace Mcc
 
             ctx->networkManager.Send(from.peer, packet, ENET_PACKET_FLAG_RELIABLE, 0);
 
-            world.entity()
+            const auto entity = world.entity()
                 .is_a<PUserEntity>()
                 .set<CUserSession>(session)
                 .set<CNetProps>({ session->pInfo.handle })
@@ -84,6 +84,8 @@ namespace Mcc
                 }})
                 .add<TEntityCreated>()
                 .child_of<SceneRoot>();
+
+            MCC_LOG_INFO("UserEntity({}, #{}) created", session->pInfo.handle, entity.id());
         }
         else
         {
@@ -106,13 +108,13 @@ namespace Mcc
 
             if (!lHandle.has_value())
             {
-                MCC_LOG_WARN("[OnDisconnectEventHandler] Entity({}) isn't associated to a local entity", rHandle);
+                MCC_LOG_WARN("Entity({}) isn't associated to a local entity", rHandle);
                 return;
             }
 
             if (!world.is_alive(*lHandle))
             {
-                MCC_LOG_WARN("[OnDisconnectEventHandler] Entity({}) isn't alive", rHandle);
+                MCC_LOG_WARN("Entity({}) isn't alive", rHandle);
                 return;
             }
 

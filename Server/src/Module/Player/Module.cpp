@@ -41,7 +41,7 @@ namespace Mcc
             .each(ProcessPlayerInputs);
 
         world.system("HandlePlayerCreation")
-            .kind<Phase::OnSetup>()
+            .kind<Phase::PreUpdate>()
             .with<TEntityCreated>()
             .with<TUserEntity>()
             .each(HandlePlayerCreation);

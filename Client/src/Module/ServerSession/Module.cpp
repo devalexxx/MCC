@@ -46,11 +46,11 @@ namespace Mcc
             .add<GameScene>();
 
         world.system<CSrvConnTask>("HandleConnectionResult")
-            .kind<Phase::OnSetup>()
+            .kind<Phase::PreUpdate>()
             .each(HandleConnectionResultSystem);
 
         world.system<CSrvDConnTask>("HandleDisconnectionResult")
-            .kind<Phase::OnSetup>()
+            .kind<Phase::PreUpdate>()
             .each(HandleDisconnectionResultSystem);
     }
 
@@ -76,6 +76,7 @@ namespace Mcc
         const auto* ctx = ClientWorldContext::Get(world);
         ctx->networkManager.Send<OnClientInfo>({ static_cast<ClientInfo>(ctx->settings) }, ENET_PACKET_FLAG_RELIABLE, 0);
 
+        MCC_LOG_INFO("Client info sent to the server");
         SessionState::Pending::Enter(world);
     }
 
@@ -85,6 +86,7 @@ namespace Mcc
         ctx->playerInfo = packet.playerInfo;
         ctx->serverInfo = packet.serverInfo;
 
+        MCC_LOG_INFO("Connection accepted from server with network id {}", ctx->playerInfo.handle);
         SessionState::Active::Enter(world);
     }
 

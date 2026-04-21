@@ -6,6 +6,7 @@
 
 #include "Common/Module/Network/Component.h"
 #include "Common/Module/Network/System.h"
+#include "Common/Phase.h"
 #include "Common/WorldContext.h"
 
 namespace Mcc
@@ -32,7 +33,13 @@ namespace Mcc
             .set<CNetProps>({ Null() });
     }
 
-    void NetworkModule::RegisterSystem(flecs::world& /* world */) {}
+    void NetworkModule::RegisterSystem(flecs::world& world)
+    {
+        world.system("PollNetwork")
+            .kind<Phase::OnPoll>()
+            .immediate()
+            .run(PollNetworkSystem);
+    }
 
     void NetworkModule::RegisterObserver(flecs::world& world)
     {

@@ -9,6 +9,18 @@
 namespace Mcc
 {
 
+    void PollNetworkSystem(flecs::iter& it)
+    {
+        const auto world = it.world();
+        const auto ctx   = WorldContext<>::Get(world);
+
+        world.defer_suspend();
+        ctx->networkManager.Poll();
+        world.defer_resume();
+
+        IgnoreIter(it);
+    }
+
     void GenerateNetworkHandleObserver(flecs::entity, CNetProps& props)
     {
         props.handle = GenerateNetworkHandle();

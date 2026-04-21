@@ -116,7 +116,9 @@ namespace Mcc
         world.component<Phase::OnLoad>().add<Phase>();
         world.component<Phase::OnQuit>().add<Phase>();
         world.component<Phase::OnSetup>().add<Phase>();
-        world.component<Phase::OnUpdate>().add<Phase>().depends_on<Phase::OnSetup>();
+        world.component<Phase::OnPoll>().add<Phase>().depends_on<Phase::OnSetup>();
+        world.component<Phase::PreUpdate>().add<Phase>().depends_on<Phase::OnPoll>();
+        world.component<Phase::OnUpdate>().add<Phase>().depends_on<Phase::PreUpdate>();
         world.component<Phase::PostUpdate>().add<Phase>().depends_on<Phase::OnUpdate>();
         world.component<Phase::OnDrawGui>().add<Phase>().depends_on<Phase::PostUpdate>();
         world.component<Phase::PostDrawGui>().add<Phase>().depends_on<Phase::OnDrawGui>();
