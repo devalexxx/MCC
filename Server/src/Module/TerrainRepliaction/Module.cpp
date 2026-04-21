@@ -239,7 +239,7 @@ namespace Mcc
         chunkPacket.position = desc.position;
         chunkPacket.blocks   = std::move(desc.blocks);
 
-        auto rle = desc.chunk->ToNetwork(desc.mapping);
+        auto rle = MCC_BENCH_TIME(RLECompression, desc.chunk->ToNetwork)(desc.mapping);
 
         for (const auto session : info.sessions)
         {

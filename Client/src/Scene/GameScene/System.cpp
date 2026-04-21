@@ -5,7 +5,6 @@
 #include "Client/Scene/GameScene/System.h"
 
 #include "Client/Module/Renderer/Component.h"
-#include "Client/Module/ServerSession/Component.h"
 #include "Client/Module/ServerSession/Module.h"
 #include "Client/Module/TerrainRenderer/Component.h"
 #include "Client/Scene/GameScene/Component.h"
@@ -150,7 +149,8 @@ namespace Mcc
         static char   overlay[50] = "value";
 
         const auto ctx  = it.ctx<DebugContext>();
-        elapsed        += it.delta_time();
+        const auto dt   = it.delta_time();
+        elapsed        += dt;
         frames++;
         if (elapsed >= .2f)
         {
@@ -189,13 +189,34 @@ namespace Mcc
             }
         }
 
-        if (const auto peer = ClientWorldContext::Get(it.world())->networkManager.GetPeer())
+
+        const auto host = ClientWorldContext::Get(it.world())->networkManager.GetHost();
+        const auto peer = ClientWorldContext::Get(it.world())->networkManager.GetPeer();
+        if (host && peer)
         {
+            ctx->incomingBandwidthHistory.Add(static_cast<float>(host->totalReceivedData) * 0.0001f, dt);
+            ctx->outgoingBandwidthHistory.Add(static_cast<float>(host->totalSentData    ) * 0.0001f, dt);
+            ctx->incomingDataTotal += static_cast<double>(host->totalReceivedData) * 0.0001;
+            ctx->incomingDataTotal += static_cast<double>(host->totalSentData    ) * 0.0001;
+            host->totalReceivedData = 0;
+            host->totalSentData     = 0;
+
             if (ImGui::CollapsingHeader("Network"))
             {
+                ctx->incomingBandwidthHistory.Plot(
+                    "Received", "kb/s", " ",fmt::format("\ntotal: {:.2f} kb", ctx->incomingDataTotal).c_str()
+                );
+
+                ctx->outgoingBandwidthHistory.Plot(
+                    "Received", "kb/s", " ",fmt::format("\ntotal: {:.2f} kb", ctx->outgoingDataTotal).c_str()
+                );
+
+                ImGui::Spacing();
+                ImGui::Text("packet received: %d", host->totalReceivedPackets);
+                ImGui::Text("packet sent    : %d", peer->packetsSent);
+                ImGui::Spacing();
                 ImGui::Text("ping %d ms", peer->roundTripTime);
                 ImGui::Text("loss %d", peer->packetLoss);
-                ImGui::Text("packet sent: %d", peer->packetsSent);
             }
         }
 

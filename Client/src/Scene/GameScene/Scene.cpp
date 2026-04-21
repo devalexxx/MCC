@@ -36,7 +36,11 @@ namespace Mcc
         static DebugContext debugContext {
             .fpsHistory      = std::vector(100, 0.f),
             .fpsHistorySize  = 100,
-            .fpsHistoryIndex = 0
+            .fpsHistoryIndex = 0,
+
+            .incomingBandwidthHistory = { 100ul, .2f },
+            .outgoingBandwidthHistory = { 100ul, .2f },
+            .incomingDataTotal        = 0
         };
 
         world.system("SetupStateSystem")

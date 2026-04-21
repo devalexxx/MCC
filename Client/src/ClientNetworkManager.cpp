@@ -96,5 +96,19 @@ namespace Mcc
         return mPeer;
     }
 
+    ENetPeer* ClientNetworkManager::GetPeer() {
+        return mPeer;
+    }
+
+    const ENetHost* ClientNetworkManager::GetHost() const
+    {
+        return mHost;
+    }
+
+    ENetHost* ClientNetworkManager::GetHost()
+    {
+        return mHost;
+    }
+
 
 }
