@@ -118,6 +118,7 @@ namespace Mcc
     {
         const auto fEntity = *it.ctx<flecs::entity>();
         const auto world   = it.world();
+        const auto ctx     = ClientWorldContext::Get(world);
         const auto camera  = CameraModule::GetActiveCamera(world);
         if (!camera.is_valid())
             return;
@@ -131,9 +132,18 @@ namespace Mcc
                 Hx::Overloaded {
                     [&](const BlockHit& hit)
                     {
+                        auto [parent, local] = hit.position;
+                        const auto  chunkT   = ctx->chunkMapping.find(parent)->second;
+                        const auto& chunkPtr = world.entity(chunkT).get<CChunkPtr>();
+                        const auto  blockT   = chunkPtr->Get(glm::uvec3(LocalPosV(local)));
+                        const auto& meta     = world.entity(blockT).get<CBlockMeta>();
+
                         fEntity.add<TRenderable>();
                         fEntity.set<CFacingInfo>({
-                            .previous = hit.previous, .position = hit.position, .distance = result->distance
+                            .previous  = hit.previous,
+                            .position  = hit.position,
+                            .blockName = meta.id.c_str(),
+                            .distance  = result->distance
                         });
                     },
                     [&](const EntityHit&)

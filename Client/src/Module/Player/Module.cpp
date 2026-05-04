@@ -125,6 +125,11 @@ namespace Mcc
         mCursorPosEventHandlerID   = 0;
     }
 
+    const CFacingInfo* PlayerModule::GetFacingInfo() const
+    {
+        return mFacingEntity.try_get<CFacingInfo>();
+    }
+
     flecs::entity PlayerModule::GetPlayer(const flecs::world& world)
     {
         const auto* ctx = ClientWorldContext::Get(world);

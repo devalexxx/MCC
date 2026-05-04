@@ -4,6 +4,7 @@
 
 #include "Client/Scene/GameScene/System.h"
 
+#include "Client/Module/Player/Component.h"
 #include "Client/Module/Renderer/Component.h"
 #include "Client/Module/ServerSession/Module.h"
 #include "Client/Module/TerrainRenderer/Component.h"
@@ -239,6 +240,12 @@ namespace Mcc
                 ImGui::InputFloat3("Position", &position[0]);
                 ImGui::InputInt2  ("ChunkPosition", &static_cast<glm::ivec2>(chunkPos)[0]);
                 ImGui::InputFloat3("PositionInChunk", &static_cast<glm::vec3>(posInChunk)[0]);
+            }
+
+            if (const auto facing = world.get<PlayerModule>().GetFacingInfo())
+            {
+                ImGui::Text("distance: %f", facing->distance);
+                ImGui::Text("block id: %s", facing->blockName);
             }
         }
 

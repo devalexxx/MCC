@@ -29,6 +29,7 @@ namespace Mcc
         void SetInputHandler  (flecs::world& world);
         void ClearInputHandler(const flecs::world& world);
 
+        const struct CFacingInfo* GetFacingInfo() const;
         static flecs::entity GetPlayer(const flecs::world& world);
 
       private:

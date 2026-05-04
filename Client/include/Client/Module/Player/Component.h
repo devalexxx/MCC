@@ -18,9 +18,10 @@ namespace Mcc
 
     struct CFacingInfo
     {
-        WorldPosV previous;
-        WorldPosV position;
-        float     distance;
+        WorldPosV   previous;
+        WorldPosV   position;
+        const char* blockName;
+        float       distance;
     };
 
     namespace _ { struct PlayerModuleTag {}; };
