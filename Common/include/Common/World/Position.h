@@ -5,8 +5,6 @@
 #ifndef MCC_COMMON_WORLD_POSITION_H
 #define MCC_COMMON_WORLD_POSITION_H
 
-
-
 #include "Common/World/Coordinate.h"
 #include "Common/Utils/GLMUtils.h"
 #include "Common/Utils/MathUtils.h"
@@ -191,9 +189,9 @@ namespace Mcc
 
         constexpr operator glm::fvec3() const;
 
-        constexpr operator WorldPosV() const;
-        constexpr operator WorldPosE() const;
-        constexpr operator ChunkPosV() const;
+        inline operator WorldPosV() const;
+        inline operator WorldPosE() const;
+        inline operator ChunkPosV() const;
 
         template<std::size_t>
         friend constexpr auto get(Position p);
@@ -265,12 +263,12 @@ namespace Mcc
         else                       return p.mPosition.z;
     }
 
-    constexpr auto format_as(const ChunkPosV& position);
-    constexpr auto format_as(const LocalPosV& position);
-    constexpr auto format_as(const LocalPosE& position);
-    constexpr auto format_as(const WorldPosV& position);
-    constexpr auto format_as(const WorldPosE& position);
-    constexpr auto format_as(const WorldPosF& position);
+    inline auto format_as(const ChunkPosV& position);
+    inline auto format_as(const LocalPosV& position);
+    inline auto format_as(const LocalPosE& position);
+    inline auto format_as(const WorldPosV& position);
+    inline auto format_as(const WorldPosE& position);
+    inline auto format_as(const WorldPosF& position);
 
 }
 

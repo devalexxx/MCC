@@ -94,7 +94,7 @@ namespace Mcc
             return nullptr;
         }
 
-        auto image = std::make_shared<Image>(STBLoadImage(_path->c_str()));
+        auto image = std::make_shared<Image>(STBLoadImage(_path->generic_string().c_str()));
         return cache
             ? std::dynamic_pointer_cast<Image>(reg.Add(std::string(path), image))
             : image;

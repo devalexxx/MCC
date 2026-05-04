@@ -6,6 +6,9 @@
 #include "Common/Utils/Assert.h"
 
 #include <glm/gtc/epsilon.hpp>
+#include <glm/glm.hpp>
+
+#include <algorithm>
 
 namespace Mcc
 {
@@ -226,7 +229,7 @@ namespace Mcc
         return mPosition;
     }
 
-    constexpr Position<WorldSpace, FloatCoord>::operator Position<WorldSpace, VoxelCoord>() const
+    inline Position<WorldSpace, FloatCoord>::operator Position<WorldSpace, VoxelCoord>() const
     {
         MCC_ASSERT(
             mPosition.y >= 0 && mPosition.y < Chunk::Height,
@@ -247,7 +250,7 @@ namespace Mcc
         return {{ cx, cz }, { px, py, pz }};
     }
 
-    constexpr Position<WorldSpace, FloatCoord>::operator Position<WorldSpace, EnttyCoord>() const
+    inline Position<WorldSpace, FloatCoord>::operator Position<WorldSpace, EnttyCoord>() const
     {
         constexpr float size   = Chunk::Size;
         constexpr float height = Chunk::Height;
@@ -277,7 +280,7 @@ namespace Mcc
         return {{ cx, cz }, { px, py, pz }};
     }
 
-    constexpr Position<WorldSpace, FloatCoord>::operator Position<ChunkSpace, VoxelCoord>() const
+    inline Position<WorldSpace, FloatCoord>::operator Position<ChunkSpace, VoxelCoord>() const
     {
         return { glm::ivec2(glm::floor(mPosition.x / Chunk::Size), glm::floor(mPosition.z / Chunk::Size)) };
     }
@@ -294,34 +297,34 @@ namespace Mcc
         return !(lhs == rhs);
     }
 
-    constexpr auto format_as(const ChunkPosV& position)
+    inline auto format_as(const ChunkPosV& position)
     {
         return fmt::format("ChunkPosV({})", static_cast<glm::ivec2>(position));
     }
 
-    constexpr auto format_as(const LocalPosV& position)
+    inline auto format_as(const LocalPosV& position)
     {
         return fmt::format("LocalPosV({})", static_cast<glm::uvec3>(position));
     }
 
-    constexpr auto format_as(const LocalPosE& position)
+    inline auto format_as(const LocalPosE& position)
     {
         return fmt::format("LocalPosE({})", static_cast<glm::vec3>(position));
     }
 
-    constexpr auto format_as(const WorldPosV& position)
+    inline auto format_as(const WorldPosV& position)
     {
         auto [ parent, local ] = position;
         return fmt::format("WorldPosV({}, {})", parent, local );
     }
 
-    constexpr auto format_as(const WorldPosE& position)
+    inline auto format_as(const WorldPosE& position)
     {
         auto [ parent, local ] = position;
         return fmt::format("WorldPosE({}, {})", parent, local );
     }
 
-    constexpr auto format_as(const WorldPosF& position)
+    inline auto format_as(const WorldPosF& position)
     {
         return fmt::format("WorldPosF({})", static_cast<glm::vec3>(position) );
     }

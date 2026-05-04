@@ -13,7 +13,7 @@ namespace std
     template<>
     struct hash<Mcc::ChunkPosV>
     {
-        constexpr size_t operator()(const Mcc::ChunkPosV& v) const noexcept
+        inline size_t operator()(const Mcc::ChunkPosV& v) const noexcept
         {
             return std::hash<glm::ivec2>()(v);
         }
@@ -22,7 +22,7 @@ namespace std
     template<>
     struct hash<Mcc::LocalPosV>
     {
-        constexpr size_t operator()(const Mcc::LocalPosV& v) const noexcept
+        inline size_t operator()(const Mcc::LocalPosV& v) const noexcept
         {
             return std::hash<glm::uvec3>()(v);
         }
@@ -31,7 +31,7 @@ namespace std
     template<>
     struct hash<Mcc::LocalPosE>
     {
-        constexpr size_t operator()(const Mcc::LocalPosE& v) const noexcept
+        inline size_t operator()(const Mcc::LocalPosE& v) const noexcept
         {
             return std::hash<glm::vec3>()(v);
         }
@@ -40,7 +40,7 @@ namespace std
     template<>
     struct hash<Mcc::WorldPosV>
     {
-        constexpr size_t operator()(const Mcc::WorldPosV& v) const noexcept
+        inline size_t operator()(const Mcc::WorldPosV& v) const noexcept
         {
             auto [ c, i ] = v;
             return std::hash<decltype(c)>{}(c) ^ std::hash<decltype(i)>{}(i) << 1;
@@ -50,7 +50,7 @@ namespace std
     template<>
     struct hash<Mcc::WorldPosE>
     {
-        constexpr size_t operator()(const Mcc::WorldPosE& v) const noexcept
+        inline size_t operator()(const Mcc::WorldPosE& v) const noexcept
         {
             auto [ c, i ] = v;
             return std::hash<decltype(c)>{}(c) ^ std::hash<decltype(i)>{}(i) << 1;
@@ -60,7 +60,7 @@ namespace std
     template<>
     struct hash<Mcc::WorldPosF>
     {
-        constexpr size_t operator()(const Mcc::WorldPosF& v) const noexcept
+        inline size_t operator()(const Mcc::WorldPosF& v) const noexcept
         {
             return std::hash<glm::vec3>()(v);
         }

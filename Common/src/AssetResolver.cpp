@@ -50,7 +50,7 @@ namespace Mcc
         // Check if it is a valid path
         if (!std::filesystem::exists(result))
         {
-            MCC_LOG_ERROR("[AssetResolver] Asset not found at {}", result.c_str());
+            MCC_LOG_ERROR("[AssetResolver] Asset not found at {}", result.generic_string());
             return std::nullopt;
         }
 

@@ -11,10 +11,10 @@
 namespace glm
 {
 
-    constexpr auto format_as(const ivec2& v);
-    constexpr auto format_as(const fvec3& v);
-    constexpr auto format_as(const uvec3& v);
-    constexpr auto format_as(const ivec3& v);
+    inline auto format_as(const ivec2& v);
+    inline auto format_as(const fvec3& v);
+    inline auto format_as(const uvec3& v);
+    inline auto format_as(const ivec3& v);
 
     template<class Archive>
     constexpr void serialize(Archive& ar, vec3& vec);
@@ -39,7 +39,7 @@ namespace std
     template<>
     struct hash<glm::vec3>
     {
-        constexpr size_t operator()(const glm::vec3& v) const noexcept
+        inline size_t operator()(const glm::vec3& v) const noexcept
         {
             return std::hash<float>()(v.x) ^ std::hash<float>()(v.y) << 1 ^ std::hash<float>()(v.z) << 2;
         }
@@ -48,7 +48,7 @@ namespace std
     template<>
     struct hash<glm::ivec2>
     {
-        constexpr size_t operator()(const glm::ivec2& v) const noexcept
+        inline size_t operator()(const glm::ivec2& v) const noexcept
         {
             return std::hash<int>()(v.x) ^ std::hash<int>()(v.y) << 1;
         }
@@ -57,7 +57,7 @@ namespace std
     template<>
     struct hash<glm::uvec3>
     {
-        constexpr size_t operator()(const glm::uvec3& v) const noexcept
+        inline size_t operator()(const glm::uvec3& v) const noexcept
         {
             return std::hash<uint32_t>()(v.x) ^ std::hash<uint32_t>()(v.y) << 1 ^ std::hash<uint32_t>()(v.z) << 2;
         }
