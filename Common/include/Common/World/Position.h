@@ -6,7 +6,6 @@
 #define MCC_COMMON_WORLD_POSITION_H
 
 #include "Common/World/Coordinate.h"
-#include "Common/Utils/GLMUtils.h"
 #include "Common/Utils/MathUtils.h"
 #include "Common/World/Chunk.h"
 
@@ -39,16 +38,14 @@ namespace Mcc
     class Position<ChunkSpace, VoxelCoord>
     {
       public:
-        using type = glm::ivec2;
+        using data_type = glm::ivec3;
 
         constexpr Position() = default;
-        constexpr Position(glm::ivec2 position);
-        constexpr Position(glm::ivec3 position);
-        constexpr Position(int32_t x, int32_t z);
-        constexpr Position(std::integral auto x, std::integral auto z);
+        constexpr Position(data_type position);
+        constexpr Position(std::integral auto x, std::integral auto y, std::integral auto z);
 
-        constexpr operator glm::ivec2() const;
-        constexpr operator WorldPosF () const;
+        constexpr operator data_type() const;
+        constexpr operator WorldPosF() const;
 
         template<std::size_t>
         friend constexpr auto get(Position p);
@@ -60,7 +57,7 @@ namespace Mcc
         friend constexpr void serialize(Archive& ar, Position& position);
 
       private:
-        glm::ivec2 mPosition;
+        data_type mPosition;
     };
 
     /**
@@ -70,7 +67,7 @@ namespace Mcc
     class Position<LocalSpace, VoxelCoord>
     {
       public:
-        using type = glm::uvec3;
+        using data_type = glm::uvec3;
 
         constexpr Position() = default;
         constexpr Position(glm::uvec3 position);
@@ -99,7 +96,7 @@ namespace Mcc
     class Position<LocalSpace, EnttyCoord>
     {
       public:
-        using type = glm::vec3;
+        using data_type = glm::vec3;
 
         constexpr Position() = default;
         constexpr Position(glm::fvec3 position);
@@ -128,6 +125,9 @@ namespace Mcc
     class Position<WorldSpace, VoxelCoord>
     {
       public:
+        using parent_type = ChunkPosV;
+        using local_type  = LocalPosV;
+
         constexpr Position() = default;
         constexpr Position(ChunkPosV parent, LocalPosV local);
 
@@ -144,8 +144,8 @@ namespace Mcc
         friend constexpr void serialize(Archive& ar, Position& position);
 
       private:
-        ChunkPosV mParent;
-        LocalPosV mLocal;
+        parent_type mParent;
+        local_type  mLocal;
     };
 
     /**
@@ -155,6 +155,9 @@ namespace Mcc
     class Position<WorldSpace, EnttyCoord>
     {
       public:
+        using parent_type = ChunkPosV;
+        using local_type  = LocalPosE;
+
         constexpr Position() = default;
         constexpr Position(ChunkPosV parent, LocalPosE local);
 
@@ -171,8 +174,8 @@ namespace Mcc
         friend constexpr void serialize(Archive& ar, Position& position);
 
       private:
-        ChunkPosV mParent;
-        LocalPosE mLocal;
+        parent_type mParent;
+        local_type  mLocal;
     };
 
     /**
@@ -182,12 +185,14 @@ namespace Mcc
     class Position<WorldSpace, FloatCoord>
     {
       public:
+        using data_type = glm::vec3;
+
         constexpr Position() = default;
         constexpr Position(glm::fvec3 position);
         constexpr Position(float x, float y, float z);
         constexpr explicit Position(float value);
 
-        constexpr operator glm::fvec3() const;
+        constexpr operator data_type() const;
 
         inline operator WorldPosV() const;
         inline operator WorldPosE() const;
@@ -203,14 +208,15 @@ namespace Mcc
         friend constexpr void serialize(Archive& ar, Position& position);
 
       private:
-        glm::fvec3 mPosition;
+        data_type mPosition;
     };
 
     template<std::size_t I>
     constexpr auto get(ChunkPosV p)
     {
         if constexpr (I == 0) return p.mPosition.x;
-        else                  return p.mPosition.y;
+        if constexpr (I == 1) return p.mPosition.y;
+        else                  return p.mPosition.z;
     }
 
     template<std::size_t I>
@@ -276,7 +282,7 @@ namespace std
 {
 
     template<>
-    struct tuple_size<Mcc::ChunkPosV> : std::integral_constant<size_t, 2> {};
+    struct tuple_size<Mcc::ChunkPosV> : std::integral_constant<size_t, 3> {};
 
     template<size_t N>
     struct tuple_element<N, Mcc::ChunkPosV>

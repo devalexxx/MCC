@@ -78,7 +78,7 @@ namespace Mcc
                 .set<CUserSession>(session)
                 .set<CNetProps>({ session->pInfo.handle })
                 .set<CEntityTransform>({{
-                    .position={{ 0, 0 }, { 0, .75f, 0 }},
+                    .position={{ 0, 0, 0 }, { 0, .75f, 0 }},
                     .rotation={},
                     .scale   ={ 1, 1, 1 }
                 }})

@@ -9,18 +9,19 @@ namespace Mcc
         mTranslation(translation)
     {}
 
-    constexpr Translation<VoxelCoord>::Translation(const int32_t x, const int32_t y, const int32_t z) :
+    constexpr Translation<VoxelCoord>::Translation(auto x, auto y, auto z) :
         mTranslation(x, y, z)
     {}
 
     constexpr Translation<VoxelCoord>::operator Translation<EnttyCoord>() const
     {
-        return { glm::vec3(mTranslation) / glm::vec3(Chunk::Size, Chunk::Height, Chunk::Size) };
+        using T = Translation<EnttyCoord>::data_type;
+        return { T(mTranslation) / T(Chunk::Size) };
     }
 
     constexpr Translation<VoxelCoord>::operator Translation<FloatCoord>() const
     {
-        return { glm::vec(mTranslation) };
+        return { mTranslation };
     }
 
     constexpr Translation<VoxelCoord>::operator glm::ivec3() const
@@ -42,21 +43,22 @@ namespace Mcc
         mTranslation(translation)
     {}
 
-    constexpr Translation<EnttyCoord>::Translation(const float x, const float y, const float z) :
+    constexpr Translation<EnttyCoord>::Translation(auto x, auto y, auto z) :
         mTranslation(x, y, z)
     {}
 
     inline Translation<EnttyCoord>::operator Translation<VoxelCoord>() const
     {
-        return { glm::floor(glm::vec3(mTranslation) * glm::vec3(Chunk::Size, Chunk::Height, Chunk::Size)) };
+        return { glm::floor(mTranslation * data_type(Chunk::Size)) };
     }
 
     constexpr Translation<EnttyCoord>::operator Translation<FloatCoord>() const
     {
-        return { glm::vec3(mTranslation) * glm::vec3(Chunk::Size, Chunk::Height, Chunk::Size) };
+        using T = Translation<FloatCoord>::data_type;
+        return { T(mTranslation) * T(Chunk::Size) };
     }
 
-    constexpr Translation<EnttyCoord>::operator glm::vec3() const
+    constexpr Translation<EnttyCoord>::operator data_type() const
     {
         return mTranslation;
     }
@@ -75,7 +77,7 @@ namespace Mcc
         mTranslation(translation)
     {}
 
-    constexpr Translation<FloatCoord>::Translation(const float x, const float y, const float z) :
+    constexpr Translation<FloatCoord>::Translation(auto x, auto y, auto z) :
         mTranslation(x, y, z)
     {}
 
@@ -86,10 +88,11 @@ namespace Mcc
 
     constexpr Translation<FloatCoord>::operator Translation<EnttyCoord>() const
     {
-        return { mTranslation / glm::vec3(Chunk::Size, Chunk::Height, Chunk::Size) };
+        using T = Translation<EnttyCoord>::data_type;
+        return { T(mTranslation) / T(Chunk::Size) };
     }
 
-    constexpr Translation<FloatCoord>::operator glm::vec3() const
+    constexpr Translation<FloatCoord>::operator data_type() const
     {
         return mTranslation;
     }
@@ -106,74 +109,74 @@ namespace Mcc
 
     inline auto format_as(const TranslationV& translation)
     {
-        return fmt::format("WorldPosF({})", static_cast<glm::ivec3>(translation) );
+        return fmt::format("TranslationV({})", static_cast<TranslationV::data_type>(translation) );
     }
 
     inline auto format_as(const TranslationE& translation)
     {
-        return fmt::format("TranslationE({})", static_cast<glm::vec3>(translation) );
+        return fmt::format("TranslationE({})", static_cast<TranslationE::data_type>(translation) );
     }
 
     inline auto format_as(const TranslationF& translation)
     {
-        return fmt::format("TranslationF({})", static_cast<glm::vec3>(translation) );
+        return fmt::format("TranslationF({})", static_cast<TranslationF::data_type>(translation) );
     }
 
     constexpr TranslationV operator+(const TranslationV& lhs, const TranslationV& rhs)
     {
-        return { glm::ivec3(lhs) + glm::ivec3(rhs) };
+        return { TranslationV::data_type(lhs) + TranslationV::data_type(rhs) };
     }
 
     constexpr TranslationV operator-(const TranslationV& lhs, const TranslationV& rhs)
     {
-        return { glm::ivec3(lhs) - glm::ivec3(rhs) };
+        return { TranslationV::data_type(lhs) - TranslationV::data_type(rhs) };
     }
 
     constexpr TranslationE operator+(const TranslationE& lhs, const TranslationE& rhs)
     {
-        return { glm::vec3(lhs) + glm::vec3(rhs) };
+        return { TranslationE::data_type(lhs) + TranslationE::data_type(rhs) };
     }
 
     constexpr TranslationE operator-(const TranslationE& lhs, const TranslationE& rhs)
     {
-        return { glm::vec3(lhs) - glm::vec3(rhs) };
+        return { TranslationE::data_type(lhs) - TranslationE::data_type(rhs) };
     }
 
     constexpr TranslationF operator+(const TranslationF& lhs, const TranslationF& rhs)
     {
-        return { glm::vec3(lhs) + glm::vec3(rhs) };
+        return { TranslationF::data_type(lhs) + TranslationF::data_type(rhs) };
     }
 
     constexpr TranslationF operator-(const TranslationF& lhs, const TranslationF& rhs)
     {
-        return { glm::vec3(lhs) - glm::vec3(rhs) };
+        return { TranslationF::data_type(lhs) - TranslationF::data_type(rhs) };
     }
 
-    inline TranslationV operator*(const TranslationV& lhs, const auto& rhs)
+    TranslationV operator*(const TranslationV& lhs, const auto& rhs)
     {
-        return { glm::ivec3(glm::floor(glm::vec3(glm::ivec3(lhs)) * static_cast<float>(rhs))) };
+        return { TranslationV::data_type(glm::floor(glm::vec3(TranslationV::data_type(lhs)) * static_cast<float>(rhs))) };
     }
 
     constexpr TranslationE operator*(const TranslationE& lhs, const auto& rhs)
     {
-        return { glm::vec3(lhs) * static_cast<float>(rhs) };
+        return { TranslationE::data_type(lhs) * static_cast<float>(rhs) };
     }
 
     constexpr TranslationF operator*(const TranslationF& lhs, const auto& rhs)
     {
-        return { glm::vec3(lhs) * static_cast<float>(rhs) };
+        return { TranslationF::data_type(lhs) * static_cast<float>(rhs) };
     }
 
     template<typename C>
     constexpr Translation<C> operator/(const Translation<C>& lhs, const auto& rhs)
     {
-        return { static_cast<typename Translation<C>::type>(lhs) / rhs };
+        return { static_cast<Translation<C>::data_type>(lhs) / rhs };
     }
 
     template<typename C>
     constexpr Translation<C> SelectAxis(const Translation<C>& translation, bool x, bool y, bool z)
     {
-        auto t = (typename Translation<C>::type)(translation);
+        auto t = static_cast<Translation<C>::data_type>(translation);
         return {
             x ? t.x : 0,
             y ? t.y : 0,

@@ -55,6 +55,15 @@ namespace std
     };
 
     template<>
+    struct hash<glm::ivec3>
+    {
+        inline size_t operator()(const glm::ivec3& v) const noexcept
+        {
+            return std::hash<int>()(v.x) ^ std::hash<int>()(v.y) << 1 ^ std::hash<int>()(v.z) << 2;
+        }
+    };
+
+    template<>
     struct hash<glm::uvec3>
     {
         inline size_t operator()(const glm::uvec3& v) const noexcept

@@ -55,14 +55,14 @@ namespace Mcc
       public:
         using Palette = ChunkData<flecs::entity_t>::Palette;
 
-        static constexpr unsigned char Size   = 31;
-        static constexpr unsigned char Height = 127;
+        static constexpr unsigned char Size = 31;
 
         Chunk();
         Chunk(flecs::entity_t filler);
         Chunk(ChunkData<flecs::entity_t> data);
 
         bool IsValid() const;
+        bool IsEmpty(const flecs::world& world) const;
 
         flecs::entity_t Get(glm::ivec3 position) const;
         bool            Set(glm::uvec3 position, flecs::entity_t entity);

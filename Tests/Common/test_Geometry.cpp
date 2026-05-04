@@ -33,8 +33,8 @@ TEST_SUITE("Geometry")
 
         SUBCASE("ChunkPosVSub")
         {
-            ChunkPosV    lhs(-2,  1);
-            ChunkPosV    rhs( 2, -1);
+            ChunkPosV    lhs(-2, 0,  1);
+            ChunkPosV    rhs( 2, 0, -1);
             TranslationV r  (Chunk::Size * 4, 0, Chunk::Size * -2);
 
             CHECK_EQ(rhs - lhs, r);
@@ -51,8 +51,8 @@ TEST_SUITE("Geometry")
 
         SUBCASE("WorldPosVSub")
         {
-            WorldPosV    lhs({ -2,  1 }, {  5, 12, 5 });
-            WorldPosV    rhs({  2, -1 }, { 10,  6, 3 });
+            WorldPosV    lhs({ -2, 0,  1 }, {  5, 12, 5 });
+            WorldPosV    rhs({  2, 0, -1 }, { 10,  6, 3 });
             TranslationV r(
                 Chunk::Size *  4 + 10 -  5, 
                                     6 - 12, 
@@ -65,9 +65,9 @@ TEST_SUITE("Geometry")
         SUBCASE("TranslateChunkPos")
         {
             TranslationV t(1, 10, -2);
-            ChunkPosV    p(0, 0);
-            ChunkPosV    r_add(1, -2);
-            ChunkPosV    r_sub(-1, 2);
+            ChunkPosV    p(0, 0, 0);
+            ChunkPosV    r_add(1, 10, -2);
+            ChunkPosV    r_sub(-1, -10, 2);
 
             CHECK_EQ(p + t, r_add);
             CHECK_EQ(p - t, r_sub);
@@ -96,9 +96,9 @@ TEST_SUITE("Geometry")
         SUBCASE("TranslateWorldPos")
         {
             TranslationV t(50, 10, 3);
-            WorldPosV    p({0, 0}, {0, 20, 0});
-            WorldPosV    r_add({1, 0}, {19, 30, 3});
-            WorldPosV    r_sub({-2, -1}, {12, 10, 28});
+            WorldPosV    p({0, 0, 0}, {0, 20, 0});
+            WorldPosV    r_add({1, 0, 0}, {19, 30, 3});
+            WorldPosV    r_sub({-2, 0, -1}, {12, 10, 28});
 
             CHECK_EQ(p + t, r_add);
             CHECK_EQ(p - t, r_sub);
@@ -120,8 +120,8 @@ TEST_SUITE("Geometry")
 
         SUBCASE("WorldPosESub")
         {
-            WorldPosE    lhs({ -2,  1 }, { .5, .2, .1 });
-            WorldPosE    rhs({  2, -1 }, { .3, .8, .2 });
+            WorldPosE    lhs({ -2, 0,  1 }, { .5, .2, .1 });
+            WorldPosE    rhs({  2, 0, -1 }, { .3, .8, .2 });
             TranslationE r(
                  4 + .3 - .5, 
                      .8 - .2, 
@@ -134,9 +134,9 @@ TEST_SUITE("Geometry")
         SUBCASE("TranslateWorldPos")
         {
             TranslationE t(1.f, 1.f, -1.f);
-            WorldPosE    p({0, 0}, {.5f, 0.f, .5f});
-            WorldPosE    r_add({1, -1}, {.5f, 1.f, .5f});
-            WorldPosE    r_sub({-1, 1}, {.5f, -1.f, .5f});
+            WorldPosE    p({0, 0, 0}, {.5f, 0.f, .5f});
+            WorldPosE    r_add({ 1, 1, -1}, {.5f, 0.f, .5f});
+            WorldPosE    r_sub({-1, -1,  1}, {.5f, 0.f, .5f});
 
             CHECK_EQ(p + t, r_add);
             CHECK_EQ(p - t, r_sub);
@@ -183,13 +183,13 @@ TEST_SUITE("Geometry")
 
         SUBCASE("LerpWorldPosV")
         {
-            WorldPosV lhs({  2, -5 }, { 22, 75, 10 });
-            WorldPosV rhs({ -1,  3 }, {  5,  0, 12 });
+            WorldPosV lhs({  2, 0, -5 }, { 22, 12, 10 });
+            WorldPosV rhs({ -1, 0,  3 }, {  5,  0, 12 });
 
             for (auto v: { .25f, .50f, .75f })
             {
                 int dx = glm::floor((-1 * Chunk::Size -  2 * Chunk::Size +  5 - 22) * v);
-                int dy = glm::floor(( 0 - 75) * v);
+                int dy = glm::floor(( 0 - 12) * v);
                 int dz = glm::floor(( 3 * Chunk::Size - -5 * Chunk::Size + 12 - 10) * v);
 
                 float fx = dx;
@@ -198,11 +198,12 @@ TEST_SUITE("Geometry")
                 WorldPosV e(
                     {
                         static_cast<int32_t>(glm::floor(( 2 * Chunk::Size + 22 + fx) / Chunk::Size)),
+                        0,
                         static_cast<int32_t>(glm::floor((-5 * Chunk::Size + 10 + fz) / Chunk::Size)),
                     },
                     {
                         static_cast<uint32_t>(Chunk::Size + ((22 + dx) % Chunk::Size)) % Chunk::Size,
-                        static_cast<uint32_t>(75 + dy),
+                        static_cast<uint32_t>(12 + dy),
                         static_cast<uint32_t>(Chunk::Size + ((10 + dz) % Chunk::Size)) % Chunk::Size
                     }
                 );

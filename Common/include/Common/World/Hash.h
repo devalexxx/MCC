@@ -15,7 +15,7 @@ namespace std
     {
         inline size_t operator()(const Mcc::ChunkPosV& v) const noexcept
         {
-            return std::hash<glm::ivec2>()(v);
+            return std::hash<Mcc::ChunkPosV::data_type>()(v);
         }
     };
 

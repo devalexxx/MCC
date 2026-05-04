@@ -157,12 +157,12 @@ namespace Mcc
 
         auto Index(const auto x, const auto y, const auto z)
         {
-            return x + 1 + ((y + 1) * (Chunk::Size + 2)) + ((z + 1) * (Chunk::Size + 2) * (Chunk::Height + 2));
+            return x + 1 + ((y + 1) * (Chunk::Size + 2)) + ((z + 1) * (Chunk::Size + 2) * (Chunk::Size + 2));
         }
 
         struct ChunkMeshBuildDesc
         {
-            glm::ivec2 position;
+            glm::ivec3 position;
 
             std::shared_ptr<Chunk>                             chunk;
             std::vector<Hx::EnumArray<BlockFace, std::string>> assetPath;
@@ -185,10 +185,10 @@ namespace Mcc
             auto&& [left, right, front, back] = cDesc.neighbors;
 
             // Compute chunk mask
-            std::vector mask((Chunk::Size + 2) * (Chunk::Size + 2) * (Chunk::Height + 2), true);
+            std::vector mask((Chunk::Size + 2) * (Chunk::Size + 2) * (Chunk::Size + 2), true);
             for (size_t x = 0; x < Chunk::Size; ++x)
             {
-                for (size_t y = 0; y < Chunk::Height; ++y)
+                for (size_t y = 0; y < Chunk::Size; ++y)
                 {
                     mask[Index(-1, y, x)]          = cDesc.solid[left ->Get({ Chunk::Size - 1, y, x })];
                     mask[Index(Chunk::Size, y, x)] = cDesc.solid[right->Get({ 0, y, x })];
@@ -205,12 +205,12 @@ namespace Mcc
 
             Mesh                                                         mesh;
             std::unordered_map<PackedVertex, size_t, PackedVertexHasher> indexMap;
-            constexpr auto chunkSize = glm::vec3(Chunk::Size, Chunk::Height, Chunk::Size);
+            constexpr auto chunkSize = glm::vec3(Chunk::Size);
             for (int x = 0; std::cmp_less(x, Chunk::Size); ++x)
             {
                 for (int z = 0; std::cmp_less(z, Chunk::Size); ++z)
                 {
-                    for (int y = 0; std::cmp_less(y, Chunk::Height); ++y)
+                    for (int y = 0; std::cmp_less(y, Chunk::Size); ++y)
                     {
                         if (!mask[Index(x, y, z)])
                             continue;
@@ -261,6 +261,7 @@ namespace Mcc
     void OnPlayerMoveObserver(const flecs::iter& it, size_t, const CEntityTransform& transform)
     {
         static int cx = std::numeric_limits<int>::max();
+        static int cy = std::numeric_limits<int>::max();
         static int cz = std::numeric_limits<int>::max();
 
         const auto  world = it.world();
@@ -269,27 +270,29 @@ namespace Mcc
         const int rRange = static_cast<int>(ctx->settings.renderDistance);
         const int bRange = static_cast<int>(ctx->settings.preloadDistance);
 
-        const auto [x, z] = get<0>(transform.position);
-        if (std::abs(cx - x) > 0 || std::abs(cz - z) > 0)
+        const auto [x, y, z] = get<0>(transform.position);
+        if (std::abs(cx - x) > 0 || std::abs(cy - y) > 0 || std::abs(cz - z) > 0)
         {
-            Helper::ForInCircle(cx, cz, rRange + 1, [&](long i, long j)
+            Helper::ForInSphere(cx, cy, cz, rRange + 1, [&](long i, long j, long k)
             {
-                if (const auto cit = ctx->chunkMapping.find({ i, j }); cit != ctx->chunkMapping.end())
+                if (const auto cit = ctx->chunkMapping.find({ i, j, k }); cit != ctx->chunkMapping.end())
                 {
-                    world.entity(cit->second).remove<TShouldRenderChunk>();
-                    world.entity(cit->second).remove<TRenderable>();
+                    const auto e = world.entity(cit->second);
+                    e.remove<TShouldRenderChunk>();
+                    e.remove<TRenderable>();
                 }
             });
 
-            Helper::ForInCircle(x, z, bRange, [&](long i, long j)
+            Helper::ForInSphere(x, y, z, bRange, [&](long i, long j, long k)
             {
-                if (const auto cit = ctx->chunkMapping.find({ i, j }); cit != ctx->chunkMapping.end())
+                if (const auto cit = ctx->chunkMapping.find({ i, j, k }); cit != ctx->chunkMapping.end())
                 {
-                    world.entity(cit->second).add<TCouldRenderChunk>();
-                    if (Helper::IsInCircle({ x, z }, { i, j }, rRange))
+                    const auto e = world.entity(cit->second);
+                    e.add<TCouldRenderChunk>();
+                    if (Helper::IsInSphere({ x, y, z }, { i, j, k }, rRange))
                     {
-                        world.entity(cit->second).add<TShouldRenderChunk>();
-                        world.entity(cit->second).add<TRenderable>();
+                        e.add<TShouldRenderChunk>();
+                        e.add<TRenderable>();
                     }
                 }
             });
@@ -305,7 +308,7 @@ namespace Mcc
         const auto* ctx   = ClientWorldContext::Get(world);
 
         // Setup render transform
-        constexpr auto halfChunk = glm::vec3(Chunk::Size, Chunk::Height, Chunk::Size) * .5f;
+        constexpr auto halfChunk = glm::vec3(Chunk::Size) * .5f;
         auto& [position, rotation, scale] = entity.ensure<CRenderTransform>();
         // TODO: set world pos relative to player transform
         position = static_cast<WorldPosF>(p) + TranslationF(halfChunk);
@@ -320,18 +323,18 @@ namespace Mcc
         if (player == flecs::entity::null()) return;
 
         auto& transform = player.get<CEntityTransform>();
-        auto [pX, pZ] = get<0>(transform.position);
-        auto [cX, cZ] = p.Underlying();
+        const auto cp = get<0>(transform.position);
+        const auto cc = p.Underlying();
 
         entity.add<TShouldBuildMesh>();
-        if (Helper::IsInCircle({ pX, pZ }, { cX, cZ }, rRange))
+        if (Helper::IsInSphere(cp, cc, rRange))
         {
             entity.add<TCouldRenderChunk>();
             entity.add<TShouldRenderChunk>();
             entity.add<TRenderable>();
         }
         else
-        if (Helper::IsInCircle({ pX, pZ }, { cX, cZ }, bRange))
+        if (Helper::IsInSphere(cp, cc, bRange))
         {
             entity.add<TCouldRenderChunk>();
         }

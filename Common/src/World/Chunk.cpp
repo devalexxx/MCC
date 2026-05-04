@@ -6,6 +6,7 @@
 
 #include "Common/Module/Network/Component.h"
 #include "Common/Module/Terrain/Component.h"
+#include "Common/SceneImporter.h"
 #include "Common/Utils/BlockUtils.h"
 #include "Common/Utils/Logging.h"
 #include "Common/WorldContext.h"
@@ -18,7 +19,7 @@ namespace Mcc
     Chunk::Chunk() : Chunk(0) {}
 
     Chunk::Chunk(flecs::entity_t filler) :
-        mData   ({ filler }, { Size * Size * Height, 2 }),
+        mData   ({ filler }, { Size * Size * Size, 2 }),
         mVersion(0)
     {
         for (size_t i = 0; i < mData.mapping.GetSize(); ++i) { mData.mapping.Set(i, 0); }
@@ -35,6 +36,11 @@ namespace Mcc
             return false;
 
         return true;
+    }
+
+    bool Chunk::IsEmpty(const flecs::world& world) const
+    {
+        return !IsValid() || mData.palette.size() == 1 && mData.palette[0] == world.scope<SceneRoot>().lookup("mcc:block:air").id();
     }
 
     flecs::entity_t Chunk::Get(const glm::ivec3 position) const
@@ -140,7 +146,7 @@ namespace Mcc
 
     size_t Chunk::IndexFromPosition(const glm::uvec3 position)
     {
-        return position.x + (position.y * Size) + (position.z * Size * Height);
+        return position.x + (position.y * Size) + (position.z * Size * Size);
     }
 
     namespace Helper
@@ -196,7 +202,7 @@ namespace Mcc
 
             ChunkData<flecs::entity_t> data {
                 .palette={},
-                .mapping={ Chunk::Size * Chunk::Size * Chunk::Height, 2 }
+                .mapping={ Chunk::Size * Chunk::Size * Chunk::Size, 2 }
             };
             size_t currentOffset = 0;
             for (auto [handle, count]: rle.data)
@@ -278,7 +284,7 @@ namespace Mcc
         {
             ChunkData<flecs::entity_t> data {
                 .palette={},
-                .mapping={ Chunk::Size * Chunk::Size * Chunk::Height, 2 }
+                .mapping={ Chunk::Size * Chunk::Size * Chunk::Size, 2 }
             };
             size_t currentOffset = 0;
             for (auto [handle, count]: rle.data)

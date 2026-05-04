@@ -238,7 +238,7 @@ namespace Mcc
                 auto  position                = glm::vec3(WorldPosF(transform.position));
                 auto  [chunkPos, posInChunk]  = transform.position;
                 ImGui::InputFloat3("Position", &position[0]);
-                ImGui::InputInt2  ("ChunkPosition", &static_cast<glm::ivec2>(chunkPos)[0]);
+                ImGui::InputInt3  ("ChunkPosition", &static_cast<glm::ivec3>(chunkPos)[0]);
                 ImGui::InputFloat3("PositionInChunk", &static_cast<glm::vec3>(posInChunk)[0]);
             }
 

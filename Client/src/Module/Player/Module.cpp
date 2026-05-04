@@ -169,7 +169,7 @@ namespace Mcc
                     .zNear=0.1f,
                     .zFar=static_cast<float>(ctx->settings.renderDistance) * 256.f
                 })
-                .set<CCameraFollowSettings>({ { 0, 2, 0 } })
+                .set<CCameraFollowSettings>({ .offset={ 0. , 2., 0. }})
                 .add<RCameraFollow>(entity)
                 .add<TActiveCamera>()
                 .child_of<SceneRoot>();

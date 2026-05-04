@@ -36,22 +36,22 @@ namespace Mcc
         world.component<WorldPosE>("WorldPosE")
             .opaque(
                 world.component()
-                    .member<glm::ivec2>("parent")
-                    .member<glm::fvec3>("local")
+                    .member<WorldPosE::parent_type::data_type>("parent")
+                    .member<WorldPosE::local_type ::data_type>("local")
             )
             .serialize([](const flecs::serializer* s, const WorldPosE* data)
             {
                 auto [ parent, local ] = *data;
                 s->member("parent");
-                s->value(glm::ivec2(parent));
+                s->value(static_cast<WorldPosE::parent_type::data_type>(parent));
                 s->member("local");
-                s->value(glm::vec3(local));
+                s->value(static_cast<WorldPosE::local_type::data_type>(local));
                 return 0;
             })
             .ensure_member([](WorldPosE*, const char* member) -> void*
             {
-                static glm::ivec2 fake1;
-                static glm::fvec3 fake2;
+                static WorldPosE::parent_type::data_type fake1;
+                static WorldPosE::local_type::data_type  fake2;
 
                 const auto str = std::string_view(member);
                 if (str == "parent") return &fake1;
