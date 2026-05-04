@@ -59,7 +59,26 @@ namespace Mcc
             .each(CameraFollowSystem);
     }
 
+
     void CameraModule::RegisterObserver(flecs::world& /* world */) {}
+
+    flecs::entity CameraModule::GetActiveCamera(const flecs::world& world)
+    {
+        static auto query = world.query_builder().with<TActiveCamera>().build();
+
+        if (query.count() == 0)
+        {
+            MCC_LOG_ERROR("[CameraModule] No active camera");
+            return flecs::entity::null();
+        }
+
+        if (query.count() > 1)
+        {
+            MCC_LOG_WARN("[CameraModule] More than one camera active");
+        }
+
+        return query.first();
+    }
 
 
 }

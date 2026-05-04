@@ -48,7 +48,7 @@ namespace Mcc
             .run(LoadTextureSystem);
 
         world.system("HandleDirtyChunk")
-            .kind<Phase::OnUpdate>() // TODO: maybe on pre-update
+            .kind<Phase::OnRender>() // TODO: maybe on pre-update
             .with<TChunk>()
             .with<TDirty>()
             .each(HandleDirtyChunkSystem)

@@ -16,6 +16,8 @@ namespace Mcc
 
     MCC_LIB_API std::string_view GetBlockName(flecs::entity e);
 
+    MCC_LIB_API bool IsSolid(flecs::entity e);
+
 }
 
 #endif

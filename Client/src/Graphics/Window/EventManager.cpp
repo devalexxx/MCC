@@ -14,8 +14,9 @@ namespace Mcc
 
     void WindowEventManager::BoundEvent(const Window& window)
     {
-        glfwSetKeyCallback      (window.Get(), KeyCallback);
-        glfwSetCursorPosCallback(window.Get(), CursorPosCallback);
+        glfwSetKeyCallback        (window.Get(), KeyCallback);
+        glfwSetCursorPosCallback  (window.Get(), CursorPosCallback);
+        glfwSetMouseButtonCallback(window.Get(), MouseButtonCallback);
     }
 
     void WindowEventManager::KeyCallback(
@@ -30,6 +31,18 @@ namespace Mcc
         }
 
         w->Dispatch<KeyEvent>({ .window=*w, .key=key, .scancode=scancode, .action=action, .mods=mods });
+    }
+
+    void WindowEventManager::MouseButtonCallback(GLFWwindow* window, const int button, const int action, const int mods)
+    {
+        const auto w = static_cast<Window*>(glfwGetWindowUserPointer(window));
+        if (!w)
+        {
+            MCC_LOG_WARN("Trying to dispatch an event from a non exiting window (Should not happen)");
+            return;
+        }
+
+        w->Dispatch<MouseButtonEvent>({ .window=*w, .button=button, .action=action, .mods=mods });
     }
 
     void WindowEventManager::CursorPosCallback(GLFWwindow* window, const double x, const double y)

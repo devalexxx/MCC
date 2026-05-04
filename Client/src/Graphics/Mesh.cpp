@@ -310,6 +310,61 @@ namespace Mcc
             return optimized;
         }
 
+        Mesh GenerateCubeMesh()
+        {
+            static Mesh mesh = Index({{
+                // FRONT
+                { .vertex={ 0, 0, 0 }, .color={}, .uv={ 0, 0, 0 }, .normal={} },
+                { .vertex={ 0, 1, 0 }, .color={}, .uv={ 0, 1, 0 }, .normal={} },
+                { .vertex={ 1, 1, 0 }, .color={}, .uv={ 1, 1, 0 }, .normal={} },
+                { .vertex={ 1, 1, 0 }, .color={}, .uv={ 1, 1, 0 }, .normal={} },
+                { .vertex={ 1, 0, 0 }, .color={}, .uv={ 1, 0, 0 }, .normal={} },
+                { .vertex={ 0, 0, 0 }, .color={}, .uv={ 0, 0, 0 }, .normal={} },
+
+                // BACK
+                { .vertex={ 1, 1, 1 }, .color={}, .uv={ 1, 1, 0 }, .normal={} },
+                { .vertex={ 0, 1, 1 }, .color={}, .uv={ 0, 1, 0 }, .normal={} },
+                { .vertex={ 0, 0, 1 }, .color={}, .uv={ 0, 0, 0 }, .normal={} },
+                { .vertex={ 0, 0, 1 }, .color={}, .uv={ 0, 0, 0 }, .normal={} },
+                { .vertex={ 1, 0, 1 }, .color={}, .uv={ 1, 0, 0 }, .normal={} },
+                { .vertex={ 1, 1, 1 }, .color={}, .uv={ 1, 1, 0 }, .normal={} },
+
+                // TOP
+                { .vertex={ 0, 1, 0 }, .color={}, .uv={ 0, 0, 0 }, .normal={} },
+                { .vertex={ 0, 1, 1 }, .color={}, .uv={ 0, 1, 0 }, .normal={} },
+                { .vertex={ 1, 1, 1 }, .color={}, .uv={ 1, 1, 0 }, .normal={} },
+                { .vertex={ 1, 1, 1 }, .color={}, .uv={ 1, 1, 0 }, .normal={} },
+                { .vertex={ 1, 1, 0 }, .color={}, .uv={ 1, 0, 0 }, .normal={} },
+                { .vertex={ 0, 1, 0 }, .color={}, .uv={ 0, 0, 0 }, .normal={} },
+
+                // BOTTOM
+                { .vertex={ 1, 0, 1 }, .color={}, .uv={ 1, 1, 0 }, .normal={} },
+                { .vertex={ 0, 0, 1 }, .color={}, .uv={ 0, 1, 0 }, .normal={} },
+                { .vertex={ 0, 0, 0 }, .color={}, .uv={ 0, 0, 0 }, .normal={} },
+                { .vertex={ 0, 0, 0 }, .color={}, .uv={ 0, 0, 0 }, .normal={} },
+                { .vertex={ 1, 0, 0 }, .color={}, .uv={ 1, 0, 0 }, .normal={} },
+                { .vertex={ 1, 0, 1 }, .color={}, .uv={ 1, 1, 0 }, .normal={} },
+
+                // LEFT
+                { .vertex={ 1, 1, 1 }, .color={}, .uv={ 1, 1, 0 }, .normal={} },
+                { .vertex={ 1, 0, 1 }, .color={}, .uv={ 0, 1, 0 }, .normal={} },
+                { .vertex={ 1, 0, 0 }, .color={}, .uv={ 0, 0, 0 }, .normal={} },
+                { .vertex={ 1, 0, 0 }, .color={}, .uv={ 0, 0, 0 }, .normal={} },
+                { .vertex={ 1, 1, 0 }, .color={}, .uv={ 1, 0, 0 }, .normal={} },
+                { .vertex={ 1, 1, 1 }, .color={}, .uv={ 1, 1, 0 }, .normal={} },
+
+                // RIGHT
+                { .vertex={ 0, 0, 0 }, .color={}, .uv={ 0, 0, 0 }, .normal={} },
+                { .vertex={ 0, 0, 1 }, .color={}, .uv={ 0, 1, 0 }, .normal={} },
+                { .vertex={ 0, 1, 1 }, .color={}, .uv={ 1, 1, 0 }, .normal={} },
+                { .vertex={ 0, 1, 1 }, .color={}, .uv={ 1, 1, 0 }, .normal={} },
+                { .vertex={ 0, 1, 0 }, .color={}, .uv={ 1, 0, 0 }, .normal={} },
+                { .vertex={ 0, 0, 0 }, .color={}, .uv={ 0, 0, 0 }, .normal={} },
+            }});
+
+            return mesh;
+        }
+
     }
 
 }

@@ -13,7 +13,10 @@
 namespace Mcc
 {
     // System
+    void SetupFacingBlockSystem (flecs::iter& it);
     void ApplyAndSendPlayerInput(const flecs::iter& it, size_t row, UserInput& current, CUserInputQueue& queue);
+    void SetFacingBlockSystem   (flecs::iter& it, size_t row, const CEntityTransform& transform);
+    void DrawCrosshairSystem    (flecs::iter& it);
 
 }
 

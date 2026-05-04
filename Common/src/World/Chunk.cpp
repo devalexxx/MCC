@@ -61,24 +61,27 @@ namespace Mcc
         };
     }
 
-    void Chunk::Set(const glm::uvec3 position, const flecs::entity_t entity)
+    bool Chunk::Set(const glm::uvec3 position, const flecs::entity_t entity)
     {
         const size_t index  = IndexFromPosition(position);
 
         if (index >= mData.mapping.GetSize())
-            return;
+            return false;
 
-        if (const auto it = std::ranges::find(mData.palette, entity); it == mData.palette.cend())
+        if (const auto it = std::ranges::find(mData.palette, entity); it != mData.palette.cend())
         {
-            mData.palette.push_back(entity);
-            mData.mapping.Set(index, mData.palette.size() - 1);
-        }
-        else
-        {
-            mData.mapping.Set(index, std::distance(mData.palette.begin(), it));
+            const auto valueIndex = std::distance(mData.palette.begin(), it);
+            const bool isSame     = mData.mapping.Get(index) == valueIndex;
+            mData.mapping.Set(index, valueIndex);
+            mVersion += isSame;
+            return !isSame;
         }
 
+        mData.palette.push_back(entity);
+        mData.mapping.Set(index, mData.palette.size() - 1);
         mVersion++;
+
+        return true;
     }
 
     size_t Chunk::GetPaletteIndex(size_t index) const

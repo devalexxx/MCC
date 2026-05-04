@@ -10,10 +10,15 @@
 #include "Client/Module/EntityReplication/Module.h"
 #include "Client/Module/Player/Component.h"
 #include "Client/Module/Player/System.h"
+#include "Client/Module/Renderer/Component.h"
 #include "Client/Scene/Scene.h"
 #include "Client/WorldContext.h"
 
 #include "Common/Phase.h"
+#include "Common/Utils/ChunkHelper.h"
+#include "Common/Utils/Raycast.h"
+
+#include <glm/gtx/quaternion.hpp>
 
 #include <algorithm>
 
@@ -23,6 +28,7 @@ namespace Mcc
     PlayerModule::PlayerModule(flecs::world& world) :
         BaseModule(world),
         mKeyEventHandlerID(0),
+        mMouseButtonEventHandlerID(0),
         mCursorPosEventHandlerID(0)
     {
         const auto* ctx = ClientWorldContext::Get(world);
@@ -35,6 +41,11 @@ namespace Mcc
         world.component<TPlayerEntity>();
 
         world.component<PPlayerEntity>();
+
+        world.component<CFacingInfo>();
+            // .member("previous", &CFacingInfo::previous)
+            // .member("position", &CFacingInfo::position)
+            // .member("distance", &CFacingInfo::distance);
 
         AutoRegister<CCurrentPlayerInput>::Register(world, "CCurrentPlayerInput");
     }
@@ -50,36 +61,68 @@ namespace Mcc
 
     void PlayerModule::RegisterSystem(flecs::world& world)
     {
+        world.system("SetupFacingBlock")
+            .ctx(&mFacingEntity)
+            .kind<Phase::OnLoad>()
+            .run(SetupFacingBlockSystem)
+            .add<GameScene>();
+
         world.system<CCurrentPlayerInput, CUserInputQueue>("ApplyAndSendPlayerInput")
             .kind<Phase::OnUpdate>()
             .with<TPlayerEntity>()
             .each(ApplyAndSendPlayerInput)
             .add<GameScene>();
+
+        world.system<const CEntityTransform>("SetFacingBlock")
+            .ctx(&mFacingEntity)
+            .kind<Phase::OnUpdate>()
+            .with<TPlayerEntity>()
+            .each(SetFacingBlockSystem)
+            .add<GameScene>();
+
+        world.system("DrawCrosshair")
+            .kind<Phase::OnDrawGui>()
+            .run(DrawCrosshairSystem)
+            .add<GameScene>();
     }
 
-    void PlayerModule::RegisterObserver(flecs::world& /* world */) {}
+    void PlayerModule::RegisterObserver(flecs::world& world)
+    {
+        world.observer<CFacingInfo>()
+            .event(flecs::OnSet)
+            .each([](const flecs::entity entity, const CFacingInfo& info)
+            {
+                auto& tr = entity.ensure<CRenderTransform>();
+                tr.position = info.position;
+                tr.rotation = glm::quat_identity<float, glm::defaultp>();
+                tr.scale    = glm::vec3(1.f);
+            });
+    }
 
     void PlayerModule::SetInputHandler(flecs::world& world)
     {
-        if (mKeyEventHandlerID != 0 || mCursorPosEventHandlerID != 0)
+        if (mKeyEventHandlerID != 0 || mCursorPosEventHandlerID != 0 || mMouseButtonEventHandlerID != 0)
             return;
 
         const auto ctx = ClientWorldContext::Get(world);
-        mKeyEventHandlerID       = ctx->window.Subscribe<KeyEvent>      (OnKeyEventHandler, world);
-        mCursorPosEventHandlerID = ctx->window.Subscribe<CursorPosEvent>(OnCursorPosEventHandler, world);
+        mKeyEventHandlerID         = ctx->window.Subscribe<KeyEvent>        (OnKeyEventHandler, world);
+        mMouseButtonEventHandlerID = ctx->window.Subscribe<MouseButtonEvent>(OnMouseButtonEventHandler, world, &mFacingEntity);
+        mCursorPosEventHandlerID   = ctx->window.Subscribe<CursorPosEvent>  (OnCursorPosEventHandler, world);
     }
 
     void PlayerModule::ClearInputHandler(const flecs::world& world)
     {
-        if (mKeyEventHandlerID == 0 || mCursorPosEventHandlerID == 0)
+        if (mKeyEventHandlerID == 0 || mCursorPosEventHandlerID == 0 || mMouseButtonEventHandlerID == 0)
             return;
 
         const auto ctx = ClientWorldContext::Get(world);
         ctx->window.Withdraw(mKeyEventHandlerID);
+        ctx->window.Withdraw(mMouseButtonEventHandlerID);
         ctx->window.Withdraw(mCursorPosEventHandlerID);
 
-        mKeyEventHandlerID       = 0;
-        mCursorPosEventHandlerID = 0;
+        mKeyEventHandlerID         = 0;
+        mMouseButtonEventHandlerID = 0;
+        mCursorPosEventHandlerID   = 0;
     }
 
     flecs::entity PlayerModule::GetPlayer(const flecs::world& world)
@@ -271,15 +314,74 @@ namespace Mcc
                     break;
             }
         }
+    }
 
-        if (event.action == GLFW_RELEASE && event.key == GLFW_KEY_Q)
+    void PlayerModule::OnMouseButtonEventHandler(const MouseButtonEvent& event, const flecs::world& world, const flecs::entity* entityPtr)
+    {
+        if (event.action == GLFW_PRESS || event.action == GLFW_REPEAT)
         {
-            BreakBlock(entity, ctx);
-        }
+            const CFacingInfo* info = entityPtr->try_get<CFacingInfo>();
+            if (!info)
+                return;
 
-        if (event.action == GLFW_RELEASE && event.key == GLFW_KEY_E)
-        {
-            PlaceBlock(entity, ctx);
+            if (event.button == GLFW_MOUSE_BUTTON_LEFT)
+            {
+                auto [parent, local] = info->position;
+
+                const auto ctx         = ClientWorldContext::Get(world);
+                const auto chunk       = ctx->chunkMapping.find(parent)->second;
+                const auto chunkHandle = *ctx->networkMapping.GetRHandle(chunk);
+                const auto chunkEntity = world.entity(chunk);
+                const auto chunkPtr    = chunkEntity.get<CChunkPtr>();
+
+                if (auto block = chunkPtr->Get(glm::uvec3(LocalPosV(local))); world.entity(block).get<CBlockType>() != CBlockType::Solid)
+                {
+                    MCC_LOG_DEBUG("Cant break non solid block");
+                    return;
+                }
+
+                // Prediction (roll-backed by server if invalid)
+                auto air = world.query<CBlockMeta>() // < temp
+                    .find([](const CBlockMeta& meta) { return meta.id == "mcc:block:air"; });
+                chunkPtr->Set(local, air);
+                chunkEntity.add<TDirty>();
+
+                OnBlockBreak packet;
+                packet.chunkHandle   = chunkHandle;
+                packet.position = local;
+                ctx->scheduler.Insert([=]{ ctx->networkManager.Send(packet, ENET_PACKET_FLAG_RELIABLE, 0); }).Enqueue();
+            }
+
+            if (event.button == GLFW_MOUSE_BUTTON_RIGHT)
+            {
+                auto [parent, local] = info->previous;
+
+                const auto ctx         = ClientWorldContext::Get(world);
+                const auto chunk       = ctx->chunkMapping.find(parent)->second;
+                const auto chunkHandle = *ctx->networkMapping.GetRHandle(chunk);
+                const auto chunkEntity = world.entity(chunk);
+                const auto chunkPtr    = chunkEntity.get<CChunkPtr>();
+
+                flecs::entity blockEntity;
+                for (const auto block: chunkPtr->GetPalette())
+                {
+                    if (auto e = world.entity(block); e.get<CBlockType>() == CBlockType::Solid)
+                    {
+                        blockEntity = e;
+                        break;
+                    }
+                }
+
+                // Prediction (roll-backed by server if invalid)
+                chunkPtr->Set(local, blockEntity);
+                chunkEntity.add<TDirty>();
+
+                OnBlockPlace packet;
+                packet.chunkHandle = chunkHandle;
+                packet.position    = local;
+                packet.blockHandle = *ctx->networkMapping.GetRHandle(blockEntity);
+                ctx->scheduler.Insert([=]{ ctx->networkManager.Send(packet, ENET_PACKET_FLAG_RELIABLE, 0); }).Enqueue();
+            }
         }
     }
 

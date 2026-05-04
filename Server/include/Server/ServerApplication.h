@@ -21,7 +21,7 @@
 #define RENDER_DISTANCE_MAX 64
 #define RENDER_DISTANCE_MIN 8
 
-#define USER_SPEED_DEFAULT 100
+#define USER_SPEED_DEFAULT 20
 
 namespace Mcc
 {

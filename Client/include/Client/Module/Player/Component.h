@@ -7,6 +7,7 @@
 
 #include "Common/Module/Entity/Component.h"
 #include "Common/Utils/FlecsUtils.h"
+#include "Common/Utils/Raycast.h"
 
 namespace Mcc
 {
@@ -15,8 +16,16 @@ namespace Mcc
 
     struct PPlayerEntity {};
 
+    struct CFacingInfo
+    {
+        WorldPosV previous;
+        WorldPosV position;
+        float     distance;
+    };
+
     namespace _ { struct PlayerModuleTag {}; };
     using CCurrentPlayerInput = ComponentWrapper<UserInput, _::PlayerModuleTag>;
+
 }
 
 #endif

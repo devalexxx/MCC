@@ -81,6 +81,9 @@ namespace Mcc
         constexpr operator LocalPosE () const;
         constexpr operator glm::uvec3() const;
 
+        template<std::size_t>
+        friend constexpr auto get(Position p);
+
         friend constexpr bool operator==(const Position& lhs, const Position& rhs);
         friend constexpr bool operator!=(const Position& lhs, const Position& rhs);
 
@@ -106,6 +109,9 @@ namespace Mcc
 
         constexpr operator LocalPosV() const;
         constexpr operator glm::vec3() const;
+
+        template<std::size_t>
+        friend constexpr auto get(Position p);
 
         friend constexpr bool operator==(const Position& lhs, const Position& rhs);
         friend constexpr bool operator!=(const Position& lhs, const Position& rhs);
@@ -181,12 +187,16 @@ namespace Mcc
         constexpr Position() = default;
         constexpr Position(glm::fvec3 position);
         constexpr Position(float x, float y, float z);
+        constexpr explicit Position(float value);
 
         constexpr operator glm::fvec3() const;
 
         constexpr operator WorldPosV() const;
         constexpr operator WorldPosE() const;
         constexpr operator ChunkPosV() const;
+
+        template<std::size_t>
+        friend constexpr auto get(Position p);
 
         friend constexpr bool operator==(const Position& lhs, const Position& rhs);
         friend constexpr bool operator!=(const Position& lhs, const Position& rhs);
@@ -206,10 +216,32 @@ namespace Mcc
     }
 
     template<std::size_t I>
+    constexpr auto get(LocalPosV p)
+    {
+             if constexpr (I == 0) return p.mPosition.x;
+        else if constexpr (I == 1) return p.mPosition.y;
+        else return                       p.mPosition.z;
+    }
+
+    template<std::size_t I>
+    constexpr auto get(LocalPosE p)
+    {
+             if constexpr (I == 0) return p.mPosition.x;
+        else if constexpr (I == 1) return p.mPosition.y;
+        else return                       p.mPosition.z;
+    }
+
+    template<std::size_t I>
     constexpr auto get(WorldPosV p)
     {
         if constexpr (I == 0) return p.mParent;
         else                  return p.mLocal;
+    }
+
+    template<std::size_t I, std::size_t J>
+    constexpr auto get(const WorldPosV p)
+    {
+        return get<J>(get<I>(p));
     }
 
     template<std::size_t I>
@@ -217,6 +249,20 @@ namespace Mcc
     {
         if constexpr (I == 0) return p.mParent;
         else                  return p.mLocal;
+    }
+
+    template<std::size_t I, std::size_t J>
+    constexpr auto get(const WorldPosE p)
+    {
+        return get<J>(get<I>(p));
+    }
+
+    template<std::size_t I>
+    constexpr auto get(WorldPosF p)
+    {
+             if constexpr (I == 0) return p.mPosition.x;
+        else if constexpr (I == 1) return p.mPosition.y;
+        else                       return p.mPosition.z;
     }
 
     constexpr auto format_as(const ChunkPosV& position);
@@ -241,6 +287,24 @@ namespace std
     };
 
     template<>
+    struct tuple_size<Mcc::LocalPosV> : std::integral_constant<size_t, 3> {};
+
+    template<size_t N>
+    struct tuple_element<N, Mcc::LocalPosV>
+    {
+        using type = decltype(Mcc::get<N>(std::declval<Mcc::LocalPosV>()));
+    };
+
+    template<>
+    struct tuple_size<Mcc::LocalPosE> : std::integral_constant<size_t, 3> {};
+
+    template<size_t N>
+    struct tuple_element<N, Mcc::LocalPosE>
+    {
+        using type = decltype(Mcc::get<N>(std::declval<Mcc::LocalPosE>()));
+    };
+
+    template<>
     struct tuple_size<Mcc::WorldPosV> : std::integral_constant<size_t, 2> {};
 
     template<size_t N>
@@ -256,6 +320,15 @@ namespace std
     struct tuple_element<N, Mcc::WorldPosE>
     {
         using type = decltype(Mcc::get<N>(std::declval<Mcc::WorldPosE>()));
+    };
+
+    template<>
+    struct tuple_size<Mcc::WorldPosF> : std::integral_constant<size_t, 3> {};
+
+    template<size_t N>
+    struct tuple_element<N, Mcc::WorldPosF>
+    {
+        using type = decltype(Mcc::get<N>(std::declval<Mcc::WorldPosF>()));
     };
 
 }

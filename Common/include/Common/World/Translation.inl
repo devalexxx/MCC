@@ -164,4 +164,21 @@ namespace Mcc
         return { glm::vec3(lhs) * static_cast<float>(rhs) };
     }
 
+    template<typename C>
+    constexpr Translation<C> operator/(const Translation<C>& lhs, const auto& rhs)
+    {
+        return { static_cast<typename Translation<C>::type>(lhs) / rhs };
+    }
+
+    template<typename C>
+    constexpr Translation<C> SelectAxis(const Translation<C>& translation, bool x, bool y, bool z)
+    {
+        typename Translation<C>::type t = translation;
+        return {
+            x ? t.x : 0,
+            y ? t.y : 0,
+            z ? t.z : 0
+        };
+    }
+
 }

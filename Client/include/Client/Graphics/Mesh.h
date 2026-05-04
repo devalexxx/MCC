@@ -45,6 +45,7 @@ namespace Mcc
         Mesh GenerateSphereMesh(float radius, unsigned int segments, unsigned int rings);
         Mesh GenerateHalfSphereMesh(float radius, unsigned int segments, unsigned int rings);
         Mesh GenerateCapsuleMesh(float radius, unsigned int segments, unsigned int rings);
+        Mesh GenerateCubeMesh();
     }
 
 }
