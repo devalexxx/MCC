@@ -5,6 +5,7 @@
 #include "Client/Module/Renderer/Module.h"
 
 #include "Client/Module/Camera/Component.h"
+#include "Client/Module/Camera/Module.h"
 #include "Client/Module/Renderer/Component.h"
 #include "Client/Module/Renderer/System.h"
 #include "Client/WorldContext.h"
@@ -12,7 +13,6 @@
 #include "Common/World/Geometry.h"
 #include "Common/World/Transform.h"
 #include "Common/Phase.h"
-#include "Common/Utils/Logging.h"
 
 namespace Mcc
 {
@@ -123,46 +123,23 @@ namespace Mcc
 
     std::tuple<glm::vec3, glm::mat4, glm::mat4> RendererModule::GetView(const flecs::world& world)
     {
-        const auto* ctx = ClientWorldContext::Get(world);
+        const auto* ctx    = ClientWorldContext::Get(world);
+        const auto  camera = CameraModule::GetActiveCamera(world);
+        if (!camera.is_valid())
+            return {{}, {}, {}};
 
-        CRenderTransform cTransform {};
-        CCameraSettings  cSettings {};
-        world.query_builder<const CEntityTransform, const CCameraSettings>()
-            .with<TActiveCamera>()
-            .build()
-            .run([&](flecs::iter& it) {
-                bool isSet = false;
-                while (it.next())
-                {
-                    if (!isSet)
-                    {
-                        auto t = it.field<const CEntityTransform>(0);
-                        auto s = it.field<const CCameraSettings> (1);
+        auto& transform = camera.get<CEntityTransform>();
+        auto& settings  = camera.get<CCameraSettings>();
 
-                        if (it.count() > 1)
-                            MCC_LOG_WARN("More than one camera active");
+        WorldPosF position = transform.position;
 
-                        if (it.count() <= 0)
-                        {
-                            MCC_LOG_ERROR("No active camera");
-                        }
-                        else
-                        {
-                            cTransform = t[0];
-                            cSettings  = s[0];
-                            isSet      = true;
-                        }
-                    }
-                }
-            });
-
-        const glm::vec3 eye    = cTransform.position;
-        const glm::vec3 center = cTransform.position + TranslationF(cTransform.rotation * glm::forward);
-        const glm::vec3 up     = glm::normalize(glm::cross(cTransform.rotation * glm::right, cTransform.rotation * glm::forward));
+        const glm::vec3 eye    = position;
+        const glm::vec3 center = position + TranslationF(transform.rotation * glm::forward);
+        const glm::vec3 up     = glm::normalize(glm::cross(transform.rotation * glm::right, transform.rotation * glm::forward));
         const glm::mat4 view   = glm::lookAt(eye, center, up);
-        const glm::mat4 proj   = glm::perspective(cSettings.fov, ctx->window.GetAspectRatio(), cSettings.zNear, cSettings.zFar);
+        const glm::mat4 proj   = glm::perspective(settings.fov, ctx->window.GetAspectRatio(), settings.zNear, settings.zFar);
 
-        return { cTransform.position, view, proj };
+        return { position, view, proj };
     }
 
 

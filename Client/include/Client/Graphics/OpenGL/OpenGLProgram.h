@@ -5,6 +5,8 @@
 #ifndef MCC_CLIENT_GRAPHICS_OPENGL_OPENGL_PROGRAM_H
 #define MCC_CLIENT_GRAPHICS_OPENGL_OPENGL_PROGRAM_H
 
+#include "Common/AssetRegistry.h"
+
 #include <glad/glad.h>
 #include <glm/glm.hpp>
 
@@ -15,7 +17,7 @@ namespace Mcc
 
     class OpenGLShader;
 
-    class OpenGLProgram final : public OpenGLObject
+    class OpenGLProgram final : public OpenGLObject, public Asset
     {
       public:
         OpenGLProgram();

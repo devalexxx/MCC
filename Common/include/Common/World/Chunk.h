@@ -65,7 +65,7 @@ namespace Mcc
         bool IsValid() const;
 
         flecs::entity_t Get(glm::ivec3 position) const;
-        void            Set(glm::uvec3 position, flecs::entity_t entity);
+        bool            Set(glm::uvec3 position, flecs::entity_t entity);
 
         size_t GetPaletteIndex(size_t index) const;
         size_t GetPaletteIndex(glm::uvec3 position) const;

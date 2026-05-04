@@ -34,6 +34,9 @@ namespace Mcc
         constexpr operator TranslationF() const;
         constexpr operator glm::ivec3  () const;
 
+        template<std::size_t>
+        friend constexpr auto get(Translation t);
+
         friend constexpr bool operator==(const Translation& lhs, const Translation& rhs);
         friend constexpr bool operator!=(const Translation& lhs, const Translation& rhs);
 
@@ -41,6 +44,7 @@ namespace Mcc
         glm::ivec3 mTranslation;
     };
 
+    // TODO: add chunk to keep float precision
     template<>
     class Translation<EnttyCoord>
     {
@@ -54,6 +58,9 @@ namespace Mcc
         constexpr operator TranslationV() const;
         constexpr operator TranslationF() const;
         constexpr operator glm::vec3   () const;
+
+        template<std::size_t>
+        friend constexpr auto get(Translation t);
 
         friend constexpr bool operator==(const Translation& lhs, const Translation& rhs);
         friend constexpr bool operator!=(const Translation& lhs, const Translation& rhs);
@@ -76,12 +83,39 @@ namespace Mcc
         constexpr operator TranslationE() const;
         constexpr operator glm::vec3   () const;
 
+        template<std::size_t>
+        friend constexpr auto get(Translation t);
+
         friend constexpr bool operator==(const Translation& lhs, const Translation& rhs);
         friend constexpr bool operator!=(const Translation& lhs, const Translation& rhs);
 
       private:
         glm::vec3 mTranslation;
     };
+
+    template<std::size_t I>
+    constexpr auto get(TranslationV t)
+    {
+             if constexpr (I == 0) return t.mTranslation.x;
+        else if constexpr (I == 1) return t.mTranslation.y;
+        else                       return t.mTranslation.z;
+    }
+
+    template<std::size_t I>
+    constexpr auto get(TranslationE t)
+    {
+             if constexpr (I == 0) return t.mTranslation.x;
+        else if constexpr (I == 1) return t.mTranslation.y;
+        else                       return t.mTranslation.z;
+    }
+
+    template<std::size_t I>
+    constexpr auto get(TranslationF t)
+    {
+             if constexpr (I == 0) return t.mTranslation.x;
+        else if constexpr (I == 1) return t.mTranslation.y;
+        else                       return t.mTranslation.z;
+    }
 
     constexpr auto format_as(const TranslationV& translation);
     constexpr auto format_as(const TranslationE& translation);
@@ -101,6 +135,15 @@ namespace Mcc
     constexpr TranslationV operator*(const TranslationV& lhs, const auto& rhs);
     constexpr TranslationE operator*(const TranslationE& lhs, const auto& rhs);
     constexpr TranslationF operator*(const TranslationF& lhs, const auto& rhs);
+
+    // Translation = Translation / T where Translation::type / T exist
+    template<typename C>
+    constexpr Translation<C> operator/(const Translation<C>& lhs, const auto& rhs);
+
+    // Utility method
+    template<typename C>
+    constexpr Translation<C> SelectAxis(const Translation<C>& translation, bool x, bool y, bool z);
+
 
 }
 

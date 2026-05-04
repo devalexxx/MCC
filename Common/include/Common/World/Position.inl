@@ -219,6 +219,8 @@ namespace Mcc
         Position(glm::fvec3(x, y, z))
     {}
 
+    constexpr Position<WorldSpace, FloatCoord>::Position(const float value) : mPosition(value, value, value) {}
+
     constexpr Position<WorldSpace, FloatCoord>::operator glm::fvec3() const
     {
         return mPosition;

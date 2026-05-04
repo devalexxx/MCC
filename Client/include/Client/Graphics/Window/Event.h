@@ -28,6 +28,15 @@ namespace Mcc
         double y;
     };
 
+    struct MouseButtonEvent
+    {
+        Window& window;
+
+        int button;
+        int action;
+        int mods;
+    };
+
 }
 
 #endif

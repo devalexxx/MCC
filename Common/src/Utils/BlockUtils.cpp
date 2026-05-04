@@ -19,4 +19,14 @@ namespace Mcc
         return e.name().c_str();
     }
 
+    bool IsSolid(const flecs::entity e)
+    {
+        if (const auto type = e.try_get<CBlockType>(); type)
+        {
+            return *type == CBlockType::Solid;
+        }
+
+        return false;
+    }
+
 }

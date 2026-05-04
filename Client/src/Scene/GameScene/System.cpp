@@ -88,7 +88,7 @@ namespace Mcc
     void ClearGameInfoSystem(flecs::iter& it)
     {
         const auto ctx      = ClientWorldContext::Get(it.world());
-        ctx->chunkMapping       = {};
+        ctx->chunkMapping   = {};
         ctx->networkMapping = {};
 
         IgnoreIter(it);
@@ -148,9 +148,10 @@ namespace Mcc
         static size_t frames      = 0;
         static char   overlay[50] = "value";
 
-        const auto ctx  = it.ctx<DebugContext>();
-        const auto dt   = it.delta_time();
-        elapsed        += dt;
+        const auto world = it.world();
+        const auto ctx   = it.ctx<DebugContext>();
+        const auto dt    = it.delta_time();
+        elapsed         += dt;
         frames++;
         if (elapsed >= .2f)
         {
@@ -182,7 +183,7 @@ namespace Mcc
 
         if (ImGui::CollapsingHeader("RenderSetting"))
         {
-            auto& [wireframe] = it.world().get_mut<CRendererSettings>();
+            auto& [wireframe] = world.get_mut<CRendererSettings>();
             if (ImGui::Checkbox("Wireframe", &wireframe))
             {
                 // wireframe = !wireframe;
@@ -223,9 +224,9 @@ namespace Mcc
         if (ImGui::CollapsingHeader("Chunk"))
         {
             // const auto totalChunk = it.world().count<ChunkTag>();
-            const auto queued     = it.world().count<CChunkMeshGenTask>();
+            const auto queued     = world.count<CChunkMeshGenTask>();
             ImGui::Text("queued : %d", queued);
-            ImGui::Text("display: %d", it.world().count<TShouldRenderChunk>());
+            ImGui::Text("display: %d", world.count<TShouldRenderChunk>());
         }
 
         if (ImGui::CollapsingHeader("Player"))
@@ -238,6 +239,17 @@ namespace Mcc
                 ImGui::InputFloat3("Position", &position[0]);
                 ImGui::InputInt2  ("ChunkPosition", &static_cast<glm::ivec2>(chunkPos)[0]);
                 ImGui::InputFloat3("PositionInChunk", &static_cast<glm::vec3>(posInChunk)[0]);
+            }
+        }
+
+        if (ImGui::CollapsingHeader("Camera"))
+        {
+            if (const auto player = PlayerModule::GetPlayer(world); player.is_valid())
+            {
+                auto camera  = CameraModule::GetActiveCamera(world);
+                auto cameraTransform = camera.get<CEntityTransform>();
+                auto cameraDirection = glm::normalize(cameraTransform.rotation * glm::forward);
+                ImGui::InputFloat3("CameraDirection", &cameraDirection[0]);
             }
         }
 

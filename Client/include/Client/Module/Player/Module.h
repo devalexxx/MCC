@@ -34,11 +34,16 @@ namespace Mcc
       private:
         static void OnEntitiesCreatedHandler(const OnEntitiesCreated& event, const flecs::world& world);
         static void OnEntitiesUpdatedHandler(const OnEntitiesUpdated& event, const flecs::world& world);
-        static void OnKeyEventHandler       (const KeyEvent& event, const flecs::world& world);
-        static void OnCursorPosEventHandler (const CursorPosEvent& event, const flecs::world& world);
+
+        static void OnKeyEventHandler        (const KeyEvent& event, const flecs::world& world);
+        static void OnMouseButtonEventHandler(const MouseButtonEvent& event, const flecs::world& world, const flecs::entity* entityPtr);
+        static void OnCursorPosEventHandler  (const CursorPosEvent& event, const flecs::world& world);
 
         EventHandlerID mKeyEventHandlerID;
+        EventHandlerID mMouseButtonEventHandlerID;
         EventHandlerID mCursorPosEventHandlerID;
+
+        flecs::entity mFacingEntity;
     };
 
 }

@@ -21,6 +21,8 @@ namespace Mcc
         void RegisterPrefab   (flecs::world& world) override;
         void RegisterSystem   (flecs::world& world) override;
         void RegisterObserver (flecs::world& world) override;
+
+        static flecs::entity GetActiveCamera(const flecs::world& world);
     };
 
 }

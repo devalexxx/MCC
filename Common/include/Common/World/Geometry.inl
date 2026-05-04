@@ -159,11 +159,74 @@ namespace Mcc
     }
 
     template<typename C, typename U>
-    WorldPos<C> ComputeLerp<WorldPos<C>, U>::operator()(const WorldPos<C>& lhs, const WorldPos<C>& rhs, const U& t) const
+    constexpr WorldPos<C> ComputeLerp<WorldPos<C>, U>::operator()(const WorldPos<C>& lhs, const WorldPos<C>& rhs, const U& t) const
     {
         auto diff = rhs - lhs;
         auto step = diff * t;
         return { lhs + step };
+    }
+
+    template<typename C>
+    constexpr float ComputeLength<Translation<C>>::operator()(const Translation<C>& v) const
+    {
+        return Length(static_cast<Translation<C>::type>(v));
+    }
+
+    constexpr float ComputeLength<TranslationV>::operator()(const TranslationV& v) const
+    {
+        return Length(static_cast<TranslationF>(v));
+    }
+
+    template<typename C>
+    constexpr float ComputeDistance<WorldPos<C>, WorldPos<C>>::operator()(const WorldPos<C>& lhs, const WorldPos<C>& rhs) const
+    {
+        return Length(rhs - lhs);
+    }
+
+    constexpr WorldPosF ComputeFloor<WorldPosF>::operator()(const WorldPosF& v) const
+    {
+        return { glm::floor(glm::vec3(v)) };
+    }
+
+    constexpr WorldPosE ComputeFloor<WorldPosE>::operator()(const WorldPosE& v) const
+    {
+        return static_cast<WorldPosE>(static_cast<WorldPosV>(v));
+    }
+
+    constexpr TranslationF ComputeFloor<TranslationF>::operator()(const TranslationF& v) const
+    {
+        return { glm::floor(glm::vec3(v)) };
+    }
+
+    constexpr TranslationE ComputeFloor<TranslationE>::operator()(const TranslationE& v) const
+    {
+        return static_cast<TranslationV>(v);
+    }
+
+    constexpr WorldPosF ComputeCeil<WorldPosF>::operator()(const WorldPosF& v) const
+    {
+        return { glm::ceil(glm::vec3(v)) };
+    }
+
+    constexpr WorldPosE ComputeCeil<WorldPosE>::operator()(const WorldPosE& v) const
+    {
+        return static_cast<WorldPosE>(static_cast<WorldPosV>(v) + TranslationV(1, 1, 1));
+    }
+
+    constexpr TranslationF ComputeCeil<TranslationF>::operator()(const TranslationF& v) const
+    {
+        return { glm::floor(glm::vec3(v)) };
+    }
+
+    constexpr TranslationE ComputeCeil<TranslationE>::operator()(const TranslationE& v) const
+    {
+        return static_cast<TranslationV>(v) + TranslationV(1, 1, 1);
+    }
+
+    template<typename C>
+    constexpr Translation<C> ComputeAbs<Translation<C>>::operator()(const Translation<C>& v) const
+    {
+        return Abs(static_cast<Translation<C>::type>(v));
     }
 
 }

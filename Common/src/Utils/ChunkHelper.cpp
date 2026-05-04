@@ -4,8 +4,6 @@
 
 #include "Common/Utils/ChunkHelper.h"
 
-#include "Common/World/Chunk.h"
-
 namespace Mcc::Helper
 {
 

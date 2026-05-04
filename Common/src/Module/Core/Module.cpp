@@ -26,6 +26,10 @@ namespace Mcc
                 *data = value;
             });
 
+        world.component<glm::ivec2>()
+            .member<int>("x")
+            .member<int>("y");
+
         world.component<glm::vec3>()
             .member<float>("x")
             .member<float>("y")

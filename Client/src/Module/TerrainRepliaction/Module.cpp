@@ -89,11 +89,12 @@ namespace Mcc
             return;
         }
 
+        bool hasChanged = false;
         const auto chunkEntity = world.entity(*chunkEntityT);
         const auto chunkPtr    = chunkEntity.get<CChunkPtr>();
         for (const auto& [handle, position, block]: packet.updates)
         {
-            chunkPtr->Set(
+            hasChanged |= chunkPtr->Set(
                 position,
                 *block
                     .transform([&](const BlockData& data) { return CreateBlock(data, world); })
@@ -101,7 +102,11 @@ namespace Mcc
             );
         }
 
-        chunkEntity.add<TDirty>();
+        if (hasChanged)
+        {
+            MCC_LOG_DEBUG("Chunk({}) has been updated", packet.chunkHandle);
+            chunkEntity.add<TDirty>();
+        }
     }
 
 
