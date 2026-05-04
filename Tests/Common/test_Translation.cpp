@@ -36,7 +36,7 @@ TEST_SUITE("Translation")
         SUBCASE("ToTranslationE")
         {
             TranslationV t(35, 110, -221);
-            TranslationE e(35.f / Chunk::Size, 110.f / Chunk::Height, -221.f / Chunk::Size);
+            TranslationE e(35.f / Chunk::Size, 110.f / Chunk::Size, -221.f / Chunk::Size);
             TranslationE eT = t;
 
             CHECK_EQ(e, eT);
@@ -83,7 +83,7 @@ TEST_SUITE("Translation")
 
         SUBCASE("Equal")
         {
-            TranslationE a(35.f / Chunk::Size, 110.f / Chunk::Height, -221.f / Chunk::Size);
+            TranslationE a(35.f / Chunk::Size, 110.f / Chunk::Size, -221.f / Chunk::Size);
             TranslationE b = a;
             
             CHECK_EQ(a, b);
@@ -91,7 +91,7 @@ TEST_SUITE("Translation")
 
         SUBCASE("ToTranslationV")
         {
-            TranslationE t(35.f / Chunk::Size, 110.f / Chunk::Height, -221.f / Chunk::Size);
+            TranslationE t(35.f / Chunk::Size, 110.f / Chunk::Size, -221.f / Chunk::Size);
             TranslationV e(35, 110, -221);
             TranslationV eT = t;
 
@@ -101,7 +101,7 @@ TEST_SUITE("Translation")
         SUBCASE("ToTranslationF")
         {
             TranslationE t(1.5f, 2.5f, -1.f);
-            TranslationF e(1.5f * Chunk::Size, 2.5f * Chunk::Height, -1.f * Chunk::Size);
+            TranslationF e(1.5f * Chunk::Size, 2.5f * Chunk::Size, -1.f * Chunk::Size);
             TranslationF eT = t;
 
             CHECK_EQ(e, eT);
@@ -156,7 +156,7 @@ TEST_SUITE("Translation")
 
         SUBCASE("ToTranslationE")
         {
-            TranslationF t(1.5f * Chunk::Size, 2.5f * Chunk::Height, -1.f * Chunk::Size);
+            TranslationF t(1.5f * Chunk::Size, 2.5f * Chunk::Size, -1.f * Chunk::Size);
             TranslationE e(1.5f, 2.5f, -1.f);
             TranslationE eT = t;
 

@@ -16,14 +16,16 @@ namespace Mcc
 
     void ChunkGenerator::Setup(const flecs::world& world)
     {
-        mPalette.emplace("air", world.lookup("mcc:block:air"));
+        mPalette.emplace("air"  , world.lookup("mcc:block:air"));
         mPalette.emplace("stone", world.lookup("mcc:block:stone"));
-        mPalette.emplace("dirt", world.lookup("mcc:block:dirt"));
+        mPalette.emplace("dirt" , world.lookup("mcc:block:dirt"));
+        mPalette.emplace("grass", world.lookup("mcc:block:grass"));
     }
 
     std::shared_ptr<Chunk> ChunkGenerator::Generate(const glm::ivec3 position) const
     {
-        auto       chunk = std::make_shared<Chunk>(mPalette.find("air")->second);
+        auto chunk = std::make_shared<Chunk>(mPalette.find("air")->second);
+
         const auto stone = mPalette.find("stone")->second;
         for (int x = 0; std::cmp_less(x, Chunk::Size); ++x)
         {
@@ -31,14 +33,18 @@ namespace Mcc
             {
                 constexpr auto f      = .01;
                 constexpr auto oct    = 2;
-                constexpr auto max    = .9;
-                constexpr auto min    = .0;
+                constexpr auto amp    = 4;
+                constexpr auto surf   = .5;
                 const auto     dx     = static_cast<double>(position.x * Chunk::Size + x);
-                const auto     dy     = static_cast<double>(position.z * Chunk::Size + z);
-                const double   noise  = mPerlin.octave2D_01(dx * f, dy * f, oct);
-                const double   mapped = (max - min) * (noise - 0.) / (1. + 0.) + min;
-                const auto     height = static_cast<size_t>(static_cast<double>(Chunk::Height) * (mapped + (1. - max)));
-                for (size_t y = 0; y < height; ++y) { chunk->Set({ x, y, z }, stone); }
+                const auto     dz     = static_cast<double>(position.z * Chunk::Size + z);
+                const double   noise  = surf + mPerlin.octave2D_01(dx * f, dz * f, oct) * amp;
+                const auto     height = noise * Chunk::Size;
+
+                for (int y = 0; std::cmp_less(y, Chunk::Size); ++y)
+                {
+                    if (position.y * Chunk::Size + y < height)
+                        chunk->Set({ x, y, z }, stone);
+                }
             }
         }
 

@@ -24,20 +24,20 @@ namespace Mcc
         chunk.ensure<CPendingReplication>().emplace(session.Get());
     }
 
-    static void ReplicateChunksAroundPlayer(const flecs::entity entity, const long x, const long z)
+    static void ReplicateChunksAroundPlayer(const flecs::entity entity, const long x, const long y, const long z)
     {
         const auto world   = entity.world();
         auto&      session = entity.get_mut<CUserSession>();
         const auto ctx     = ServerWorldContext::Get(world);
 
-        Helper::ForInCircle(x, z, ctx->settings.renderDistance, [&](const long cx, const long cz)
+        Helper::ForInSphere(x, y, z, ctx->settings.renderDistance, [&](const long cx, const long cy, const long cz)
         {
-            const glm::ivec2 position(cx, cz);
+            const glm::ivec3 position(cx, cy, cz);
 
             const auto it = ctx->chunkMapping.find(position);
             if (it == ctx->chunkMapping.cend()) // < Chunk don't exist -> Generate and Replicate
             {
-                const auto chunk = world.get<TerrainGenerationModule>().LaunchGenerationTask(world, { position.x, 0, position.y });
+                const auto chunk = world.get<TerrainGenerationModule>().LaunchGenerationTask(world, position);
                 Replicate(session, chunk);
                 return;
             }
@@ -67,28 +67,31 @@ namespace Mcc
         if (!GenerationState::Done::IsActive(entity)) return;
         if (pending.empty())                          return;
 
-        TerrainReplicationModule::LaunchChunkReplicationTask(
-            std::vector(pending.begin(), pending.end()),
-            entity.world(),
-            entity.id()
-        );
+        if (!entity.get<CChunkPtr>()->IsEmpty(entity.world()))
+        {
+            TerrainReplicationModule::LaunchChunkReplicationTask(
+                std::vector(pending.begin(), pending.end()),
+                entity.world(),
+                entity.id()
+            );
+        }
         pending.clear();
     }
 
     void OnPlayerCreatedObserver(const flecs::entity entity, const CEntityTransform& transform)
     {
-        auto [x, z] = get<0>(transform.position);
-        ReplicateChunksAroundPlayer(entity, x, z);
+        auto [x, y, z] = get<0>(transform.position);
+        ReplicateChunksAroundPlayer(entity, x, y, z);
     }
 
     void OnPlayerMoveObserver(flecs::iter& it, const size_t row)
     {
         const auto evt = it.param<OnPlayerMoveEvent>();
-        auto [px, pz]  = get<0>(evt->prev);
-        auto [cx, cz]  = get<0>(evt->curr);
-        if (std::abs(px - cx) > 0 || std::abs(pz - cz) > 0)
+        auto [px, py, pz]  = get<0>(evt->prev);
+        auto [cx, cy, cz]  = get<0>(evt->curr);
+        if (std::abs(px - cx) > 0 || std::abs(py - cy) > 0 || std::abs(pz - cz) > 0)
         {
-            ReplicateChunksAroundPlayer(it.entity(row), cx, cz);
+            ReplicateChunksAroundPlayer(it.entity(row), cx, cy, cz);
         }
     }
 

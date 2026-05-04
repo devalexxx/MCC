@@ -24,15 +24,15 @@ namespace Mcc
     class Translation<VoxelCoord>
     {
       public:
-        using type = glm::ivec3;
+        using data_type = glm::ivec3;
 
         constexpr Translation() = default;
-        constexpr Translation(glm::ivec3 translation);
-        constexpr Translation(int32_t x, int32_t y, int32_t z);
+        constexpr Translation(data_type translation);
+        constexpr Translation(auto x, auto y, auto z);
 
         constexpr operator TranslationE() const;
         constexpr operator TranslationF() const;
-        constexpr operator glm::ivec3  () const;
+        constexpr operator data_type   () const;
 
         template<std::size_t>
         friend constexpr auto get(Translation t);
@@ -41,7 +41,7 @@ namespace Mcc
         friend constexpr bool operator!=(const Translation& lhs, const Translation& rhs);
 
       private:
-        glm::ivec3 mTranslation;
+        data_type mTranslation;
     };
 
     // TODO: add chunk to keep float precision
@@ -49,15 +49,15 @@ namespace Mcc
     class Translation<EnttyCoord>
     {
       public:
-        using type = glm::vec3;
+        using data_type = glm::vec3;
 
         constexpr Translation() = default;
-        constexpr Translation(glm::vec3 translation);
-        constexpr Translation(float x, float y, float z);
+        constexpr Translation(data_type translation);
+        constexpr Translation(auto x, auto y, auto z);
 
-        inline operator TranslationV() const;
+        inline    operator TranslationV() const;
         constexpr operator TranslationF() const;
-        explicit constexpr operator glm::vec3   () const;
+        explicit constexpr operator data_type() const;
 
         template<std::size_t>
         friend constexpr auto get(Translation t);
@@ -66,22 +66,22 @@ namespace Mcc
         friend inline bool operator!=(const Translation& lhs, const Translation& rhs);
 
       private:
-        glm::vec3 mTranslation;
+        data_type mTranslation;
     };
 
     template<>
     class Translation<FloatCoord>
     {
       public:
-        using type = glm::vec3;
+        using data_type = glm::vec3;
 
         constexpr Translation() = default;
-        constexpr Translation(glm::vec3 translation);
-        constexpr Translation(float x, float y, float z);
+        constexpr Translation(data_type translation);
+        constexpr Translation(auto x, auto y, auto z);
 
-        inline operator TranslationV() const;
+        inline    operator TranslationV() const;
         constexpr operator TranslationE() const;
-        explicit constexpr operator glm::vec3   () const;
+        explicit constexpr operator data_type() const;
 
         template<std::size_t>
         friend constexpr auto get(Translation t);
@@ -90,7 +90,7 @@ namespace Mcc
         friend inline bool operator!=(const Translation& lhs, const Translation& rhs);
 
       private:
-        glm::vec3 mTranslation;
+        data_type mTranslation;
     };
 
     template<std::size_t I>

@@ -60,9 +60,6 @@ namespace Mcc
             bool isY = !isX && get<1>(tMax) < get<2>(tMax);
             bool isZ = !isX && !isY;
 
-            if (isY && get<1, 1>(position) + 1 >= Chunk::Height)
-                return std::nullopt;
-
             position = position + SelectAxis(step  , isX, isY, isZ);
             tMax     = tMax     + SelectAxis(tDelta, isX, isY, isZ);
 
@@ -75,7 +72,8 @@ namespace Mcc
                 auto newChunkEntityMapIt = ctx->chunkMapping.find(get<0>(position));
                 if (newChunkEntityMapIt == ctx->chunkMapping.end())
                 {
-                    continue;
+                    // Chunk not generated
+                    return std::nullopt;
                 }
 
                 cChunkEntity = world.entity(newChunkEntityMapIt->second);

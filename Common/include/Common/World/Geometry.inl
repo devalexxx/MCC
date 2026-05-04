@@ -7,12 +7,14 @@ namespace Mcc
 
     constexpr TranslationV operator-(const ChunkPosV& lhs, const ChunkPosV& rhs)
     {
-        const auto v = glm::ivec2(lhs) - glm::ivec2(rhs);
-        return { glm::ivec3(v.x, 0, v.y) * glm::ivec3(Chunk::Size, 1, Chunk::Size) };
+        using T = ChunkPosV::data_type;
+        const auto v = static_cast<T>(lhs) - static_cast<T>(rhs);
+        return { v * T(Chunk::Size) };
     }
 
     constexpr TranslationV operator-(const LocalPosV& lhs, const LocalPosV& rhs)
     {
+
         return { glm::ivec3(glm::uvec3(lhs)) - glm::ivec3(glm::uvec3(rhs)) };
     }
 
@@ -45,87 +47,73 @@ namespace Mcc
     constexpr Position<ChunkSpace, VoxelCoord>
     operator+(const Position<ChunkSpace, VoxelCoord>& lhs, const Translation<VoxelCoord>& rhs)
     {
-        const glm::ivec2 cLhs = lhs;
-        const glm::ivec3 cRhs = rhs;
-        return { cLhs.x + cRhs.x, cLhs.y + cRhs.z };
+        const Position<ChunkSpace, VoxelCoord>::data_type cLhs = lhs;
+        const Translation<VoxelCoord>::data_type          cRhs = rhs;
+        return { cLhs + cRhs };
     }
 
     constexpr Position<ChunkSpace, VoxelCoord>
     operator-(const Position<ChunkSpace, VoxelCoord>& lhs, const Translation<VoxelCoord>& rhs)
     {
-        const glm::ivec2 cLhs = lhs;
-        const glm::ivec3 cRhs = rhs;
-        return { cLhs.x - cRhs.x, cLhs.y - cRhs.z };
+        const Position<ChunkSpace, VoxelCoord>::data_type cLhs = lhs;
+        const Translation<VoxelCoord>::data_type          cRhs = rhs;
+        return { cLhs - cRhs };
     }
 
-    static inline std::tuple<LocalPosV, TranslationV> ComputeOverlap(const glm::ivec3& inV)
+    static std::tuple<LocalPosV, TranslationV> ComputeOverlap(const glm::ivec3& inV)
     {
         glm::ivec3 v = inV;
         glm::ivec3 c(0, 0, 0);
         c.x = glm::floor(static_cast<float>(v.x) / Chunk::Size);
+        c.y = glm::floor(static_cast<float>(v.y) / Chunk::Size);
         c.z = glm::floor(static_cast<float>(v.z) / Chunk::Size);
 
         v.x %= Chunk::Size;
+        v.y %= Chunk::Size;
         v.z %= Chunk::Size;
 
         const uint32_t px = (Chunk::Size + v.x % Chunk::Size) % Chunk::Size;
-        const uint32_t py = v.y;
+        const uint32_t py = (Chunk::Size + v.y % Chunk::Size) % Chunk::Size;
         const uint32_t pz = (Chunk::Size + v.z % Chunk::Size) % Chunk::Size;
 
         return {{ px, py, pz }, { c }};
     }
 
-    static inline std::tuple<LocalPosE, TranslationV> ComputeOverlap(const glm::vec3& v)
+    static std::tuple<LocalPosE, TranslationV> ComputeOverlap(const glm::vec3& v)
     {
         glm::ivec3 c(0, 0, 0);
         c.x = glm::floor(v.x);
+        c.y = glm::floor(v.y);
         c.z = glm::floor(v.z);
 
-        const glm::vec3 norm = v - glm::vec3(c) + glm::vec3(0, 1, 0);
+        const glm::vec3 norm = v - glm::vec3(c) + glm::vec3(0, 0, 0);
         glm::vec3 _, rest = glm::modf(norm, _);
-        rest.y = v.y;
 
         return { rest, c };
     }
 
     template<typename C, typename R>
-    inline R operator+(const Position<LocalSpace, C>& lhs, const Translation<C>& rhs)
+    R operator+(const Position<LocalSpace, C>& lhs, const Translation<C>& rhs)
     {
-        using ttp = Translation<C>         ::type;
-        using ptp = Position<LocalSpace, C>::type;
+        using ttp = Translation<C>         ::data_type;
+        using ptp = Position<LocalSpace, C>::data_type;
 
         ttp l = ptp(lhs);
         ttp r = ttp(rhs);
         ttp v = l + r;
 
-        if constexpr (std::is_same_v<C, VoxelCoord>)
-        {
-            MCC_ASSERT(
-                v.y > 0 && v.y < Chunk::Height,
-                "{} + {} is not valid, resulting in an out of grid position", lhs, rhs
-            );
-        }
-
         return ComputeOverlap(v);
     }
 
     template<typename C, typename R>
-    inline R operator-(const Position<LocalSpace, C>& lhs, const Translation<C>& rhs)
+    R operator-(const Position<LocalSpace, C>& lhs, const Translation<C>& rhs)
     {
-        using ttp = Translation<C>         ::type;
-        using ptp = Position<LocalSpace, C>::type;
+        using ttp = Translation<C>         ::data_type;
+        using ptp = Position<LocalSpace, C>::data_type;
 
         ttp l = ptp(lhs);
         ttp r = ttp(rhs);
         ttp v = l - r;
-
-        if constexpr (std::is_same_v<C, VoxelCoord>)
-        {
-            MCC_ASSERT(
-                v.y > 0 && v.y < Chunk::Height,
-                "{} - {} is not valid, resulting in an out of grid position", lhs, rhs
-            );
-        }
 
         return ComputeOverlap(v);
     }
@@ -169,7 +157,7 @@ namespace Mcc
     template<typename C>
     constexpr float ComputeLength<Translation<C>>::operator()(const Translation<C>& v) const
     {
-        return Length(static_cast<Translation<C>::type>(v));
+        return Length(static_cast<Translation<C>::data_type>(v));
     }
 
     constexpr float ComputeLength<TranslationV>::operator()(const TranslationV& v) const

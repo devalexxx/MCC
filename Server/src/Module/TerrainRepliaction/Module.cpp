@@ -120,12 +120,12 @@ namespace Mcc
             placeholder
         );
 
-        const glm::ivec2   chunkPos = chunkEntity.get<CChunkPos>();
+        const glm::ivec3   chunkPos = chunkEntity.get<CChunkPos>();
         std::unordered_set peers    = { from.peer };
         world.query_builder<const CEntityTransform, const CUserSession>()
             .each([&](flecs::entity, const CEntityTransform& tr, const CUserSession& us)
             {
-                if (auto [p, l] = tr.position; Helper::IsInCircle(chunkPos, glm::ivec2(p), ctx->settings.renderDistance))
+                if (auto [p, l] = tr.position; Helper::IsInSphere(chunkPos, glm::ivec3(p), ctx->settings.renderDistance))
                 {
                     auto proxy = *us.ptr->replicatedChunks;
                     if (const auto repl = proxy->find(chunkEntity); repl != proxy->cend())
@@ -187,12 +187,12 @@ namespace Mcc
             *replacement
         );
 
-        const glm::ivec2   chunkPos = chunkEntity.get<CChunkPos>();
+        const glm::ivec3   chunkPos = chunkEntity.get<CChunkPos>();
         std::unordered_set peers    = { from.peer };
         world.query_builder<const CEntityTransform, const CUserSession>()
             .each([&](flecs::entity, const CEntityTransform& tr, const CUserSession& us)
             {
-                if (auto [p, l] = tr.position; Helper::IsInCircle(chunkPos, glm::ivec2(p), ctx->settings.renderDistance))
+                if (auto [p, l] = tr.position; Helper::IsInCircle(chunkPos, glm::ivec3(p), ctx->settings.renderDistance))
                 {
                     auto proxy = *us.ptr->replicatedChunks;
                     if (const auto repl = proxy->find(chunkEntity); repl != proxy->cend())

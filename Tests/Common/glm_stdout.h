@@ -20,3 +20,8 @@ static std::ostream &operator<<(std::ostream &os, const glm::ivec2 & v)
 {
     return os << fmt::format("{}", v);
 }
+
+static std::ostream &operator<<(std::ostream &os, const glm::ivec3 & v) 
+{
+    return os << fmt::format("{}", v);
+}
