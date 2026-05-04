@@ -58,7 +58,7 @@ namespace Mcc
         return { cLhs.x - cRhs.x, cLhs.y - cRhs.z };
     }
 
-    static constexpr std::tuple<LocalPosV, TranslationV> ComputeOverlap(const glm::ivec3& inV)
+    static inline std::tuple<LocalPosV, TranslationV> ComputeOverlap(const glm::ivec3& inV)
     {
         glm::ivec3 v = inV;
         glm::ivec3 c(0, 0, 0);
@@ -75,7 +75,7 @@ namespace Mcc
         return {{ px, py, pz }, { c }};
     }
 
-    static constexpr std::tuple<LocalPosE, TranslationV> ComputeOverlap(const glm::vec3& v)
+    static inline std::tuple<LocalPosE, TranslationV> ComputeOverlap(const glm::vec3& v)
     {
         glm::ivec3 c(0, 0, 0);
         c.x = glm::floor(v.x);
@@ -89,13 +89,13 @@ namespace Mcc
     }
 
     template<typename C, typename R>
-    constexpr R operator+(const Position<LocalSpace, C>& lhs, const Translation<C>& rhs)
+    inline R operator+(const Position<LocalSpace, C>& lhs, const Translation<C>& rhs)
     {
         using ttp = Translation<C>         ::type;
         using ptp = Position<LocalSpace, C>::type;
 
         ttp l = ptp(lhs);
-        ttp r = rhs;
+        ttp r = ttp(rhs);
         ttp v = l + r;
 
         if constexpr (std::is_same_v<C, VoxelCoord>)
@@ -110,13 +110,13 @@ namespace Mcc
     }
 
     template<typename C, typename R>
-    constexpr R operator-(const Position<LocalSpace, C>& lhs, const Translation<C>& rhs)
+    inline R operator-(const Position<LocalSpace, C>& lhs, const Translation<C>& rhs)
     {
         using ttp = Translation<C>         ::type;
         using ptp = Position<LocalSpace, C>::type;
 
         ttp l = ptp(lhs);
-        ttp r = rhs;
+        ttp r = ttp(rhs);
         ttp v = l - r;
 
         if constexpr (std::is_same_v<C, VoxelCoord>)

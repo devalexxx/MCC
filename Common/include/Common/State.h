@@ -19,13 +19,13 @@
     struct T : StateValue<S, T> \
     {};
 
-#define REGISTER_STATE(Scope, S, SV...)                 \
+#define REGISTER_STATE(Scope, S, ...)                 \
     struct S : public State<Scope, S>                   \
     {                                                   \
-        MAP_1(MAKE_STATE_VALUE, S, SV)                  \
+        MAP_1(MAKE_STATE_VALUE, S, __VA_ARGS__)                  \
         static void Register(const flecs::world& world) \
         {                                               \
-            State::Register<SV>(world);                 \
+            State::Register<__VA_ARGS__>(world);                 \
         }                                               \
     };
 

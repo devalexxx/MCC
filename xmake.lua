@@ -113,6 +113,7 @@ end
 
 if is_host("windows") then
     add_cxxflags("cl::/Zc:preprocessor")
+    add_defines("NOMINMAX")
 end
 
 if is_mode("debug") then 

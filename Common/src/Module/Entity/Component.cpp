@@ -30,7 +30,7 @@ namespace Mcc
         void ApplyMovement(const UserInput& input, CEntityTransform& transform, const float speed, const float dt)
         {
             auto translation = [&](const glm::vec3& v) {
-                return TranslationE(TranslationF(transform.rotation * v * speed * dt));
+                return static_cast<TranslationE>(TranslationF(transform.rotation * v * speed * dt));
             };
 
             if (input.movement.forward && !input.movement.backward)

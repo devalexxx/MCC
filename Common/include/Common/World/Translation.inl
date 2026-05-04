@@ -46,7 +46,7 @@ namespace Mcc
         mTranslation(x, y, z)
     {}
 
-    constexpr Translation<EnttyCoord>::operator Translation<VoxelCoord>() const
+    inline Translation<EnttyCoord>::operator Translation<VoxelCoord>() const
     {
         return { glm::floor(glm::vec3(mTranslation) * glm::vec3(Chunk::Size, Chunk::Height, Chunk::Size)) };
     }
@@ -61,12 +61,12 @@ namespace Mcc
         return mTranslation;
     }
 
-    constexpr bool operator==(const Translation<EnttyCoord>& lhs, const Translation<EnttyCoord>& rhs)
+    inline bool operator==(const Translation<EnttyCoord>& lhs, const Translation<EnttyCoord>& rhs)
     {
         return glm::all(glm::epsilonEqual(lhs.mTranslation, rhs.mTranslation, std::numeric_limits<float>::epsilon()));
     }
 
-    constexpr bool operator!=(const Translation<EnttyCoord>& lhs, const Translation<EnttyCoord>& rhs)
+    inline bool operator!=(const Translation<EnttyCoord>& lhs, const Translation<EnttyCoord>& rhs)
     {
         return !(lhs == rhs);
     }
@@ -79,7 +79,7 @@ namespace Mcc
         mTranslation(x, y, z)
     {}
 
-    constexpr Translation<FloatCoord>::operator Translation<VoxelCoord>() const
+    inline Translation<FloatCoord>::operator Translation<VoxelCoord>() const
     {
         return { glm::floor(mTranslation) };
     }
@@ -94,27 +94,27 @@ namespace Mcc
         return mTranslation;
     }
 
-    constexpr bool operator==(const Translation<FloatCoord>& lhs, const Translation<FloatCoord>& rhs)
+    inline bool operator==(const Translation<FloatCoord>& lhs, const Translation<FloatCoord>& rhs)
     {
         return glm::all(glm::epsilonEqual(lhs.mTranslation, rhs.mTranslation, std::numeric_limits<float>::epsilon()));
     }
 
-    constexpr bool operator!=(const Translation<FloatCoord>& lhs, const Translation<FloatCoord>& rhs)
+    inline bool operator!=(const Translation<FloatCoord>& lhs, const Translation<FloatCoord>& rhs)
     {
         return !(lhs == rhs);
     }
 
-    constexpr auto format_as(const TranslationV& translation)
+    inline auto format_as(const TranslationV& translation)
     {
         return fmt::format("WorldPosF({})", static_cast<glm::ivec3>(translation) );
     }
 
-    constexpr auto format_as(const TranslationE& translation)
+    inline auto format_as(const TranslationE& translation)
     {
         return fmt::format("TranslationE({})", static_cast<glm::vec3>(translation) );
     }
 
-    constexpr auto format_as(const TranslationF& translation)
+    inline auto format_as(const TranslationF& translation)
     {
         return fmt::format("TranslationF({})", static_cast<glm::vec3>(translation) );
     }
@@ -149,7 +149,7 @@ namespace Mcc
         return { glm::vec3(lhs) - glm::vec3(rhs) };
     }
 
-    constexpr TranslationV operator*(const TranslationV& lhs, const auto& rhs)
+    inline TranslationV operator*(const TranslationV& lhs, const auto& rhs)
     {
         return { glm::ivec3(glm::floor(glm::vec3(glm::ivec3(lhs)) * static_cast<float>(rhs))) };
     }
@@ -173,7 +173,7 @@ namespace Mcc
     template<typename C>
     constexpr Translation<C> SelectAxis(const Translation<C>& translation, bool x, bool y, bool z)
     {
-        typename Translation<C>::type t = translation;
+        auto t = (typename Translation<C>::type)(translation);
         return {
             x ? t.x : 0,
             y ? t.y : 0,

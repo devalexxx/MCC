@@ -30,9 +30,9 @@ namespace Mcc
     using LR = std::tuple<Position<LocalSpace, C>, TranslationV>;
 
     template<typename C, typename R = std::tuple<Position<LocalSpace, C>, TranslationV>>
-    constexpr R operator+(const Position<LocalSpace, C>& lhs, const Translation<C>& rhs);
+    inline R operator+(const Position<LocalSpace, C>& lhs, const Translation<C>& rhs);
     template<typename C, typename R = std::tuple<Position<LocalSpace, C>, TranslationV>>
-    constexpr R operator-(const Position<LocalSpace, C>& lhs, const Translation<C>& rhs);
+    inline R operator-(const Position<LocalSpace, C>& lhs, const Translation<C>& rhs);
 
     template<typename C>
     constexpr Position<WorldSpace, C> operator+(const Position<WorldSpace, C>& lhs, const Translation<C>& rhs);

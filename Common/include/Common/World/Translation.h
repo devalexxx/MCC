@@ -55,15 +55,15 @@ namespace Mcc
         constexpr Translation(glm::vec3 translation);
         constexpr Translation(float x, float y, float z);
 
-        constexpr operator TranslationV() const;
+        inline operator TranslationV() const;
         constexpr operator TranslationF() const;
-        constexpr operator glm::vec3   () const;
+        explicit constexpr operator glm::vec3   () const;
 
         template<std::size_t>
         friend constexpr auto get(Translation t);
 
-        friend constexpr bool operator==(const Translation& lhs, const Translation& rhs);
-        friend constexpr bool operator!=(const Translation& lhs, const Translation& rhs);
+        friend inline bool operator==(const Translation& lhs, const Translation& rhs);
+        friend inline bool operator!=(const Translation& lhs, const Translation& rhs);
 
       private:
         glm::vec3 mTranslation;
@@ -79,15 +79,15 @@ namespace Mcc
         constexpr Translation(glm::vec3 translation);
         constexpr Translation(float x, float y, float z);
 
-        constexpr operator TranslationV() const;
+        inline operator TranslationV() const;
         constexpr operator TranslationE() const;
-        constexpr operator glm::vec3   () const;
+        explicit constexpr operator glm::vec3   () const;
 
         template<std::size_t>
         friend constexpr auto get(Translation t);
 
-        friend constexpr bool operator==(const Translation& lhs, const Translation& rhs);
-        friend constexpr bool operator!=(const Translation& lhs, const Translation& rhs);
+        friend inline bool operator==(const Translation& lhs, const Translation& rhs);
+        friend inline bool operator!=(const Translation& lhs, const Translation& rhs);
 
       private:
         glm::vec3 mTranslation;
@@ -117,9 +117,9 @@ namespace Mcc
         else                       return t.mTranslation.z;
     }
 
-    constexpr auto format_as(const TranslationV& translation);
-    constexpr auto format_as(const TranslationE& translation);
-    constexpr auto format_as(const TranslationF& translation);
+    inline auto format_as(const TranslationV& translation);
+    inline auto format_as(const TranslationE& translation);
+    inline auto format_as(const TranslationF& translation);
 
     // Translation = Translation +/- Translation
     constexpr TranslationV operator+(const TranslationV& lhs, const TranslationV& rhs);
@@ -132,7 +132,7 @@ namespace Mcc
     constexpr TranslationF operator-(const TranslationF& lhs, const TranslationF& rhs);
 
     // Translation = Translation * value
-    constexpr TranslationV operator*(const TranslationV& lhs, const auto& rhs);
+    inline TranslationV operator*(const TranslationV& lhs, const auto& rhs);
     constexpr TranslationE operator*(const TranslationE& lhs, const auto& rhs);
     constexpr TranslationF operator*(const TranslationF& lhs, const auto& rhs);
 

@@ -121,7 +121,7 @@ namespace std
     template<>
     struct hash<Mcc::Chunk>
     {
-        constexpr size_t operator()(const Mcc::Chunk& c) const noexcept
+        inline size_t operator()(const Mcc::Chunk& c) const noexcept
         {
             size_t hash = c.mVersion;
             for (const auto a : c.mData.palette)
