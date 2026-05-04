@@ -92,6 +92,7 @@ namespace Mcc
         if (GetLevelParameter(0, GL_TEXTURE_DEPTH, 0) == 0)
         {
             SetData(images);
+            return;
         }
 
         const auto w = GetLevelParameter(0, GL_TEXTURE_WIDTH , 0);
