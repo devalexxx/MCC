@@ -19,19 +19,7 @@ namespace Mcc
 
     void NetworkEventManager::DispatchPacket(ENetPeer* peer, const ENetPacket* packet)
     {
-        size_t length;
-        std::memcpy(&length, packet->data, sizeof(length));
-
-        std::vector<uint8_t> buffer(length);
-        if (MCC_BENCH_TIME(Uncompression, uncompress)(
-                buffer.data(), reinterpret_cast<uLongf*>(&length), packet->data + sizeof(length),
-                packet->dataLength - sizeof(length)
-            ) != Z_OK)
-        {
-            MCC_LOG_ERROR("Failed to uncompress data");
-        }
-
-        PacketInputStream          stream(reinterpret_cast<char*>(buffer.data()), length);
+        PacketInputStream          stream (reinterpret_cast<char*>(packet->data), packet->dataLength);
         cereal::BinaryInputArchive archive(stream);
 
         size_t index;

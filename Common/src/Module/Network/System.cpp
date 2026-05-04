@@ -15,7 +15,7 @@ namespace Mcc
         const auto ctx   = WorldContext<>::Get(world);
 
         world.defer_suspend();
-        ctx->networkManager.Poll();
+        MCC_BENCH_TIME(NetworkPolling, ctx->networkManager.Poll)();
         world.defer_resume();
 
         IgnoreIter(it);

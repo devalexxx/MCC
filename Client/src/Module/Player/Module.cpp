@@ -202,7 +202,7 @@ namespace Mcc
         OnBlockBreak packet;
         packet.chunkHandle   = chunkHandle;
         packet.position = local;
-        ctx->scheduler.Insert([=]{ ctx->networkManager.Send(packet, ENET_PACKET_FLAG_RELIABLE, 0); }).Enqueue();
+        ctx->networkManager.Send(packet, ENET_PACKET_FLAG_RELIABLE, 0);;
     }
 
     static void PlaceBlock(const flecs::entity self, const ClientWorldContext* ctx)
@@ -229,7 +229,8 @@ namespace Mcc
         packet.chunkHandle = chunkHandle;
         packet.position    = local;
         packet.blockHandle = *ctx->networkMapping.GetRHandle(blockEntity);
-        ctx->scheduler.Insert([=]{ ctx->networkManager.Send(packet, ENET_PACKET_FLAG_RELIABLE, 0); }).Enqueue();
+        // ctx->scheduler.Insert([=]{ ctx->networkManager.Send(packet, ENET_PACKET_FLAG_RELIABLE, 0); }).Enqueue();
+        ctx->networkManager.Send(packet, ENET_PACKET_FLAG_RELIABLE, 0);;
     }
 
     void PlayerModule::OnKeyEventHandler(const KeyEvent& event, const flecs::world& world)

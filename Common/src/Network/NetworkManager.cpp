@@ -8,8 +8,6 @@
 #include "Common/Utils/Benchmark.h"
 #include "Common/Utils/Logging.h"
 
-#include "zlib.h"
-
 namespace Mcc
 {
 
@@ -35,7 +33,10 @@ namespace Mcc
 
     void NetworkManager::Poll()
     {
-        for (; !mCommandQueue.empty(); mCommandQueue.pop()) { mCommandQueue.front()(); }
+        {
+            std::lock_guard guard(mMutex);
+            for (; !mCommandQueue.empty(); mCommandQueue.pop()) { mCommandQueue.front()(); }
+        }
 
         ENetEvent event;
         while (enet_host_service(mHost, &event, 0) > 0)
@@ -64,27 +65,7 @@ namespace Mcc
 
     ENetPacket* NetworkManager::CreatePacket(ByteSpan&& data, enet_uint32 flag)
     {
-        const size_t         baseLength = data.size();
-        size_t               length     = compressBound(data.size());
-        std::vector<uint8_t> buffer(length);
-        if (
-            MCC_BENCH_TIME(Compression, compress)(
-                buffer.data(),
-                reinterpret_cast<uLongf*>(&length),
-                reinterpret_cast<uint8_t*>(data.data()),
-                data.size()
-            )
-        != Z_OK)
-        {
-            MCC_LOG_ERROR("Failed to compress data");
-        }
-        buffer.resize(length);
-
-        std::vector<uint8_t> packet(length + sizeof(length));
-        std::memcpy(packet.data(), &baseLength, sizeof(length));
-        std::memcpy(packet.data() + sizeof(length), buffer.data(), buffer.size());
-
-        return enet_packet_create(packet.data(), length + sizeof(length), flag);
+        return enet_packet_create(data.data(), data.size(), flag);
     }
 
     int
@@ -96,6 +77,8 @@ namespace Mcc
             MCC_LOG_ERROR("Failed to create ENet host");
             return EXIT_FAILURE;
         }
+
+        enet_host_compress_with_range_coder(mHost);
         return EXIT_SUCCESS;
     }
 

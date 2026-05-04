@@ -11,8 +11,6 @@ namespace Mcc
     template<typename T>
     int NetworkManager::Send(const std::vector<ENetPeer*> peers, T data, const enet_uint32 flag, enet_uint8 channel) const
     {
-        std::lock_guard guard(mMutex);
-
         PacketOutputStream          stream;
         cereal::BinaryOutputArchive archive(stream);
 
@@ -24,6 +22,7 @@ namespace Mcc
 
         if (const auto packet = CreatePacket(stream.GetBuffer(), flag))
         {
+            std::lock_guard guard(mMutex);
             mCommandQueue.push([packet, channel, ps = std::move(peers)]
             {
                 for (const auto peer: ps)
@@ -43,24 +42,7 @@ namespace Mcc
     template<typename T>
     int NetworkManager::Send(ENetPeer* peer, T data, enet_uint32 flag, enet_uint8 channel) const
     {
-        std::lock_guard guard(mMutex);
-
-        PacketOutputStream          stream;
-        cereal::BinaryOutputArchive archive(stream);
-
-        size_t type = PacketList::IndexOf<T>;
-        archive(type);
-
-        auto f = [&] { archive(data); };
-        MCC_BENCH_TIME(Serialization, f)();
-
-        if (const auto packet = CreatePacket(stream.GetBuffer(), flag))
-        {
-            mCommandQueue.push([=] { enet_peer_send(peer, channel, packet); });
-            return EXIT_SUCCESS;
-        }
-
-        return EXIT_FAILURE;
+        return Send(std::vector{ peer }, std::move(data), flag, channel);
     }
 
 }

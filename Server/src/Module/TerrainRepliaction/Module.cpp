@@ -138,26 +138,21 @@ namespace Mcc
             });
 
         const auto placeholderHandle = ctx->networkMapping.GetRHandle(placeholder).value();
-        ctx->scheduler
-            .Insert([=, peers = std::move(peers)]
-            {
-                ctx->networkManager.Send(
-                    std::vector(peers.begin(), peers.end()),
-                    OnChunkUpdated {
-                        .chunkHandle = from.packet.chunkHandle,
-                        .updates = {{
-                            {
-                                .blockHandle   = placeholderHandle,
-                                .position = from.packet.position,
-                                .blockOpt    = std::nullopt
-                            }
-                        }}
-                    },
-                    ENET_PACKET_FLAG_RELIABLE,
-                    0
-                );
-            })
-            .Enqueue();
+        ctx->networkManager.Send(
+            std::vector(peers.begin(), peers.end()),
+            OnChunkUpdated {
+                .chunkHandle = from.packet.chunkHandle,
+                .updates = {{
+                    {
+                        .blockHandle   = placeholderHandle,
+                        .position = from.packet.position,
+                        .blockOpt    = std::nullopt
+                    }
+                }}
+            },
+            ENET_PACKET_FLAG_RELIABLE,
+            0
+        );
     }
 
     void TerrainReplicationModule::OnBlockPlaceHandler(const From<OnBlockPlace>& from, const flecs::world& world)
@@ -209,26 +204,22 @@ namespace Mcc
                 }
             });
 
-        ctx->scheduler
-            .Insert([=, peers = std::move(peers)]
-            {
-                ctx->networkManager.Send(
-                    std::vector(peers.begin(), peers.end()),
-                    OnChunkUpdated {
-                        .chunkHandle = from.packet.chunkHandle,
-                        .updates = {{
-                            {
-                                .blockHandle = from.packet.blockHandle,
-                                .position    = from.packet.position,
-                                .blockOpt    = std::nullopt
-                            }
-                        }}
-                    },
-                    ENET_PACKET_FLAG_RELIABLE,
-                    0
-                );
-            })
-            .Enqueue();
+
+        ctx->networkManager.Send(
+            std::vector(peers.begin(), peers.end()),
+            OnChunkUpdated {
+                .chunkHandle = from.packet.chunkHandle,
+                .updates = {{
+                    {
+                        .blockHandle = from.packet.blockHandle,
+                        .position    = from.packet.position,
+                        .blockOpt    = std::nullopt
+                    }
+                }}
+            },
+            ENET_PACKET_FLAG_RELIABLE,
+            0
+        );
     }
 
     void TerrainReplicationModule::ChunkReplicationTask(NetworkInfo info, ChunkReplicationDesc desc)
