@@ -30,6 +30,24 @@ namespace Mcc
         return mPtr;
     }
 
+    template<typename U>
+    U& CallProxy<U>::operator*()
+    {
+        return *mPtr;
+    }
+
+    template<typename U>
+    const U* CallProxy<U>::operator->() const
+    {
+        return mPtr;
+    }
+
+    template<typename U>
+    const U& CallProxy<U>::operator*() const
+    {
+        return *mPtr;
+    }
+
     template<typename T>
     template<typename... Args>
     SafeAccess<T>::SafeAccess(Args&&... args) : mData(std::forward<Args>(args)...)
