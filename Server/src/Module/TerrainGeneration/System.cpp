@@ -59,6 +59,23 @@ namespace Mcc
             })
             .child_of<SceneRoot>();
 
+        world.entity("mcc:block:debug")
+            .is_a<PBlock>()
+            .set<CBlockType>(CBlockType::Solid)
+            .set<CBlockColor>({ .0f, .7f, .3f })
+            .set<CBlockMeta>({ "mcc:block:debug" })
+            .set<CBlockAsset>({
+                .texture = Hx::EnumArray<BlockFace, std::string>{
+                    { BlockFace::Top   , "texture://Debug/debug_cube_0.png" },
+                    { BlockFace::Bottom, "texture://Debug/debug_cube_1.png" },
+                    { BlockFace::Front , "texture://Debug/debug_cube_4.png" },
+                    { BlockFace::Back  , "texture://Debug/debug_cube_5.png" },
+                    { BlockFace::Left  , "texture://Debug/debug_cube_3.png" },
+                    { BlockFace::Right , "texture://Debug/debug_cube_2.png" },
+                }
+            })
+            .child_of<SceneRoot>();
+
         world.get_mut<TerrainGenerationModule>().InitializeGenerator(world);
 
         IgnoreIter(it);

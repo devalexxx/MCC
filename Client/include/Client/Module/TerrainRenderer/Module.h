@@ -14,7 +14,7 @@
 
 #include <flecs.h>
 
-#include <unordered_set>
+#include <vector>
 #include <unordered_map>
 #include <string>
 
@@ -37,7 +37,7 @@ namespace Mcc
         std::shared_ptr<OpenGLTexture2DArray> textureArray;
 
         std::shared_ptr<SafeAccess<std::unordered_map<std::string, size_t>>> textureIndex;
-        std::shared_ptr<SafeAccess<std::unordered_set<std::string>>>         textureToLoad;
+        std::shared_ptr<SafeAccess<std::vector<std::string>>>                textureToLoad;
     };
 
 }

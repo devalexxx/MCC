@@ -22,8 +22,8 @@ namespace Mcc
         textureArrayEntity(flecs::entity::null()),
         program     (std::make_shared<OpenGLProgram>()),
         textureArray(std::make_shared<OpenGLTexture2DArray>()),
-        textureIndex(std::make_shared<SafeAccess<std::unordered_map<std::string, size_t>>>()),
-        textureToLoad(std::make_shared<SafeAccess<std::unordered_set<std::string>>>())
+        textureIndex (std::make_shared<SafeAccess<std::unordered_map<std::string, size_t>>>()),
+        textureToLoad(std::make_shared<SafeAccess<std::vector<std::string>>>())
     {}
 
     void TerrainRendererModule::RegisterComponent(flecs::world& world)

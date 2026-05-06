@@ -80,19 +80,19 @@ namespace Mcc
                     {{ -1.f, -1.f, 1.f }, { 0.f, 0.f }}, {{  1.f, -1.f, 1.f }, { 1.f, 0.f }}
                 }}},
                 { BlockFace::Back, {{
-                    {{  1.f,  1.f, -1.f }, { 1.f, 1.f }}, {{ -1.f, -1.f, -1.f }, { 0.f, 1.f }},
-                    {{ -1.f,  1.f, -1.f }, { 0.f, 1.f }}, {{  1.f,  1.f, -1.f }, { 1.f, 1.f }},
-                    {{  1.f, -1.f, -1.f }, { 1.f, 0.f }}, {{ -1.f, -1.f, -1.f }, { 0.f, 0.f }}
+                    {{  1.f,  1.f, -1.f }, { 0.f, 1.f }}, {{ -1.f, -1.f, -1.f }, { 1.f, 0.f }},
+                    {{ -1.f,  1.f, -1.f }, { 1.f, 1.f }}, {{  1.f,  1.f, -1.f }, { 0.f, 1.f }},
+                    {{  1.f, -1.f, -1.f }, { 0.f, 0.f }}, {{ -1.f, -1.f, -1.f }, { 1.f, 0.f }}
                 }}},
                 { BlockFace::Left, {{
-                    {{ -1.f, -1.f,  1.f }, { 0.f, 1.f }}, {{ -1.f,  1.f, -1.f }, { 1.f, 0.f }},
-                    {{ -1.f, -1.f, -1.f }, { 0.f, 0.f }}, {{ -1.f, -1.f,  1.f }, { 0.f, 1.f }},
-                    {{ -1.f,  1.f,  1.f }, { 1.f, 1.f }}, {{ -1.f,  1.f, -1.f }, { 1.f, 0.f }}
+                    {{ -1.f, -1.f,  1.f }, { 1.f, 0.f }}, {{ -1.f,  1.f, -1.f }, { 0.f, 1.f }},
+                    {{ -1.f, -1.f, -1.f }, { 0.f, 0.f }}, {{ -1.f, -1.f,  1.f }, { 1.f, 0.f }},
+                    {{ -1.f,  1.f,  1.f }, { 1.f, 1.f }}, {{ -1.f,  1.f, -1.f }, { 0.f, 1.f }}
                 }}},
                 { BlockFace::Right, {{
-                    {{ 1.f,  1.f,  1.f }, { 1.f, 1.f }}, {{ 1.f, -1.f, -1.f }, { 0.f, 0.f }},
-                    {{ 1.f,  1.f, -1.f }, { 1.f, 0.f }}, {{ 1.f,  1.f,  1.f }, { 1.f, 1.f }},
-                    {{ 1.f, -1.f,  1.f }, { 0.f, 1.f }}, {{ 1.f, -1.f, -1.f }, { 0.f, 0.f }}
+                    {{ 1.f,  1.f,  1.f }, { 0.f, 1.f }}, {{ 1.f, -1.f, -1.f }, { 1.f, 0.f }},
+                    {{ 1.f,  1.f, -1.f }, { 1.f, 1.f }}, {{ 1.f,  1.f,  1.f }, { 0.f, 1.f }},
+                    {{ 1.f, -1.f,  1.f }, { 0.f, 0.f }}, {{ 1.f, -1.f, -1.f }, { 1.f, 0.f }}
                 }}},
                 { BlockFace::Bottom, {{
                     {{  1.f, -1.f,  1.f }, { 1.f, 1.f }}, {{ -1.f, -1.f, -1.f }, { 0.f, 0.f }},
@@ -227,7 +227,7 @@ namespace Mcc
                             auto [tIt, tInserted] = (*tDesc.textureIndex)->try_emplace(texturePath,(*tDesc.textureIndex)->size());
                             if (tInserted)
                             {
-                                (*tDesc.textureToLoad)->emplace(texturePath);
+                                (*tDesc.textureToLoad)->push_back(texturePath);
                             }
                             auto textureIndex = tIt->second;
 
@@ -355,8 +355,7 @@ namespace Mcc
             auto tttProxy = *(*module.textureToLoad);
             images.reserve(tttProxy->size());
             paths .reserve(tttProxy->size());
-
-            std::copy(tttProxy->begin(), tttProxy->end(), std::back_inserter(paths));
+            std::ranges::copy(*tttProxy, std::back_inserter(paths));
             tttProxy->clear();
         }
 

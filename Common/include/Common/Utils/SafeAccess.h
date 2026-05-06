@@ -22,6 +22,9 @@ namespace Mcc
         CallProxy& operator=(const CallProxy&) = delete;
 
         U* operator->();
+        U& operator*();
+        const U* operator->() const;
+        const U& operator* () const;
 
       private:
         U*                    mPtr;
