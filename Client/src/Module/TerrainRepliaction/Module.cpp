@@ -24,11 +24,23 @@ namespace Mcc
         ctx->networkManager.Subscribe<OnChunkUpdated>(OnChunkUpdatedHandler, world);
     }
 
-    void TerrainReplicationModule::RegisterComponent(flecs::world& /* world */) {}
+    void TerrainReplicationModule::RegisterComponent(flecs::world& world)
+    {
+        world.component<CChunkUpdateInfo>();
+    }
 
     void TerrainReplicationModule::RegisterPrefab(flecs::world& /* world */) {}
 
-    void TerrainReplicationModule::RegisterSystem(flecs::world& /* world */) {}
+    void TerrainReplicationModule::RegisterSystem(flecs::world& world)
+    {
+        world.system()
+            .kind<Phase::OnSetup>()
+            .with<CChunkUpdateInfo>()
+            .each([](const flecs::entity e)
+            {
+                e.remove<CChunkUpdateInfo>();
+            });
+    }
 
     void TerrainReplicationModule::RegisterObserver(flecs::world& /* world */) {}
 
@@ -89,23 +101,38 @@ namespace Mcc
             return;
         }
 
+        CChunkUpdateInfo info;
         bool hasChanged = false;
         const auto chunkEntity = world.entity(*chunkEntityT);
         const auto chunkPtr    = chunkEntity.get<CChunkPtr>();
         for (const auto& [handle, position, block]: packet.updates)
         {
-            hasChanged |= chunkPtr->Set(
+            const bool changed = chunkPtr->Set(
                 position,
                 *block
                     .transform([&](const BlockData& data) { return CreateBlock(data, world); })
                     .or_else([&] { return std::optional(world.entity(*ctx->networkMapping.GetLHandle(handle))); })
             );
+
+            if (changed)
+            {
+                const glm::uvec3 pos = position;
+                info.negativeX = pos.x == 0;
+                info.positiveX = pos.x == Chunk::Size - 1;
+                info.negativeY = pos.y == 0;
+                info.positiveY = pos.y == Chunk::Size - 1;
+                info.negativeZ = pos.z == 0;
+                info.positiveZ = pos.z == Chunk::Size - 1;
+            }
+
+            hasChanged |= changed;
         }
 
         if (hasChanged)
         {
             MCC_LOG_DEBUG("Chunk({}) has been updated", packet.chunkHandle);
             chunkEntity.add<TDirty>();
+            chunkEntity.set<CChunkUpdateInfo>(info);
         }
     }
 

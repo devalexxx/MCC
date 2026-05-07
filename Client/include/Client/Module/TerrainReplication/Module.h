@@ -14,6 +14,16 @@
 namespace Mcc
 {
 
+    struct CChunkUpdateInfo
+    {
+        uint8_t positiveX : 1 = 0;
+        uint8_t negativeX : 1 = 0;
+        uint8_t positiveY : 1 = 0;
+        uint8_t negativeY : 1 = 0;
+        uint8_t positiveZ : 1 = 0;
+        uint8_t negativeZ : 1 = 0;
+    };
+
     class TerrainReplicationModule final : public BaseModule<TerrainReplicationModule, TerrainModule>
     {
       public:

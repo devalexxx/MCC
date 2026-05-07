@@ -21,8 +21,8 @@
 #include "Common/Utils/Benchmark.h"
 #include "Common/Utils/ChunkHelper.h"
 #include "Common/Utils/SafeAccess.h"
-#include "Common/World/Translation.h"
 #include "Common/World/Geometry.h"
+#include "Common/World/Translation.h"
 #include "Common/WorldContext.h"
 
 #include <Hexis/Core/EnumArray.h>
@@ -30,6 +30,7 @@
 #include <glm/gtx/quaternion.hpp>
 
 #include <numeric>
+#include <ranges>
 #include <set>
 #include <utility>
 
@@ -137,13 +138,15 @@ namespace Mcc
             return sNeighbours;
         }
 
-        const std::vector<std::pair<size_t, glm::ivec2>>& GetChunkNeighbours()
+        const std::vector<std::pair<size_t, glm::ivec3>>& GetChunkNeighbours()
         {
-            static std::vector<std::pair<size_t, glm::ivec2>> sNeighbours = {{
-                { 0, glm::ivec2(-1, 0) },
-                { 1, glm::ivec2( 1, 0) },
-                { 2, glm::ivec2(0, -1) },
-                { 3, glm::ivec2(0,  1) }
+            static std::vector<std::pair<size_t, glm::ivec3>> sNeighbours = {{
+                { 0, glm::ivec3(-1,  0,  0) },
+                { 1, glm::ivec3( 1,  0,  0) },
+                { 2, glm::ivec3( 0,  1,  0) },
+                { 3, glm::ivec3( 0, -1,  0) },
+                { 4, glm::ivec3( 0,  0, -1) },
+                { 5, glm::ivec3( 0,  0,  1) }
             }};
 
             return sNeighbours;
@@ -167,7 +170,7 @@ namespace Mcc
             std::shared_ptr<Chunk>                             chunk;
             std::vector<Hx::EnumArray<BlockFace, std::string>> assetPath;
 
-            std::array<std::shared_ptr<Chunk>, 4>     neighbors; // left, right, front, back
+            std::array<std::shared_ptr<Chunk>, 6>     neighbors; // left, right, top, bottom, front, back
             std::unordered_map<flecs::entity_t, bool> solid;
         };
 
@@ -182,7 +185,7 @@ namespace Mcc
             if (!world.has<ActiveScene, GameScene>())
                 return {};
 
-            auto&& [left, right, front, back] = cDesc.neighbors;
+            auto&& [left, right, top, bottom, front, back] = cDesc.neighbors;
 
             // Compute chunk mask
             std::vector mask((Chunk::Size + 2) * (Chunk::Size + 2) * (Chunk::Size + 2), true);
@@ -190,11 +193,14 @@ namespace Mcc
             {
                 for (size_t y = 0; y < Chunk::Size; ++y)
                 {
-                    mask[Index(-1, y, x)]          = cDesc.solid[left ->Get({ Chunk::Size - 1, y, x })];
-                    mask[Index(Chunk::Size, y, x)] = cDesc.solid[right->Get({ 0, y, x })];
+                    mask[Index(         -1, y, x)] = cDesc.solid[left ->Get({ Chunk::Size - 1, y, x })];
+                    mask[Index(Chunk::Size, y, x)] = cDesc.solid[right->Get({ 0              , y, x })];
 
-                    mask[Index(x, y, -1)]          = cDesc.solid[front->Get({ x, y, Chunk::Size - 1 })];
-                    mask[Index(x, y, Chunk::Size)] = cDesc.solid[back ->Get({ x, y, 0 })];
+                    mask[Index(x,          -1, y)] = cDesc.solid[bottom->Get({ x, Chunk::Size - 1, y })];
+                    mask[Index(x, Chunk::Size, y)] = cDesc.solid[top   ->Get({ x,               0, y })];
+
+                    mask[Index(x, y,          -1)] = cDesc.solid[front->Get({ x, y, Chunk::Size - 1 })];
+                    mask[Index(x, y, Chunk::Size)] = cDesc.solid[back ->Get({ x, y,               0 })];
 
                     for (size_t z = 0; z < Chunk::Size; ++z)
                     {
@@ -327,6 +333,15 @@ namespace Mcc
         const auto cc = p.Underlying();
 
         entity.add<TShouldBuildMesh>();
+        for (const auto side: _::GetChunkNeighbours() | std::views::values)
+        {
+            if (const auto cit = ctx->chunkMapping.find(p + TranslationV(side)); cit != ctx->chunkMapping.end())
+            {
+                const auto e = world.entity(cit->second);
+                e.add<TShouldBuildMesh>();
+            }
+        }
+
         if (Helper::IsInSphere(cp, cc, rRange))
         {
             entity.add<TCouldRenderChunk>();
@@ -414,8 +429,30 @@ namespace Mcc
         IgnoreIter(it);
     }
 
+    static void Foo(const ClientWorldContext* ctx, const flecs::world& world, const glm::ivec3 position)
+    {
+        if (const auto it = ctx->chunkMapping.find(position); it != ctx->chunkMapping.end())
+        {
+            const auto e = world.entity(it->second);
+            e.add<TShouldBuildMesh>();
+        }
+    }
+
     void HandleDirtyChunkSystem(const flecs::entity entity)
     {
+        if (const auto info = entity.try_get<CChunkUpdateInfo>(); info)
+        {
+            const auto  world  = entity.world();
+            const auto* ctx    = ClientWorldContext::Get(world);
+
+            const glm::ivec3 position = entity.get<CChunkPos>().Underlying();
+            if (info->negativeX) Foo(ctx, world, position + glm::ivec3(-1,  0,  0));
+            if (info->positiveX) Foo(ctx, world, position + glm::ivec3( 1,  0,  0)) ;
+            if (info->negativeY) Foo(ctx, world, position + glm::ivec3( 0, -1,  0));
+            if (info->positiveY) Foo(ctx, world, position + glm::ivec3( 0,  1,  0));
+            if (info->negativeZ) Foo(ctx, world, position + glm::ivec3( 0,  0, -1));
+            if (info->positiveZ) Foo(ctx, world, position + glm::ivec3( 0,  0,  1)) ;
+        }
         entity.add<TShouldBuildMesh>();
     }
 
@@ -431,7 +468,7 @@ namespace Mcc
 
         for (auto [i, side]: _::GetChunkNeighbours())
         {
-            if (const auto it = ctx->chunkMapping.find(pos + TranslationV(side.x, 0, side.y)); it != ctx->chunkMapping.end())
+            if (const auto it = ctx->chunkMapping.find(pos + TranslationV(side)); it != ctx->chunkMapping.end())
             {
                 cDesc.neighbors[i] = world.entity(it->second).get<CChunkPtr>();
 
