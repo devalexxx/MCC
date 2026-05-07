@@ -48,7 +48,8 @@ namespace Mcc
     }
 
     flecs::entity
-    TerrainGenerationModule::LaunchGenerationTask(const flecs::world& world, const glm::ivec3& position) const
+    TerrainGenerationModule::LaunchGenerationTask(
+        const flecs::world& world, const glm::ivec3& position, const uint32_t priority) const
     {
         const auto ctx    = ServerWorldContext::Get(world);
         const auto entity = world.entity()
@@ -57,7 +58,11 @@ namespace Mcc
             .child_of<SceneRoot>();
 
         GenerationState::Planned::Enter(entity);
-        auto task = ctx->scheduler.Insert([=, this] { return mGenerator.Generate(position); }).AsUnique().Enqueue();
+        auto task = ctx->scheduler
+            .Insert([=, this] { return mGenerator.Generate(position); })
+            .SetPriority(priority)
+            .AsUnique()
+            .Enqueue();
 
         entity.emplace<CChunkGenTask>(std::move(task));
         // Should be set in the task

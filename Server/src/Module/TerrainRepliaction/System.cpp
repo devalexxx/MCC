@@ -37,7 +37,10 @@ namespace Mcc
             const auto it = ctx->chunkMapping.find(position);
             if (it == ctx->chunkMapping.cend()) // < Chunk don't exist -> Generate and Replicate
             {
-                const auto chunk = world.get<TerrainGenerationModule>().LaunchGenerationTask(world, position);
+                float distance   = Distance(glm::vec3(position), glm::vec3 { x, y, z });
+                float normalized = distance / ctx->settings.renderDistance;
+                float priority   = (1 - normalized) * 100;
+                const auto chunk = world.get<TerrainGenerationModule>().LaunchGenerationTask(world, position, priority);
                 Replicate(session, chunk);
                 return;
             }

@@ -521,9 +521,15 @@ namespace Mcc
         tDesc.textureIndex  = module.textureIndex;
         tDesc.textureToLoad = module.textureToLoad;
 
+        auto  player     = PlayerModule::GetPlayer(world).get<CEntityTransform>();
+        float distance   = Distance(get<0>(player.position), pos.Underlying());
+        float normalized = distance / (Chunk::Size * ctx->serverInfo.renderDistance);
+        float priority   = (1 - normalized) * 100;
+
         auto task = ctx->scheduler
             .Insert(MCC_BENCH_TIME(MeshBuilding, _::BuildChunkMeshImpl), world, std::move(cDesc), std::move(tDesc))
             .AsUnique()
+            .SetPriority(priority)
             .SetGroup("game_group")
             .Enqueue();
 

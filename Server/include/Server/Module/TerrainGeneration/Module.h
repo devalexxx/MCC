@@ -25,7 +25,7 @@ namespace Mcc
         void RegisterObserver (flecs::world& world) override;
 
         void          InitializeGenerator (const flecs::world& world);
-        flecs::entity LaunchGenerationTask(const flecs::world& world, const glm::ivec3& position) const;
+        flecs::entity LaunchGenerationTask(const flecs::world& world, const glm::ivec3& position, uint32_t priority) const;
 
       private:
         ChunkGenerator mGenerator;

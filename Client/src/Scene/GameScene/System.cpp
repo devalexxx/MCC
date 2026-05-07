@@ -224,10 +224,13 @@ namespace Mcc
 
         if (ImGui::CollapsingHeader("Chunk"))
         {
-            // const auto totalChunk = it.world().count<ChunkTag>();
-            const auto queued     = world.count<CChunkMeshGenTask>();
+            const auto total   = world.count<TChunk>();
+            const auto queued  = world.count<CChunkMeshGenTask>();
+            const auto display = world.query_builder().with<TChunk>().with<TRenderable>().cached().build();
+
+            ImGui::Text("total  : %d", total);
             ImGui::Text("queued : %d", queued);
-            ImGui::Text("display: %d", world.count<TShouldRenderChunk>());
+            ImGui::Text("display: %d", display.count());
         }
 
         if (ImGui::CollapsingHeader("Player"))

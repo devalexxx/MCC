@@ -71,6 +71,12 @@ namespace Mcc
         constexpr float operator()(const WorldPos<C>& lhs, const WorldPos<C>& rhs) const;
     };
 
+    template<typename C>
+    struct ComputeDistance<ChunkPos<C>, ChunkPos<C>>
+    {
+        constexpr float operator()(const ChunkPos<C>& lhs, const ChunkPos<C>& rhs) const;
+    };
+
     // Floor
     template<>
     struct ComputeFloor<WorldPosF>

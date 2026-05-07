@@ -171,6 +171,13 @@ namespace Mcc
         return Length(rhs - lhs);
     }
 
+    template<typename C>
+    constexpr float
+    ComputeDistance<ChunkPos<C>, ChunkPos<C>>::operator()(const ChunkPos<C>& lhs, const ChunkPos<C>& rhs) const
+    {
+        return Length(rhs - lhs);
+    }
+
     constexpr WorldPosF ComputeFloor<WorldPosF>::operator()(const WorldPosF& v) const
     {
         return { glm::floor(glm::vec3(v)) };

@@ -14,6 +14,7 @@
 #include "Common/Module/Network/Component.h"
 #include "Common/Module/Terrain/Component.h"
 #include "Common/Module/Terrain/Module.h"
+#include "Common/World/Geometry.h"
 #include "Common/Phase.h"
 #include "Common/Utils/ChunkHelper.h"
 
@@ -99,7 +100,22 @@ namespace Mcc
         desc.localHandle = chunk;
         desc.blocks      = std::move(blocks);
 
-        ctx->scheduler.Insert(ChunkReplicationTask, std::move(info), std::move(desc)).Enqueue();
+
+        std::vector<uint32_t> priorities;
+        priorities.reserve(info.sessions.size());
+        for (auto* session: info.sessions)
+        {
+            auto transform   = world.entity(*ctx->networkMapping.GetLHandle(session->pInfo.handle)).get<CEntityTransform>();
+            float distance   = Distance(get<0>(transform.position), position.Underlying());
+            float normalized = distance / (Chunk::Size * ctx->settings.renderDistance);
+            float priority   = (1 - normalized) * 100;
+            priorities.push_back(priority);
+        }
+
+        ctx->scheduler
+            .Insert(ChunkReplicationTask, std::move(info), std::move(desc))
+            .SetPriority(std::ranges::max(priorities))
+            .Enqueue();
     }
 
     void TerrainReplicationModule::OnBlockBreakHandler(const From<OnBlockBreak>& from, const flecs::world& world)
