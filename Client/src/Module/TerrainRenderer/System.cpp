@@ -304,6 +304,7 @@ namespace Mcc
             });
 
             cx = x;
+            cy = y;
             cz = z;
         }
     }
